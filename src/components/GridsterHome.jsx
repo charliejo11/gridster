@@ -1,9 +1,70 @@
 import { useEffect, useRef, useState } from "react";
-import { getGridsterDestination, getGridsterProfile, hasGridsterProfile } from "../data/gridsterMockData";
+import {
+  getGridsterDestination,
+  getGridsterProfile,
+  gridsterDashboardEvents,
+  gridsterDjSets,
+  gridsterEventsPageEvents,
+  gridsterExploreCategories,
+  gridsterExploreDestinations,
+  gridsterFeaturedPhotoSpots,
+  gridsterFeaturedPlaces,
+  gridsterGalleryItems,
+  gridsterGridNightEvents,
+  gridsterGroupsPageGroups,
+  gridsterLiveNow,
+  gridsterLiveNowEvents,
+  gridsterMarketplaceFinds,
+  gridsterMessageConversations,
+  gridsterMessagePreview,
+  gridsterNotifications,
+  gridsterPopularGroups,
+  gridsterPostSampleComments,
+  gridsterSavedFilters,
+  gridsterSavedItems,
+  gridsterSearchFilters,
+  gridsterSearchResults,
+  gridsterSidebarGroups,
+  gridsterSuggestedCreators,
+  gridsterTeleportCenterDestinations,
+  gridsterThemeOptions,
+  gridsterUpcomingGridNights,
+  gridsterProfileSections,
+  gridsterAddSlurlFields,
+  gridsterFeedPreferenceCards,
+  gridsterPhotoChallengeRules,
+  gridsterPhotoChallengeEntries,
+  gridsterPhotoChallengeLeaders,
+  gridsterSpotlightAwardCategories,
+  gridsterSpotlightAwardNominees,
+  gridsterSpotlightAwardRules,
+  gridsterVerificationTypes,
+  gridsterVerificationRequirements,
+  gridsterBlingBoostFields,
+  gridsterBlingBoostPackages,
+  gridsterCreateCommunityHubFields,
+  gridsterCreateCommunityHubSections,
+  gridsterCreateBloggerPostFields,
+  gridsterBloggerCreditRows,
+  gridsterCreateStorePostFields,
+  gridsterCreateEventFields,
+  gridsterSettingsCards,
+  gridsterBlingShopItems,
+  gridsterCreatorDashboardStats,
+  gridsterVenueTools,
+  gridsterStoreToolFeatures,
+  gridsterBloggerNetworkFeatures,
+  gridsterCommunityHubFeatures,
+  gridsterPostReportOptions,
+  hasGridsterProfile,
+} from "../data/gridsterMockData";
 import Header from "./gridster/Header";
 import LeftSidebar from "./gridster/LeftSidebar";
 import RightSidebar from "./gridster/RightSidebar";
 import LandingPage from "./gridster/LandingPage";
+import ActionButton from "./gridster/ActionButton";
+import CardGrid from "./gridster/CardGrid";
+import PageHeader from "./gridster/PageHeader";
 import "./GridsterHome.css";
 
 const GRIDSTER_STORAGE_KEY = "gridster-preferences-v1";
@@ -119,51 +180,7 @@ function GridsterHome() {
   const toastTimerRef = useRef(null);
   const toastIdRef = useRef(0);
 
-  const events = [
-    ["Neon Nights Party", "May 23 • 8:00 PM SLT"],
-    ["Ocean Breeze Beach Party", "May 25 • 2:00 PM SLT"],
-    ["Rave Under The Stars", "May 31 • 10:00 PM SLT"],
-    ["Midnight Metal Mayhem", "Jun 2 • 11:00 PM SLT"],
-  ];
-
-  const places = [
-    ["Elysium Isle", "Adult • Moderate"],
-    ["Neon District", "Adult • Moderate"],
-    ["Valentina Boutique", "Fashion Store"],
-    ["Luxe Villas", "Homes • Rentals"],
-    ["Moonlit Market", "Shopping • Events"],
-  ];
-
-  const groups = ["Club Elysium", "The Creators Collective", "Pixel Fashion Society"];
-  const creators = ["NovaVixen", "DJ Starfall", "EchoMoon"];
-  const liveNow = [
-    ["DJ RavenHex", "Spinning Rock"],
-    ["DJ CharlieJo", "Club Set"],
-    ["NovaVixen", "Shopping Stream"],
-  ];
-  const galleryItems = [
-    { title: "Neon Rooftop", category: "Nightlife", creator: "CharlieJo", index: 0 },
-    { title: "Moonlit Cathedral", category: "Gothic", creator: "RavenHex", index: 1 },
-    { title: "Crystal Lagoon", category: "Beach", creator: "NovaVixen", index: 2 },
-    { title: "Cyber Alley", category: "Urban", creator: "EchoMoon", index: 3 },
-    { title: "Luxe Villa Patio", category: "Homes", creator: "Valentina", index: 4 },
-    { title: "Metal Night Stage", category: "Events", creator: "DJ Starfall", index: 5 },
-    { title: "Mystic Forest", category: "Fantasy", creator: "LunaVale", index: 6 },
-    { title: "Market Glow", category: "Shopping", creator: "Pixel Pixie", index: 7 },
-  ];
-  const notifications = [
-    ["R", "RavenHex commented on your photo", "2m"],
-    ["S", "Sanctuary Rocks added Metal Night", "14m"],
-    ["N", "NovaVixen followed you", "1h"],
-    ["B", "You earned +25 Bling Bits", "2h"],
-    ["M", "Moonlit Market posted new releases", "3h"],
-  ];
-  const themeOptions = [
-    ["Dark Neon", "dark-neon"],
-    ["Deep Purple", "deep-purple"],
-    ["Midnight Blue", "midnight-blue"],
-  ];
-  const activeThemeLabel = themeOptions.find(([, themeClass]) => themeClass === theme)?.[0] ?? "Dark Neon";
+  const activeThemeLabel = gridsterThemeOptions.find(([, themeClass]) => themeClass === theme)?.[0] ?? "Dark Neon";
 
   const showToast = (message) => {
     window.clearTimeout(toastTimerRef.current);
@@ -227,9 +244,9 @@ function GridsterHome() {
         setShowNotifications={setShowNotifications}
         showThemeMenu={showThemeMenu}
         setShowThemeMenu={setShowThemeMenu}
-        themeOptions={themeOptions}
+        themeOptions={gridsterThemeOptions}
         activeThemeLabel={activeThemeLabel}
-        notifications={notifications}
+        notifications={gridsterNotifications}
       />
 
       <section className="dashboard">
@@ -240,7 +257,7 @@ function GridsterHome() {
         <section className="center-feed">
         <CenterContent
           activePage={activePage}
-          galleryItems={galleryItems}
+          galleryItems={gridsterGalleryItems}
           selectedProfileName={selectedProfileName}
           setActivePage={setActivePage}
           onOpenProfile={openProfile}
@@ -249,17 +266,17 @@ function GridsterHome() {
         </section>
 
         <RightSidebar
-          creators={creators}
-          events={events}
-          groups={groups}
-          liveNow={liveNow}
+          creators={gridsterSuggestedCreators}
+          events={gridsterDashboardEvents}
+          groups={gridsterSidebarGroups}
+          liveNow={gridsterLiveNow}
           onOpenProfile={openProfile}
-          places={places}
+          places={gridsterFeaturedPlaces}
           showToast={showToast}
         />
       </section>
 
-      <GalleryStrip galleryItems={galleryItems} />
+      <GalleryStrip galleryItems={gridsterGalleryItems} />
       <GridsterFooter />
       {toast ? (
         <div className="gridster-toast glass-card" role="status" aria-live="polite" key={toast.id}>
@@ -292,7 +309,7 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
   if (activePage === "Explore") {
     return (
       <PageShell
-        title="Explore The Grid"
+        title="Explore"
         subtitle="Discover where residents are posting, shopping, dancing, roleplaying, and teleporting right now."
       >
         <ExplorePageContent galleryItems={galleryItems} />
@@ -302,7 +319,7 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
 
   if (activePage === "Search") {
     return (
-      <PageShell title="Search The Grid" subtitle="Find residents, stores, events, groups, photo spots, SLURLs, and communities.">
+      <PageShell title="Search" subtitle="Find residents, stores, events, groups, photo spots, SLURLs, and communities.">
         <SearchResultsPage onOpenProfile={onOpenProfile} />
       </PageShell>
     );
@@ -310,7 +327,7 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
 
   if (activePage === "Events") {
     return (
-      <PageShell title="Grid Events" subtitle="Find live DJs, club nights, shopping events, beach parties, and community gatherings.">
+      <PageShell title="Events" subtitle="Find live DJs, club nights, shopping events, beach parties, and community gatherings.">
         <EventsPageContent />
         <LiveNowEvents />
         <VenueTools />
@@ -321,7 +338,7 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
   if (activePage === "CreateEvent") {
     return (
       <PageShell
-        title="Create Grid Event"
+        title="Create Event"
         subtitle="Build an event card with time, host, DJ, rating, SLURL, and discovery tags."
       >
         <CreateEventPage />
@@ -409,7 +426,7 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
   if (activePage === "PhotoChallenge") {
     return (
       <PageShell
-        title="Gridster Photo Challenge"
+        title="Photo Challenge"
         subtitle="Join weekly photo themes, show off your world, earn Bling Bits, and get featured across the grid."
       >
         <PhotoChallengePage />
@@ -420,7 +437,7 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
   if (activePage === "SpotlightAwards") {
     return (
       <PageShell
-        title="Gridster Spotlight Awards"
+        title="Spotlight Awards"
         subtitle="Celebrate the residents, creators, DJs, bloggers, venues, stores, and communities lighting up the grid."
       >
         <SpotlightAwardsPage />
@@ -431,7 +448,7 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
   if (activePage === "VerificationCenter") {
     return (
       <PageShell
-        title="Verification Center"
+        title="Verification"
         subtitle="Help residents know which creators, stores, venues, DJs, bloggers, and communities are authentic across the grid."
       >
         <VerificationCenterPage />
@@ -441,7 +458,7 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
 
   if (activePage === "Groups") {
     return (
-      <PageShell title="Grid Groups" subtitle="Join clubs, creator circles, RP hubs, blogger networks, and community crews.">
+      <PageShell title="Groups" subtitle="Join clubs, creator circles, RP hubs, blogger networks, and community crews.">
         <GroupsPageContent onOpenProfile={onOpenProfile} />
         <CommunityHubs />
         <CommunityStandards />
@@ -462,18 +479,10 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
   }
 
   if (activePage === "GridNights") {
-    const events = [
-      ["Sanctuary Rocks — Metal Night", "8:00 PM SLT", "thumb-0"],
-      ["Neon District — Cyber Rave", "10:00 PM SLT", "thumb-1"],
-      ["Ocean Breeze — Beach Party", "2:00 PM SLT", "thumb-2"],
-      ["Midnight Metal Mayhem", "9:00 PM SLT", "thumb-3"],
-      ["Moonlit Market — Shopping Night", "6:00 PM SLT", "thumb-4"],
-    ];
-
     return (
       <PageShell title="Grid Nights" subtitle="Live events, DJ sets, club nights, parties, and gatherings happening across Second Life.">
-        <section className="nav-event-grid grid-nights-grid">
-          {events.map(([title, time, thumb]) => (
+        <CardGrid as="section" className="nav-event-grid grid-nights-grid">
+          {gridsterGridNightEvents.map(([title, time, thumb]) => (
             <article className="nav-event-card glass-card" key={title}>
               <div className={`nav-event-thumb ${thumb}`}></div>
               <div className="nav-event-copy">
@@ -485,25 +494,16 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
               <button {...getTeleportButtonProps(title.split(" — ")[0])}>Teleport</button>
             </article>
           ))}
-        </section>
+        </CardGrid>
       </PageShell>
     );
   }
 
   if (activePage === "Marketplace") {
-    const products = [
-      ["Valentina Luxe Dress", "Fashion"],
-      ["Neon Boots", "Accessories"],
-      ["Gothic Cathedral Backdrop", "Decor"],
-      ["Cyber Glow Nails", "Beauty"],
-      ["Beach Villa Set", "Homes"],
-      ["PlayNaughty Bunny Mask", "Accessories"],
-    ];
-
     return (
       <PageShell title="Marketplace Finds" subtitle="Discover products, outfits, décor, accessories, blogger picks, and creator drops.">
-        <section className="page-card-grid marketplace-grid">
-          {products.map(([name, category], index) => (
+        <CardGrid as="section" className="page-card-grid marketplace-grid">
+          {gridsterMarketplaceFinds.map(([name, category], index) => (
             <article className="marketplace-card glass-card" key={name}>
               <div className={`marketplace-thumb thumb-${index % 6}`}>{name.charAt(0)}</div>
               <div className="marketplace-copy">
@@ -516,24 +516,16 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
               </div>
             </article>
           ))}
-        </section>
+        </CardGrid>
       </PageShell>
     );
   }
 
   if (activePage === "DJSets") {
-    const sets = [
-      ["DJ CharlieJo", "Sanctuary Rocks", "Rock / Metal"],
-      ["DJ RavenHex", "Club Elysium", "Darkwave"],
-      ["DJ Starfall", "Neon District", "EDM"],
-      ["DJ EchoMoon", "Ocean Breeze", "Beach Mix"],
-      ["DJ NovaVixen", "Moonlit Market", "Pop / Dance"],
-    ];
-
     return (
       <PageShell title="DJ Sets" subtitle="Find live DJs, upcoming sets, club schedules, and music nights across the grid.">
-        <section className="page-card-grid dj-sets-grid">
-          {sets.map(([name, venue, genre]) => (
+        <CardGrid as="section" className="page-card-grid dj-sets-grid">
+          {gridsterDjSets.map(([name, venue, genre]) => (
             <article className="dj-set-card glass-card" key={name}>
               <div className={`dj-avatar thumb-${name.charCodeAt(0) % 6}`}>{name.split(" ").pop().charAt(0)}</div>
               <div className="dj-copy">
@@ -547,7 +539,7 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
               </div>
             </article>
           ))}
-        </section>
+        </CardGrid>
       </PageShell>
     );
   }
@@ -567,7 +559,7 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
 
   if (activePage === "Profile") {
     return (
-      <PageShell title="CharlieJo Profile" subtitle="Blogger, photographer, creator, and nightlife explorer across the grid.">
+      <PageShell title="Profile" subtitle="Blogger, photographer, creator, and nightlife explorer across the grid.">
         <ProfilePageContent />
         <CreatorDashboard />
         <BloggerNetwork />
@@ -582,7 +574,7 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
   if (activePage === "Settings") {
     return (
       <PageShell
-        title="Gridster Settings"
+        title="Settings"
         subtitle="Manage profile, discovery, ratings, privacy, safety, and Bling Bits."
       >
         <SettingsPage />
@@ -594,16 +586,6 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
 }
 
 function SearchResultsPage({ onOpenProfile }) {
-  const filters = ["Residents", "Events", "Stores", "Groups", "Photo Spots", "SLURLs", "General", "Moderate", "Adult"];
-  const results = [
-    ["Sanctuary Rocks", "Venue • Rock / Metal • Live Events", "View"],
-    ["CharlieJo", "Blogger • Photographer • Creator", "View Profile"],
-    ["Moonlit Cathedral", "Photo Spot • Gothic • Moderate", "Save Landmark"],
-    ["Valentina Boutique", "Store • Fashion • New Releases", "Shop"],
-    ["Neon Nights Party", "Event • Tonight • 9 PM SLT", "Teleport"],
-    ["Moonlit Hollow", "Community Hub • Gothic RP", "Join"],
-  ];
-
   return (
     <section className="search-results-page">
       <div className="search-preview-card glass-card">
@@ -613,14 +595,14 @@ function SearchResultsPage({ onOpenProfile }) {
         </label>
 
         <div className="search-filter-pills">
-          {filters.map((filter) => (
+          {gridsterSearchFilters.map((filter) => (
             <button key={filter}>{filter}</button>
           ))}
         </div>
       </div>
 
-      <div className="search-results-grid">
-        {results.map(([title, meta, action], index) => (
+      <CardGrid className="search-results-grid">
+        {gridsterSearchResults.map(([title, meta, action], index) => (
           <article className="search-result-card glass-card" key={title}>
             <div className={`search-result-icon result-${index}`}>{title.charAt(0)}</div>
             <div className="search-result-copy">
@@ -630,7 +612,7 @@ function SearchResultsPage({ onOpenProfile }) {
             <ResultActionButton action={action} title={title} onOpenProfile={onOpenProfile} />
           </article>
         ))}
-      </div>
+      </CardGrid>
     </section>
   );
 }
@@ -656,26 +638,10 @@ function ResultActionButton({ action, title, onOpenProfile }) {
 }
 
 function ExplorePageContent({ galleryItems }) {
-  const categories = [
-    ["C", "Clubs", "Live DJs, parties, hosts, and nightlife."],
-    ["S", "Stores", "New releases, sales, and creator drops."],
-    ["P", "Photo Spots", "Beautiful sims, sets, and scenic backdrops."],
-    ["R", "Rentals", "Homes, skyboxes, beaches, and private spaces."],
-    ["H", "Communities", "RP hubs, groups, families, and fandoms."],
-    ["E", "Events", "Live shows, markets, parties, and gatherings."],
-  ];
-  const destinations = [
-    ["Sanctuary Rocks", "Moderate • Rock / Metal • Live venue", "Teleport"],
-    ["Neon District", "Adult • Cyber nightlife • Trending", "Teleport"],
-    ["Moonlit Cathedral", "Moderate • Gothic photo spot • Popular", "Browse"],
-    ["Ocean Breeze", "General • Beach hangout • Active", "Teleport"],
-    ["Valentina Boutique", "General • Fashion store • New releases", "Browse"],
-  ];
-
   return (
     <>
       <section className="nav-card-grid explore-category-grid">
-        {categories.map(([icon, title, desc]) => (
+        {gridsterExploreCategories.map(([icon, title, desc]) => (
           <article className="nav-feature-card glass-card" key={title}>
             <span className="nav-card-icon">{icon}</span>
             <h3>{title}</h3>
@@ -694,7 +660,7 @@ function ExplorePageContent({ galleryItems }) {
         </div>
 
         <div className="nav-destination-list">
-          {destinations.map(([title, rating, action]) => (
+          {gridsterExploreDestinations.map(([title, rating, action]) => (
             <article className="nav-destination-row" key={title}>
               <div className="nav-row-orb">{title.charAt(0)}</div>
               <div>
@@ -713,17 +679,9 @@ function ExplorePageContent({ galleryItems }) {
 }
 
 function EventsPageContent() {
-  const events = [
-    ["Sanctuary Rocks — Metal Night", "Tonight • 8 PM SLT", "Moderate", "Sanctuary Rocks"],
-    ["Neon District — Cyber Rave", "Tonight • 10 PM SLT", "Adult", "Neon District"],
-    ["Ocean Breeze — Beach Party", "Tomorrow • 2 PM SLT", "General", "Ocean Breeze"],
-    ["Midnight Metal Mayhem", "Friday • 11 PM SLT", "Moderate", "Sanctuary Rocks"],
-    ["Moonlit Market — Shopping Event", "Saturday • 12 PM SLT", "General", "Moonlit Market"],
-  ];
-
   return (
     <section className="nav-event-grid">
-      {events.map(([title, time, rating, venue], index) => (
+      {gridsterEventsPageEvents.map(([title, time, rating, venue], index) => (
         <article className="nav-event-card glass-card" key={title}>
           <div className={`nav-event-thumb thumb-${index % 4}`}></div>
           <div className="nav-event-copy">
@@ -740,17 +698,9 @@ function EventsPageContent() {
 }
 
 function GroupsPageContent({ onOpenProfile }) {
-  const groups = [
-    ["Club Elysium", "Nightlife, DJs, event regulars, and neon dance-floor people.", "4.2K members"],
-    ["The Creators Collective", "Builders, photographers, bloggers, decorators, and makers.", "3.8K members"],
-    ["Pixel Fashion Society", "Fashion finds, blogger calls, editorials, and creator drops.", "2.9K members"],
-    ["Sanctuary Rocks Crew", "Rock fans, metal nights, venue staff, DJs, and regulars.", "2.4K members"],
-    ["Moonlit Hollow RP", "Gothic roleplay, lore, events, applications, and dark fantasy.", "1.7K members"],
-  ];
-
   return (
     <section className="nav-card-grid groups-page-grid">
-      {groups.map(([title, desc, members], index) => (
+      {gridsterGroupsPageGroups.map(([title, desc, members], index) => (
         <article className="nav-feature-card group-page-card glass-card" key={title}>
           <span className={`nav-card-icon thumb-${index % 4}`}>{title.charAt(0)}</span>
           {hasGridsterProfile(title) ? (
@@ -770,20 +720,6 @@ function GroupsPageContent({ onOpenProfile }) {
 }
 
 function MessagesPageContent({ onOpenProfile, showToast }) {
-  const conversations = [
-    ["R", "RavenHex", "That photo spot is insane.", "2m"],
-    ["S", "Sanctuary Rocks", "You’re invited to Metal Night.", "14m"],
-    ["N", "NovaVixen", "Loved your latest blog post.", "1h"],
-    ["V", "Valentina Boutique", "New blogger pack available.", "3h"],
-    ["D", "DJ Starfall", "Can you share the event SLURL?", "5h"],
-    ["M", "Moonlit Hollow", "Community application update.", "1d"],
-  ];
-  const previewMessages = [
-    ["RavenHex", "That photo spot is insane.", "received"],
-    ["CharlieJo", "Right? The lighting is perfect for gothic shots.", "sent"],
-    ["RavenHex", "Send me the SLURL when you can.", "received"],
-  ];
-
   return (
     <section className="gridster-inbox-page">
       <div className="gridster-inbox-shell glass-card">
@@ -797,7 +733,7 @@ function MessagesPageContent({ onOpenProfile, showToast }) {
           </div>
 
           <div className="inbox-conversation-list">
-            {conversations.map(([initial, name, message, time], index) => (
+            {gridsterMessageConversations.map(([initial, name, message, time], index) => (
               <button className={`inbox-conversation-row ${index === 0 ? "active" : ""}`} key={name}>
                 <span className={`conversation-avatar conversation-${index}`}>{initial}</span>
                 <span className="conversation-copy">
@@ -823,7 +759,7 @@ function MessagesPageContent({ onOpenProfile, showToast }) {
           </div>
 
           <div className="inbox-message-stack">
-            {previewMessages.map(([name, text, direction]) => (
+            {gridsterMessagePreview.map(([name, text, direction]) => (
               <article className={`dm-message ${direction === "sent" ? "sent" : ""}`} key={`${name}-${text}`}>
                 <span>{name}</span>
                 <p>{text}</p>
@@ -849,18 +785,11 @@ function MessagesPageContent({ onOpenProfile, showToast }) {
 }
 
 function ProfilePageContent() {
-  const sections = [
-    ["Recent Posts", "Latest photos, event posts, blog updates, and nightlife moments.", "View Posts"],
-    ["Saved Landmarks", "Favorite clubs, stores, photo spots, venues, and hangouts.", "View Landmarks"],
-    ["Profile Flair", "Blogger, DJ, photographer, and Bling Boosted badges.", "Customize"],
-    ["Creator Dashboard", "Profile views, SLURL clicks, event reach, and Bling Bits earned.", "View Analytics"],
-  ];
-
   return (
     <>
       <ProfileSummary />
       <section className="profile-sections-grid">
-        {sections.map(([title, desc, action], index) => (
+        {gridsterProfileSections.map(([title, desc, action], index) => (
           <article className="profile-section-card glass-card" key={title}>
             <span className={`nav-card-icon thumb-${index % 4}`}>{index + 1}</span>
             <h3>{title}</h3>
@@ -948,20 +877,12 @@ function ProfilePreviewSection({ title, items }) {
 }
 
 function AddSLURLPage() {
-  const fields = [
-    ["Destination Name", "Moonlit Cathedral"],
-    ["SLURL", "secondlife://Moonlit Cathedral/88/120/32"],
-    ["Category", "Photo Spot / Event / Store / Venue / Community"],
-    ["Rating", "General / Moderate / Adult"],
-    ["Tags", "Gothic, Photos, Landmark, Moderate"],
-  ];
-
   return (
     <section className="add-slurl-page">
       <div className="slurl-form-card glass-card">
         <div className="slurl-form-grid">
           <div className="slurl-fields">
-            {fields.map(([label, value]) => (
+            {gridsterAddSlurlFields.map(([label, value]) => (
               <label className="slurl-field" key={label}>
                 <span>{label}</span>
                 <input value={value} readOnly />
@@ -994,18 +915,10 @@ function AddSLURLPage() {
 }
 
 function FeedPreferencesPage() {
-  const preferenceCards = [
-    ["Show Me More", ["Events", "Photo Spots", "Blogger Posts", "Store Releases", "Live DJs"]],
-    ["Show Me Less", ["Repeated ads", "Overposted events", "Unrated adult content", "Empty SLURLs", "Low-credit posts"]],
-    ["Ratings I Want To See", ["General", "Moderate", "Adult"]],
-    ["Discovery Focus", ["Friends", "Local trends", "Popular across the grid", "New creators", "Nearby events"]],
-    ["Hidden & Muted", ["Hidden posts", "Muted creators", "Blocked residents", "Reported content"]],
-  ];
-
   return (
     <section className="feed-preferences-page">
       <div className="feed-preferences-grid">
-        {preferenceCards.map(([title, options]) => (
+        {gridsterFeedPreferenceCards.map(([title, options]) => (
           <article className="feed-preference-card glass-card" key={title}>
             <div className="feed-preference-heading">
               <span>Feed Tuning</span>
@@ -1032,28 +945,18 @@ function FeedPreferencesPage() {
 }
 
 function SavedItemsPage() {
-  const filters = ["All", "SLURLs", "Events", "Stores", "Photo Spots", "Posts"];
-  const savedItems = [
-    ["Sanctuary Rocks", "Venue • Rock / Metal • Saved SLURL", "Saved SLURL", "Teleport"],
-    ["Moonlit Cathedral", "Photo Spot • Gothic • Moderate", "Photo Spot", "Teleport"],
-    ["Valentina Boutique", "Store • Fashion • New Releases", "Store Find", "Shop"],
-    ["Neon Nights Party", "Event • Tonight • 9 PM SLT", "Event", "View Event"],
-    ["Metal Night Stage", "Post • Saved from CharlieJo", "Saved Post", "View Post"],
-    ["Crystal Lagoon", "Beach Photo Spot • Moderate", "Photo Spot", "Teleport"],
-  ];
-
   return (
     <section className="saved-items-page">
       <div className="saved-filter-pills glass-card">
-        {filters.map((filter) => (
+        {gridsterSavedFilters.map((filter) => (
           <button className={filter === "All" ? "active" : ""} key={filter}>
             {filter}
           </button>
         ))}
       </div>
 
-      <div className="saved-items-grid">
-        {savedItems.map(([title, details, label, action], index) => (
+      <CardGrid className="saved-items-grid">
+        {gridsterSavedItems.map(([title, details, label, action], index) => (
           <article className="saved-item-card glass-card" key={title}>
             <div className={`saved-item-thumb thumb-${index % 6}`}>{title.charAt(0)}</div>
             <div className="saved-item-copy">
@@ -1070,32 +973,12 @@ function SavedItemsPage() {
             </div>
           </article>
         ))}
-      </div>
+      </CardGrid>
     </section>
   );
 }
 
 function PhotoChallengePage() {
-  const rules = [
-    "Use your own photo",
-    "Credit stores, poses, and locations when possible",
-    "Mark Adult or Moderate content correctly",
-    "No stolen images or fake creator credits",
-  ];
-  const entries = [
-    ["Rooftop Glow", "CharlieJo", "248"],
-    ["Cyber Alley Kiss", "NovaVixen", "221"],
-    ["Midnight Stage", "DJ Starfall", "187"],
-    ["Electric Rain", "EchoMoon", "199"],
-    ["Neon Wings", "RavenHex", "174"],
-    ["City Pulse", "Pixel Pixie", "162"],
-  ];
-  const leaders = [
-    ["CharlieJo", "248 votes"],
-    ["NovaVixen", "221 votes"],
-    ["EchoMoon", "199 votes"],
-  ];
-
   return (
     <section className="photo-challenge-page">
       <section className="photo-challenge-hero glass-card">
@@ -1133,7 +1016,7 @@ function PhotoChallengePage() {
             <h3>Keep It Fair</h3>
           </div>
           <ul>
-            {rules.map((rule) => (
+            {gridsterPhotoChallengeRules.map((rule) => (
               <li key={rule}>
                 <span></span>
                 {rule}
@@ -1148,7 +1031,7 @@ function PhotoChallengePage() {
             <h3>Leaderboard</h3>
           </div>
           <div className="challenge-leader-list">
-            {leaders.map(([name, votes], index) => (
+            {gridsterPhotoChallengeLeaders.map(([name, votes], index) => (
               <article key={name}>
                 <strong>{index + 1}. {name}</strong>
                 <span>{votes}</span>
@@ -1164,7 +1047,7 @@ function PhotoChallengePage() {
           <h3>Featured Entries</h3>
         </div>
         <div className="featured-entry-grid">
-          {entries.map(([title, creator, likes], index) => (
+          {gridsterPhotoChallengeEntries.map(([title, creator, likes], index) => (
             <article className="featured-entry-card glass-card" key={title}>
               <div className={`entry-image entry-${index}`}></div>
               <div className="entry-card-copy">
@@ -1184,31 +1067,6 @@ function PhotoChallengePage() {
 }
 
 function SpotlightAwardsPage() {
-  const categories = [
-    "Best Blogger",
-    "Best DJ",
-    "Best Venue",
-    "Best Store",
-    "Best Photographer",
-    "Best Photo Spot",
-    "Best Community Hub",
-    "Rising Creator",
-  ];
-  const nominees = [
-    ["CharlieJo", "Blogger", "412 votes"],
-    ["DJ RavenHex", "DJ", "386 votes"],
-    ["Sanctuary Rocks", "Venue", "361 votes"],
-    ["Valentina Boutique", "Store", "334 votes"],
-    ["Moonlit Cathedral", "Photo Spot", "309 votes"],
-    ["Moonlit Hollow", "Community Hub", "288 votes"],
-  ];
-  const rules = [
-    "Nominate real Gridster creators, places, stores, or communities",
-    "No vote spam",
-    "Credit creators honestly",
-    "Respect content ratings and community rules",
-  ];
-
   return (
     <section className="spotlight-awards-page">
       <section className="spotlight-hero-card glass-card">
@@ -1241,7 +1099,7 @@ function SpotlightAwardsPage() {
           <h3>Celebrate Every Corner Of The Grid</h3>
         </div>
         <div className="award-category-grid">
-          {categories.map((category, index) => (
+          {gridsterSpotlightAwardCategories.map((category, index) => (
             <article className="award-category-tile" key={category}>
               <span>{index + 1}</span>
               <strong>{category}</strong>
@@ -1257,7 +1115,7 @@ function SpotlightAwardsPage() {
             <h3>Vote For This Month’s Favorites</h3>
           </div>
           <div className="nominee-grid">
-            {nominees.map(([name, category, votes], index) => (
+            {gridsterSpotlightAwardNominees.map(([name, category, votes], index) => (
               <article className="nominee-card glass-card" key={name}>
                 <div className={`nominee-thumb nominee-${index}`}>{name.charAt(0)}</div>
                 <div className="nominee-copy">
@@ -1277,7 +1135,7 @@ function SpotlightAwardsPage() {
             <h3>Keep Awards Fair</h3>
           </div>
           <ul>
-            {rules.map((rule) => (
+            {gridsterSpotlightAwardRules.map((rule) => (
               <li key={rule}>
                 <span></span>
                 {rule}
@@ -1291,22 +1149,6 @@ function SpotlightAwardsPage() {
 }
 
 function VerificationCenterPage() {
-  const verificationTypes = [
-    ["◆", "Resident", "For established Second Life residents and public personalities."],
-    ["✦", "Blogger / Photographer", "For active bloggers, Flickr creators, editorial photographers, and content creators."],
-    ["♫", "DJ / Host", "For performers, hosts, event staff, and live entertainment profiles."],
-    ["◇", "Store Owner", "For designers, creators, marketplace sellers, and in-world brands."],
-    ["⌖", "Venue / Sim Owner", "For clubs, event spaces, rentals, destinations, and public sims."],
-    ["☽", "Community Hub", "For RP sims, clubs, families, fandoms, groups, and organized communities."],
-  ];
-  const requirements = [
-    "Active Gridster profile",
-    "Clear Second Life identity or brand name",
-    "Valid links such as Flickr, Primfeed, Marketplace, website, or SLURL",
-    "No impersonation or misleading branding",
-    "Respect ratings, creator credits, and community rules",
-  ];
-
   return (
     <section className="verification-center-page">
       <section className="verification-hero-card glass-card">
@@ -1335,7 +1177,7 @@ function VerificationCenterPage() {
         </div>
 
         <div className="verification-type-grid">
-          {verificationTypes.map(([icon, title, desc]) => (
+          {gridsterVerificationTypes.map(([icon, title, desc]) => (
             <article className="verification-type-card glass-card" key={title}>
               <span className="verification-type-icon">{icon}</span>
               <h3>{title}</h3>
@@ -1352,7 +1194,7 @@ function VerificationCenterPage() {
             <h3>Before You Apply</h3>
           </div>
           <ul>
-            {requirements.map((item) => (
+            {gridsterVerificationRequirements.map((item) => (
               <li key={item}>
                 <span></span>
                 {item}
@@ -1387,27 +1229,12 @@ function VerificationCenterPage() {
 }
 
 function BlingBoostPage() {
-  const fields = [
-    ["Boost Type", "Post / Event / Store / Profile / Community Hub"],
-    ["Select Content", "Metal Night Stage photo post"],
-    ["Target Audience", "Residents / Bloggers / DJs / Shoppers / Communities / Everyone"],
-    ["Rating Visibility", "General / Moderate / Adult"],
-    ["Boost Duration", "24 Hours / 3 Days / 7 Days"],
-    ["Bling Bits Budget", "250 - 1,200 Bling Bits"],
-  ];
-  const packages = [
-    ["✦", "Spark Boost", "24 hours", "250 Bling Bits"],
-    ["◆", "Glow Boost", "3 days", "600 Bling Bits"],
-    ["◇", "Spotlight Boost", "7 days", "1,200 Bling Bits"],
-    ["◈", "Event Rush", "Best for live events", "500 Bling Bits"],
-  ];
-
   return (
     <section className="bling-boost-page">
       <div className="bling-boost-card glass-card">
         <div className="bling-boost-form-grid">
           <div className="bling-boost-fields">
-            {fields.map(([label, value]) => (
+            {gridsterBlingBoostFields.map(([label, value]) => (
               <label className="bling-boost-field" key={label}>
                 <span>{label}</span>
                 <input value={value} readOnly />
@@ -1429,7 +1256,7 @@ function BlingBoostPage() {
             <h3>Choose Your Boost</h3>
           </div>
           <div className="boost-package-grid">
-            {packages.map(([icon, name, duration, cost]) => (
+            {gridsterBlingBoostPackages.map(([icon, name, duration, cost]) => (
               <article className="boost-package-tile" key={name}>
                 <div className="boost-package-icon">{icon}</div>
                 <h4>{name}</h4>
@@ -1456,24 +1283,12 @@ function BlingBoostPage() {
 }
 
 function CreateCommunityHubPage() {
-  const fields = [
-    ["Community Name", "Moonlit Hollow"],
-    ["Community Type", "RP Sim / Club / Family / Fandom / Venue Crew / Social Group"],
-    ["Rating", "General / Moderate / Adult"],
-    ["Description", "Gothic roleplay, events, stories, and dark fantasy gatherings."],
-    ["Rules Link", "moonlithollow.grid/rules"],
-    ["Main SLURL", "secondlife://Moonlit Hollow/128/92/27"],
-    ["Application Link", "moonlithollow.grid/apply"],
-    ["Tags", "Gothic, RP, Events, Community"],
-  ];
-  const hubSections = ["Announcements", "Events", "Member Spotlights", "Applications"];
-
   return (
     <section className="create-community-page">
       <div className="community-hub-form-card glass-card">
         <div className="community-hub-form-grid">
           <div className="community-hub-fields">
-            {fields.map(([label, value]) => (
+            {gridsterCreateCommunityHubFields.map(([label, value]) => (
               <label className="community-hub-field" key={label}>
                 <span>{label}</span>
                 <input value={value} readOnly />
@@ -1495,7 +1310,7 @@ function CreateCommunityHubPage() {
             <h3>Hub Sections</h3>
           </div>
           <div className="hub-section-list">
-            {hubSections.map((section) => (
+            {gridsterCreateCommunityHubSections.map((section) => (
               <article className="hub-section-row" key={section}>
                 <span>{section}</span>
                 <button>Add Section</button>
@@ -1519,26 +1334,12 @@ function CreateCommunityHubPage() {
 }
 
 function CreateBloggerPostPage() {
-  const fields = [
-    ["Post Title", "Neon Noir: Midnight Luxe"],
-    ["Style Category", "Fashion / Beauty / Tattoos / Decor / Nightlife / Beach / Gothic / Alternative"],
-    ["Featured Brands", "Valentina Boutique, NovaVixen, Pixel Ink"],
-    ["Outfit Credits", "Dress, boots, jewelry, mesh body appliers"],
-    ["Pose Credits", "Moon Pose Studio • Editorial Set 04"],
-    ["Location / Sim", "Moonlit Cathedral"],
-    ["SLURL", "secondlife://Moonlit Cathedral/88/120/32"],
-    ["Blog Link", "charliejo.grid/blog/neon-noir"],
-    ["Flickr Link", "flickr.com/photos/charliejo/neon-noir"],
-    ["Tags", "Fashion, Gothic, Nightlife, Tattoos"],
-  ];
-  const creditRows = ["Body / Skin / Shape", "Outfit / Accessories", "Hair / Makeup / Tattoos", "Pose / Location"];
-
   return (
     <section className="create-blogger-page">
       <div className="blogger-form-card glass-card">
         <div className="blogger-form-grid">
           <div className="blogger-fields">
-            {fields.map(([label, value]) => (
+            {gridsterCreateBloggerPostFields.map(([label, value]) => (
               <label className="blogger-field" key={label}>
                 <span>{label}</span>
                 <input value={value} readOnly />
@@ -1560,7 +1361,7 @@ function CreateBloggerPostPage() {
             <h3>Credit Builder</h3>
           </div>
           <div className="credit-row-list">
-            {creditRows.map((row) => (
+            {gridsterBloggerCreditRows.map((row) => (
               <article className="credit-row" key={row}>
                 <span>{row}</span>
                 <button>Add Credit</button>
@@ -1584,23 +1385,12 @@ function CreateBloggerPostPage() {
 }
 
 function CreateStorePostPage() {
-  const fields = [
-    ["Post Type", "New Release / Blogger Call / Sale / Marketplace Find / Event Booth"],
-    ["Store Name", "Valentina Boutique"],
-    ["Product / Collection Name", "Midnight Luxe Collection"],
-    ["Price or Promo", "L$299 • Weekend promo"],
-    ["Rating", "General / Moderate / Adult"],
-    ["Marketplace Link", "marketplace.secondlife.com/stores/valentina"],
-    ["In-World SLURL", "secondlife://Moonlit Market/142/88/24"],
-    ["Tags", "Fashion, Event Look, Luxury, Blogger Pack"],
-  ];
-
   return (
     <section className="create-store-page">
       <div className="store-form-card glass-card">
         <div className="store-form-grid">
           <div className="store-fields">
-            {fields.map(([label, value]) => (
+            {gridsterCreateStorePostFields.map(([label, value]) => (
               <label className="store-field" key={label}>
                 <span>{label}</span>
                 <input value={value} readOnly />
@@ -1631,23 +1421,12 @@ function CreateStorePostPage() {
 }
 
 function CreateEventPage() {
-  const fields = [
-    ["Event Title", "Lunar Eclipse Live DJ Set"],
-    ["Venue / Sim Name", "Club Elysium"],
-    ["Date", "May 24, 2025"],
-    ["Time in SLT", "9:00 PM SLT"],
-    ["Event Rating", "General / Moderate / Adult"],
-    ["DJ / Host", "DJ Starfall • Host RavenHex"],
-    ["SLURL", "secondlife://Elysium Isle/128/128/24"],
-    ["Event Tags", "Nightlife, DJ, Dance, Neon"],
-  ];
-
   return (
     <section className="create-event-page">
       <div className="event-form-card glass-card">
         <div className="event-form-grid">
           <div className="event-fields">
-            {fields.map(([label, value]) => (
+            {gridsterCreateEventFields.map(([label, value]) => (
               <label className="event-field" key={label}>
                 <span>{label}</span>
                 <input value={value} readOnly />
@@ -1678,48 +1457,9 @@ function CreateEventPage() {
 }
 
 function SettingsPage() {
-  const settingsCards = [
-    {
-      icon: "✦",
-      title: "Profile Settings",
-      desc: "Shape how residents see your Gridster identity.",
-      options: ["Display name", "Bio", "Profile flair", "Avatar/banner"],
-    },
-    {
-      icon: "⌕",
-      title: "Discovery Preferences",
-      desc: "Tune the places, posts, and grid activity you want to see first.",
-      options: ["Events", "Stores", "Photo spots", "Communities"],
-    },
-    {
-      icon: "◇",
-      title: "Content Ratings",
-      desc: "Keep discovery clear across General, Moderate, and Adult spaces.",
-      options: ["General", "Moderate", "Adult", "Mature filters"],
-    },
-    {
-      icon: "◌",
-      title: "Privacy & Safety",
-      desc: "Manage visibility, safety history, and who can reach you.",
-      options: ["Blocked residents", "Hidden posts", "Report history", "Message permissions"],
-    },
-    {
-      icon: "💎",
-      title: "Bling Bits",
-      desc: "Review rewards, boosts, goals, and flair purchases.",
-      options: ["Weekly goal", "Boost history", "Rewards", "Profile flair purchases"],
-    },
-    {
-      icon: "!",
-      title: "Notifications",
-      desc: "Choose which comments, follows, invites, and creator updates reach you.",
-      options: ["Comments", "Follows", "Event invites", "Creator updates"],
-    },
-  ];
-
   return (
     <div className="settings-grid">
-      {settingsCards.map(({ icon, title, desc, options }) => (
+      {gridsterSettingsCards.map(({ icon, title, desc, options }) => (
         <article className="settings-card glass-card" key={title}>
           <div className="settings-card-top">
             <span className="settings-icon">{icon}</span>
@@ -1845,13 +1585,6 @@ function ExplorePreview() {
 }
 
 function TeleportCenter() {
-  const destinations = [
-    ["⌁", "icon-live", "Sanctuary Rocks", "Live music venue • Rock / Metal", "Live Now", "status-live"],
-    ["◆", "icon-trending", "Neon District", "Cyber club • Nightlife", "Trending", "status-trending"],
-    ["✦", "icon-popular", "Moonlit Cathedral", "Gothic photo spot", "Popular", "status-popular"],
-    ["◇", "icon-active", "Ocean Breeze", "Beach hangout • Social", "Active", "status-active"],
-  ];
-
   return (
     <section className="teleport-center-card glass-card">
       <div className="teleport-center-header">
@@ -1866,7 +1599,7 @@ function TeleportCenter() {
       </div>
 
       <div className="teleport-list">
-        {destinations.map(([icon, iconClass, title, desc, status, statusClass]) => (
+        {gridsterTeleportCenterDestinations.map(([icon, iconClass, title, desc, status, statusClass]) => (
           <article className="teleport-row" key={title}>
             <div className={`teleport-icon ${iconClass}`}>{icon}</div>
             <div className="teleport-copy">
@@ -2091,13 +1824,6 @@ function BlingBits() {
 }
 
 function BlingBitsShop() {
-  const items = [
-    ["✦", "Bling Boost", "Boost one post for 24 hours", "Cost: 250 Bits"],
-    ["◇", "Featured Event", "Place your event in discovery", "Cost: 500 Bits"],
-    ["◆", "Profile Flair", "Add sparkle badges to your profile", "Cost: 150 Bits"],
-    ["◇", "Creator Spotlight", "Get featured in creator discovery", "Cost: 750 Bits"],
-  ];
-
   return (
     <section className="bling-shop-card glass-card">
       <div className="bling-shop-header">
@@ -2109,7 +1835,7 @@ function BlingBitsShop() {
       </div>
 
       <div className="shop-item-grid">
-        {items.map(([icon, title, desc, cost]) => (
+        {gridsterBlingShopItems.map(([icon, title, desc, cost]) => (
           <article className="shop-item-tile" key={title}>
             <span className="shop-item-icon">{icon}</span>
             <h3>{title}</h3>
@@ -2126,13 +1852,6 @@ function BlingBitsShop() {
 }
 
 function CreatorDashboard() {
-  const stats = [
-    ["Profile Views", "4.8K", "+12% this week"],
-    ["Event Clicks", "892", "+34% this week"],
-    ["SLURL Teleports", "316", "+18% this week"],
-    ["Bling Bits Earned", "620", "+90 today"],
-  ];
-
   return (
     <section className="creator-dashboard-card glass-card">
       <div className="creator-dashboard-header">
@@ -2145,7 +1864,7 @@ function CreatorDashboard() {
       </div>
 
       <div className="creator-stat-grid">
-        {stats.map(([label, value, trend]) => (
+        {gridsterCreatorDashboardStats.map(([label, value, trend]) => (
           <article className="creator-stat-tile" key={label}>
             <span>{label}</span>
             <strong>{value}</strong>
@@ -2171,13 +1890,6 @@ function CreatorDashboard() {
 }
 
 function VenueTools() {
-  const tools = [
-    ["✦", "Event Builder", "Create event cards with posters, times, hosts, and SLURLs."],
-    ["♫", "DJ Lineup", "Show who is playing tonight and when."],
-    ["★", "Host Shoutout", "Spotlight hosts, greeters, and staff."],
-    ["◆", "Traffic Boost", "Use Bling Bits to feature your venue in discovery."],
-  ];
-
   return (
     <section className="venue-tools-card glass-card">
       <div className="venue-tools-header">
@@ -2190,7 +1902,7 @@ function VenueTools() {
       </div>
 
       <div className="venue-tool-grid">
-        {tools.map(([icon, title, desc]) => (
+        {gridsterVenueTools.map(([icon, title, desc]) => (
           <article className="venue-tool-tile" key={title}>
             <span className="venue-tool-icon">{icon}</span>
             <h3>{title}</h3>
@@ -2209,13 +1921,6 @@ function VenueTools() {
 }
 
 function StoreTools() {
-  const features = [
-    ["◆", "New Release Drop", "Announce products with photos, credits, and SLURLs."],
-    ["✦", "Blogger Call", "Find bloggers and photographers for your brand."],
-    ["◇", "Weekend Sale", "Promote discounted items and limited-time deals."],
-    ["⌁", "Marketplace Find", "Share product links, outfits, décor, and creator favorites."],
-  ];
-
   return (
     <section className="store-tools-card glass-card">
       <div className="store-tools-header">
@@ -2228,7 +1933,7 @@ function StoreTools() {
       </div>
 
       <div className="store-feature-grid">
-        {features.map(([icon, title, desc]) => (
+        {gridsterStoreToolFeatures.map(([icon, title, desc]) => (
           <article className="store-feature-tile" key={title}>
             <span className="store-feature-icon">{icon}</span>
             <h3>{title}</h3>
@@ -2247,13 +1952,6 @@ function StoreTools() {
 }
 
 function BloggerNetwork() {
-  const features = [
-    ["✦", "Blogger Calls", "Find stores looking for bloggers, photographers, and content creators."],
-    ["◇", "Credit Builder", "Add outfit credits, store names, poses, locations, and SLURLs."],
-    ["◆", "Lookbook Posts", "Share fashion, beauty, tattoos, décor, and event styling."],
-    ["⌁", "Brand Matches", "Discover creators and stores that fit your personal style."],
-  ];
-
   return (
     <section className="blogger-network-card glass-card">
       <div className="blogger-network-header">
@@ -2266,7 +1964,7 @@ function BloggerNetwork() {
       </div>
 
       <div className="blogger-feature-grid">
-        {features.map(([icon, title, desc]) => (
+        {gridsterBloggerNetworkFeatures.map(([icon, title, desc]) => (
           <article className="blogger-feature-tile" key={title}>
             <span className="blogger-feature-icon">{icon}</span>
             <h3>{title}</h3>
@@ -2285,13 +1983,6 @@ function BloggerNetwork() {
 }
 
 function CommunityHubs() {
-  const features = [
-    ["☽", "RP Sim Pages", "Share lore, rules, characters, openings, and SLURLs."],
-    ["✦", "Group Boards", "Post updates, announcements, photos, and event notices."],
-    ["◆", "Member Spotlights", "Feature residents, staff, hosts, DJs, bloggers, and creators."],
-    ["◇", "Application Posts", "Recruit staff, performers, tenants, models, bloggers, and roleplayers."],
-  ];
-
   return (
     <section className="community-hub-card glass-card">
       <div className="community-hub-header">
@@ -2304,7 +1995,7 @@ function CommunityHubs() {
       </div>
 
       <div className="community-hub-grid">
-        {features.map(([icon, title, desc]) => (
+        {gridsterCommunityHubFeatures.map(([icon, title, desc]) => (
           <article className="community-hub-tile" key={title}>
             <span className="community-hub-icon">{icon}</span>
             <h3>{title}</h3>
@@ -2323,11 +2014,7 @@ function CommunityHubs() {
 }
 
 function UpcomingGridNights() {
-  const events = [
-    ["Sanctuary Rocks", "Metal Night • 8:00 PM SLT", "thumb-0"],
-    ["Neon District", "Cyber Rave • 10:00 PM SLT", "thumb-1"],
-    ["Ocean Breeze", "Beach Party • 2:00 PM SLT", "thumb-2"],
-  ];
+
 
   return (
     <article className="post-card glass-card feed-card">
@@ -2340,7 +2027,7 @@ function UpcomingGridNights() {
       </div>
 
       <div className="event-list">
-        {events.map(([title, time, thumb]) => (
+        {gridsterUpcomingGridNights.map(([title, time, thumb]) => (
           <div className="grid-event-row" key={title}>
             <div className={`grid-event-thumb ${thumb}`}></div>
             <div className="grid-event-copy">
@@ -2356,12 +2043,6 @@ function UpcomingGridNights() {
 }
 
 function FeaturedPhotoSpots() {
-  const spots = [
-    ["Moonlit Cathedral", "spot-1"],
-    ["Crystal Lagoon", "spot-2"],
-    ["Neon Alley", "spot-3"],
-  ];
-
   return (
     <article className="post-card glass-card feed-card">
       <div className="feed-card-header">
@@ -2373,7 +2054,7 @@ function FeaturedPhotoSpots() {
       </div>
 
       <div className="photo-spot-grid">
-        {spots.map(([title, thumb]) => (
+        {gridsterFeaturedPhotoSpots.map(([title, thumb]) => (
           <div className="photo-spot-card" key={title}>
             <div className={`photo-spot-thumb ${thumb}`}></div>
             <div className="photo-spot-info">
@@ -2388,12 +2069,6 @@ function FeaturedPhotoSpots() {
 }
 
 function LiveNowEvents() {
-  const liveRows = [
-    ["Sanctuary Rocks", "DJ RavenHex • Metal room is live", "Join"],
-    ["Neon District", "Cyber Rave • 184 residents nearby", "Teleport"],
-    ["Ocean Breeze", "Beach set • Sunset social", "Join"],
-  ];
-
   return (
     <section className="post-card glass-card feed-card page-live-card">
       <div className="feed-card-header">
@@ -2405,7 +2080,7 @@ function LiveNowEvents() {
       </div>
 
       <div className="page-live-list">
-        {liveRows.map(([name, label, action]) => (
+        {gridsterLiveNowEvents.map(([name, label, action]) => (
           <div className="live-now-row" key={name}>
             <div className="live-indicator" />
             <div>
@@ -2421,16 +2096,9 @@ function LiveNowEvents() {
 }
 
 function PopularGroupsCards() {
-  const gridGroups = [
-    ["Club Elysium", "Nightlife, DJ sets, and featured party notices."],
-    ["The Creators Collective", "Builders, bloggers, photographers, and event makers."],
-    ["Pixel Fashion Society", "Style finds, creator drops, and editorial looks."],
-    ["Sanctuary Rocks Crew", "Rock fans, live events, and metal night regulars."],
-  ];
-
   return (
     <div className="page-card-grid">
-      {gridGroups.map(([title, desc], index) => (
+      {gridsterPopularGroups.map(([title, desc], index) => (
         <article className="group-summary-card glass-card" key={title}>
           <div className={`group-badge thumb-${index}`}>{title.charAt(0)}</div>
           <div>
@@ -2561,11 +2229,7 @@ function GalleryStrip({ galleryItems }) {
 function PageShell({ title, subtitle, children }) {
   return (
     <section className="center-page">
-      <header className="page-heading glass-card">
-        <span>Gridster</span>
-        <h2>{title}</h2>
-        <p>{subtitle}</p>
-      </header>
+      <PageHeader title={title} subtitle={subtitle} />
       {children}
     </section>
   );
@@ -2575,14 +2239,6 @@ function PostHeader({ name, label, showToast, onHide }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("Spam");
-  const reportOptions = [
-    "Harassment",
-    "Spam",
-    "Misleading SLURL",
-    "Unrated mature content",
-    "Stolen content / missing credit",
-    "Other",
-  ];
 
   const closeMenu = () => {
     setMenuOpen(false);
@@ -2646,7 +2302,7 @@ function PostHeader({ name, label, showToast, onHide }) {
           </div>
 
           <div className="report-option-list">
-            {reportOptions.map((option) => (
+            {gridsterPostReportOptions.map((option) => (
               <button
                 key={option}
                 className={reportReason === option ? "active" : ""}
@@ -2679,13 +2335,13 @@ function FollowButton({ storageKey = "creator" }) {
   const [following, setFollowing] = usePersistedGridsterFlag("followedCreators", storageKey);
 
   return (
-    <button
+    <ActionButton
       className={following ? "follow-toggle is-following" : "follow-toggle"}
       aria-pressed={following}
       onClick={() => setFollowing((current) => !current)}
     >
       {following ? "Following" : "Follow"}
-    </button>
+    </ActionButton>
   );
 }
 
@@ -2697,10 +2353,6 @@ function PostActions({ likes, comments, postId = "gridster-post", showToast }) {
   const [shareOpen, setShareOpen] = useState(false);
   const [reposted, setReposted] = useState(false);
   const likeCount = Number.isNaN(initialLikes) ? likes : initialLikes + (liked ? 1 : 0);
-  const sampleComments = [
-    ["R", "RavenHex", "This venue looks amazing. Saving this SLURL.", "8m"],
-    ["N", "NovaVixen", "The neon lighting is everything.", "3m"],
-  ];
 
   return (
     <div className="post-actions">
@@ -2784,7 +2436,7 @@ function PostActions({ likes, comments, postId = "gridster-post", showToast }) {
       {commentsOpen ? (
         <div className="comment-preview-panel">
           <div className="comment-preview-list">
-            {sampleComments.map(([initial, name, text, time]) => (
+            {gridsterPostSampleComments.map(([initial, name, text, time]) => (
               <article className="comment-preview-row" key={`${name}-${time}`}>
                 <div className="comment-avatar">{initial}</div>
                 <div className="comment-bubble">
@@ -2813,13 +2465,13 @@ function SaveButton({ label = "Save", savedLabel = "Saved", storageKey }) {
   const [saved, setSaved] = usePersistedGridsterFlag("savedPosts", storageKey ?? `save:${label}`);
 
   return (
-    <button
+    <ActionButton
       className={saved ? "interactive-save-button is-saved" : "interactive-save-button"}
       aria-pressed={saved}
       onClick={() => setSaved((current) => !current)}
     >
       {saved ? savedLabel : label}
-    </button>
+    </ActionButton>
   );
 }
 
@@ -2827,13 +2479,13 @@ function JoinButton({ storageKey = "group" }) {
   const [joined, setJoined] = usePersistedGridsterFlag("joinedGroups", storageKey);
 
   return (
-    <button
+    <ActionButton
       className={joined ? "join-toggle is-joined" : "join-toggle"}
       aria-pressed={joined}
       onClick={() => setJoined((current) => !current)}
     >
       {joined ? "Joined" : "Join"}
-    </button>
+    </ActionButton>
   );
 }
 

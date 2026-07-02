@@ -55,13 +55,13 @@ function LeftSidebar({
 
       <section className="sidebar-menu glass-card">
         {[
-          ["✦", "My Grid", "Home"],
+          ["✦", "Home", "Home"],
           ["✧", "Groups", "Groups"],
           ["◇", "Grid Nights", "GridNights"],
-          ["⌖", "Saved Landmarks", "SavedItems"],
-          ["▣", "Photo Spots", "PhotoChallenge"],
+          ["⌖", "Saved Landmarks & Posts", "SavedItems"],
+          ["▣", "Photo Challenge", "PhotoChallenge"],
           ["♢", "Marketplace Finds", "Marketplace"],
-          ["✎", "Blogger Posts", "SpotlightAwards"],
+          ["✎", "Spotlight Awards", "SpotlightAwards"],
           ["♫", "DJ Sets", "DJSets"],
         ].map(([icon, label, page]) => (
           <button

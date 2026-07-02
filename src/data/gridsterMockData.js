@@ -237,6 +237,7 @@ export const gridsterLeftSidebarNavItems = [
   ["♢", "Marketplace Finds", "Marketplace"],
   ["✎", "Spotlight Awards", "SpotlightAwards"],
   ["♫", "DJ Sets", "DJSets"],
+  ["!", "Auth", "Auth"],
 ];
 
 export const gridsterLeftSidebarActionItems = [

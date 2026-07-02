@@ -76,6 +76,7 @@ import DashboardLayout from "./gridster/DashboardLayout";
 import FeedPost from "./gridster/FeedPost";
 import PageHeader from "./gridster/PageHeader";
 import SectionHeader from "./gridster/SectionHeader";
+import AuthPage from "./gridster/AuthPage";
 import "./GridsterHome.css";
 
 const GRIDSTER_STORAGE_KEY = "gridster-preferences-v1";
@@ -581,6 +582,10 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
         <ProfileFlairCard variant="wide" />
       </PageShell>
     );
+  }
+
+  if (activePage === "Auth") {
+    return <AuthPage />;
   }
 
   if (activePage === "Settings") {

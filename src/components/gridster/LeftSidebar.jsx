@@ -56,7 +56,6 @@ function LeftSidebar({
       <section className="sidebar-menu glass-card">
         {[
           ["✦", "My Grid", "Home"],
-          ["☽", "Friends", "Friends"],
           ["✧", "Groups", "Groups"],
           ["◇", "Grid Nights", "GridNights"],
           ["⌖", "Saved Landmarks", "SavedItems"],

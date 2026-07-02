@@ -1,4 +1,4 @@
-import { getGridsterProfile as hasGridsterProfile } from "../../data/gridsterMockData";
+import { hasGridsterProfile } from "../../data/gridsterMockData";
 
 function RightSidebar({
   creators,
@@ -7,7 +7,41 @@ function RightSidebar({
   liveNow,
   onOpenProfile,
   places,
+  showToast,
 }) {
+  const friends = [
+    { name: "RavenHex", status: "Online" },
+    { name: "NovaVixen", status: "Online" },
+    { name: "DJ Starfall", status: "Busy" },
+    { name: "EchoMoon", status: "Away" },
+    { name: "Pixel Pixie", status: "Offline" },
+    { name: "LunaVale", status: "Online" },
+  ];
+
+  const friendInitials = (name) =>
+    name
+      .split(" ")
+      .map((part) => part.charAt(0))
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+
+  const statusClass = (status) => {
+    if (status === "Online") return "friend-status-online";
+    if (status === "Busy") return "friend-status-busy";
+    if (status === "Away") return "friend-status-away";
+    return "friend-status-offline";
+  };
+
+  const handleViewFriend = (name) => {
+    if (onOpenProfile && hasGridsterProfile(name)) {
+      onOpenProfile(name);
+      return;
+    }
+
+    showToast?.(`Opening ${name} profile.`);
+  };
+
   return (
     <aside className="right-panel">
       <Widget title="Trending Events">
@@ -30,7 +64,7 @@ function RightSidebar({
               <strong>{group}</strong>
               <small>2.4K members</small>
             </div>
-            <JoinButton storageKey={group} />
+            <JoinButton />
           </div>
         ))}
       </Widget>
@@ -49,7 +83,32 @@ function RightSidebar({
                 <small>Blogger • Fashion</small>
               </div>
             </button>
-            <FollowButton storageKey={person} />
+            <FollowButton />
+          </div>
+        ))}
+      </Widget>
+
+      <Widget title="Friends Online">
+        {friends.map(({ name, status }) => (
+          <div className="friend-online-row" key={name}>
+            <div className="friend-online-person">
+              <div className="friend-online-avatar">{friendInitials(name)}</div>
+              <div className="friend-online-copy">
+                <strong>{name}</strong>
+                <small>
+                  <span className={`friend-status-dot ${statusClass(status)}`}></span>
+                  {status}
+                </small>
+              </div>
+            </div>
+            <div className="friend-online-actions">
+              <button type="button" onClick={() => showToast?.(`Message opened with ${name}.`)}>
+                Message
+              </button>
+              <button type="button" onClick={() => handleViewFriend(name)}>
+                View
+              </button>
+            </div>
           </div>
         ))}
       </Widget>
@@ -62,7 +121,7 @@ function RightSidebar({
               <strong>{name}</strong>
               <small>{label}</small>
             </div>
-            <JoinButton storageKey={name} />
+            <JoinButton />
           </div>
         ))}
       </Widget>
@@ -141,7 +200,7 @@ function AlertRow({ initial, name, note, time }) {
   );
 }
 
-function FollowButton({ storageKey = "creator" }) {
+function FollowButton() {
   return (
     <button className="follow-toggle">
       Follow
@@ -149,7 +208,7 @@ function FollowButton({ storageKey = "creator" }) {
   );
 }
 
-function JoinButton({ storageKey = "group" }) {
+function JoinButton() {
   return (
     <button className="join-toggle">
       Join

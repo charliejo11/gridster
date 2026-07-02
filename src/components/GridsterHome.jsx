@@ -255,6 +255,7 @@ function GridsterHome() {
           liveNow={liveNow}
           onOpenProfile={openProfile}
           places={places}
+          showToast={showToast}
         />
       </section>
 
@@ -456,6 +457,97 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
         subtitle="Keep up with comments, event invites, creator updates, store notices, and private messages."
       >
         <MessagesPageContent onOpenProfile={onOpenProfile} showToast={showToast} />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "GridNights") {
+    const events = [
+      ["Sanctuary Rocks — Metal Night", "8:00 PM SLT", "thumb-0"],
+      ["Neon District — Cyber Rave", "10:00 PM SLT", "thumb-1"],
+      ["Ocean Breeze — Beach Party", "2:00 PM SLT", "thumb-2"],
+      ["Midnight Metal Mayhem", "9:00 PM SLT", "thumb-3"],
+      ["Moonlit Market — Shopping Night", "6:00 PM SLT", "thumb-4"],
+    ];
+
+    return (
+      <PageShell title="Grid Nights" subtitle="Live events, DJ sets, club nights, parties, and gatherings happening across Second Life.">
+        <section className="nav-event-grid grid-nights-grid">
+          {events.map(([title, time, thumb]) => (
+            <article className="nav-event-card glass-card" key={title}>
+              <div className={`nav-event-thumb ${thumb}`}></div>
+              <div className="nav-event-copy">
+                <span>Event</span>
+                <h3>{title}</h3>
+                <p>{time}</p>
+              </div>
+              <button onClick={() => showToast?.("Event details coming soon.")}>View Event</button>
+              <button {...getTeleportButtonProps(title.split(" — ")[0])}>Teleport</button>
+            </article>
+          ))}
+        </section>
+      </PageShell>
+    );
+  }
+
+  if (activePage === "Marketplace") {
+    const products = [
+      ["Valentina Luxe Dress", "Fashion"],
+      ["Neon Boots", "Accessories"],
+      ["Gothic Cathedral Backdrop", "Decor"],
+      ["Cyber Glow Nails", "Beauty"],
+      ["Beach Villa Set", "Homes"],
+      ["PlayNaughty Bunny Mask", "Accessories"],
+    ];
+
+    return (
+      <PageShell title="Marketplace Finds" subtitle="Discover products, outfits, décor, accessories, blogger picks, and creator drops.">
+        <section className="page-card-grid marketplace-grid">
+          {products.map(([name, category], index) => (
+            <article className="marketplace-card glass-card" key={name}>
+              <div className={`marketplace-thumb thumb-${index % 6}`}>{name.charAt(0)}</div>
+              <div className="marketplace-copy">
+                <h3>{name}</h3>
+                <p>{category}</p>
+              </div>
+              <div className="marketplace-actions">
+                <button onClick={() => showToast?.("Opening marketplace listing...")}>View</button>
+                <SaveButton label="Save" savedLabel="Saved" storageKey={`marketplace:${name}`} />
+              </div>
+            </article>
+          ))}
+        </section>
+      </PageShell>
+    );
+  }
+
+  if (activePage === "DJSets") {
+    const sets = [
+      ["DJ CharlieJo", "Sanctuary Rocks", "Rock / Metal"],
+      ["DJ RavenHex", "Club Elysium", "Darkwave"],
+      ["DJ Starfall", "Neon District", "EDM"],
+      ["DJ EchoMoon", "Ocean Breeze", "Beach Mix"],
+      ["DJ NovaVixen", "Moonlit Market", "Pop / Dance"],
+    ];
+
+    return (
+      <PageShell title="DJ Sets" subtitle="Find live DJs, upcoming sets, club schedules, and music nights across the grid.">
+        <section className="page-card-grid dj-sets-grid">
+          {sets.map(([name, venue, genre]) => (
+            <article className="dj-set-card glass-card" key={name}>
+              <div className={`dj-avatar thumb-${name.charCodeAt(0) % 6}`}>{name.split(" ").pop().charAt(0)}</div>
+              <div className="dj-copy">
+                <h3>{name}</h3>
+                <p>{venue} • {genre}</p>
+              </div>
+              <div className="dj-actions">
+                <FollowButton storageKey={name} />
+                <button onClick={() => showToast?.("DJ set page coming soon.")}>View Set</button>
+                <button {...getTeleportButtonProps(venue)}>Teleport</button>
+              </div>
+            </article>
+          ))}
+        </section>
       </PageShell>
     );
   }

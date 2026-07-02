@@ -1,0 +1,193 @@
+function Header({
+  activePage,
+  setActivePage,
+  setShowLanding,
+  theme,
+  setTheme,
+  showToast,
+  showNotifications,
+  setShowNotifications,
+  showThemeMenu,
+  setShowThemeMenu,
+  themeOptions,
+  activeThemeLabel,
+  notifications,
+}) {
+  const handleNavClick = (event, item) => {
+    event.preventDefault();
+    setActivePage(item);
+    setShowNotifications(false);
+    setShowThemeMenu(false);
+  };
+
+  const handleThemeToggle = () => {
+    setShowThemeMenu((isOpen) => !isOpen);
+    setShowNotifications(false);
+  };
+
+  const handleNotificationToggle = () => {
+    setShowNotifications((isOpen) => !isOpen);
+    setShowThemeMenu(false);
+  };
+
+  const handleThemeSelect = (themeClass) => {
+    setTheme(themeClass);
+    setShowThemeMenu(false);
+    showToast?.("Theme updated.");
+  };
+
+  const handleBackToLanding = () => {
+    setShowNotifications(false);
+    setShowThemeMenu(false);
+    setShowLanding(true);
+  };
+
+  const handleMarkAllRead = () => {
+    showToast?.("All notifications marked as read.");
+    setShowNotifications(false);
+  };
+
+  const handleViewAlerts = () => {
+    setActivePage("Messages");
+    setShowNotifications(false);
+  };
+
+  return (
+    <header className="topbar">
+      <div className="brand">
+        <img className="brand-logo" src="/gridster-logo.png" alt="Gridster logo" />
+        <div>
+          <h1>Gridster</h1>
+          <p>Post • Discover • Teleport</p>
+        </div>
+      </div>
+
+      <nav className="topnav">
+        {[
+          "Home",
+          "Search",
+          "Explore",
+          "Events",
+          "Groups",
+          "Messages",
+          "Profile",
+          "Settings",
+        ].map((item) => (
+          <a
+            key={item}
+            href={`#${item.toLowerCase()}`}
+            className={item === activePage ? "active" : ""}
+            aria-current={item === activePage ? "page" : undefined}
+            onClick={(event) => handleNavClick(event, item)}
+          >
+            {item}
+          </a>
+        ))}
+      </nav>
+
+      <label className="search-box">
+        <span>⌕</span>
+        <input placeholder="Search people, groups, events, sims..." />
+      </label>
+
+      <div className="top-actions">
+        <button
+          className="landing-back-button"
+          onClick={handleBackToLanding}
+        >
+          Back to Landing
+        </button>
+        <div className="theme-menu">
+          <button
+            className={showThemeMenu ? "theme-button active" : "theme-button"}
+            onClick={handleThemeToggle}
+            aria-label="Choose Gridster theme"
+            aria-expanded={showThemeMenu}
+          >
+            <span>Theme</span>
+            <strong>{activeThemeLabel}</strong>
+          </button>
+
+          {showThemeMenu ? (
+            <div className="theme-dropdown glass-card">
+              <div className="theme-dropdown-header">
+                <h3>Appearance</h3>
+                <span>Preview</span>
+              </div>
+
+              <div className="theme-option-list">
+                {themeOptions.map(([label, themeClass]) => (
+                  <button
+                    className={theme === themeClass ? "active" : ""}
+                    key={themeClass}
+                    onClick={() => handleThemeSelect(themeClass)}
+                  >
+                    <span className={`theme-swatch ${themeClass}`}></span>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+        <div className="notification-menu">
+          <button
+            className={showNotifications ? "notification-button active" : "notification-button"}
+            onClick={handleNotificationToggle}
+            aria-label="Toggle notifications"
+            aria-expanded={showNotifications}
+          >
+            <span className="notification-bell">🔔</span>
+            <span className="notification-count">5</span>
+          </button>
+
+          {showNotifications ? (
+            <div className="notification-dropdown glass-card">
+              <div className="notification-dropdown-header">
+                <h3>Notifications</h3>
+                <span>5 new</span>
+              </div>
+
+              <div className="notification-list-preview">
+                {notifications.map(([initial, text, time], index) => (
+                  <article className="notification-preview-row" key={text}>
+                    <span className={`notification-preview-icon notice-${index}`}>{initial}</span>
+                    <div>
+                      <strong>{text}</strong>
+                      <small>{time}</small>
+                    </div>
+                    <em aria-label="Unread notification"></em>
+                  </article>
+                ))}
+              </div>
+
+              <div className="notification-dropdown-actions">
+                <button onClick={handleMarkAllRead}>
+                  Mark all read
+                </button>
+                <button onClick={handleViewAlerts}>
+                  View alerts
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+        <button
+          className="gem-button"
+          onClick={() => showToast?.("Bling Bits can be used for boosts, flair, and featured visibility.")}
+        >
+          💎 1,250 Bling Bits
+        </button>
+        <div className="mini-profile">
+          <div className="mini-pic">CJ</div>
+          <div>
+            <strong>CharlieJo</strong>
+            <span>Online</span>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+export default Header;

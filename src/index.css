@@ -1,0 +1,28 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  min-height: 100vh;
+  background: #05060d;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background: #05060d;
+  color: #f7f3ff;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}

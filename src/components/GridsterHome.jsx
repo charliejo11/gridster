@@ -72,6 +72,7 @@ import RightSidebar from "./gridster/RightSidebar";
 import LandingPage from "./gridster/LandingPage";
 import ActionButton from "./gridster/ActionButton";
 import CardGrid from "./gridster/CardGrid";
+import DashboardLayout from "./gridster/DashboardLayout";
 import PageHeader from "./gridster/PageHeader";
 import "./GridsterHome.css";
 
@@ -257,12 +258,24 @@ function GridsterHome() {
         notifications={gridsterNotifications}
       />
 
-      <section className="dashboard">
-        <LeftSidebar activePage={activePage} setActivePage={setActivePage}>
-          <ProfileFlairCard />
-        </LeftSidebar>
-
-        <section className="center-feed">
+      <DashboardLayout
+        leftSidebar={(
+          <LeftSidebar activePage={activePage} setActivePage={setActivePage}>
+            <ProfileFlairCard />
+          </LeftSidebar>
+        )}
+        rightSidebar={(
+          <RightSidebar
+            creators={gridsterSuggestedCreators}
+            events={gridsterDashboardEvents}
+            groups={gridsterSidebarGroups}
+            liveNow={gridsterLiveNow}
+            onOpenProfile={openProfile}
+            places={gridsterFeaturedPlaces}
+            showToast={showToast}
+          />
+        )}
+      >
         <CenterContent
           activePage={activePage}
           galleryItems={gridsterGalleryItems}
@@ -271,18 +284,7 @@ function GridsterHome() {
           onOpenProfile={openProfile}
           showToast={showToast}
         />
-        </section>
-
-        <RightSidebar
-          creators={gridsterSuggestedCreators}
-          events={gridsterDashboardEvents}
-          groups={gridsterSidebarGroups}
-          liveNow={gridsterLiveNow}
-          onOpenProfile={openProfile}
-          places={gridsterFeaturedPlaces}
-          showToast={showToast}
-        />
-      </section>
+      </DashboardLayout>
 
       <GalleryStrip galleryItems={gridsterGalleryItems} />
       <GridsterFooter />

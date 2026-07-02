@@ -239,7 +239,7 @@ function GridsterHome() {
   };
 
   if (showLanding) {
-    return <LandingPage onEnter={() => setShowLanding(false)} />;
+    return <LandingPage onEnter={() => setShowLanding(false)} onNavigate={(page) => setActivePage(page)} />;
   }
 
 

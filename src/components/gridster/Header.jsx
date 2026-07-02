@@ -97,6 +97,12 @@ function Header({
         >
           Back to Landing
         </button>
+        <button
+          className="header-auth-button"
+          onClick={() => setActivePage("Auth")}
+        >
+          Log In
+        </button>
         <div className="theme-menu">
           <button
             className={showThemeMenu ? "theme-button active" : "theme-button"}

@@ -1,4 +1,4 @@
-function LandingPage({ onEnter }) {
+function LandingPage({ onEnter, onNavigate }) {
   const features = [
     ["Social Feed", "Post moments, photos, blogs, events, outfits, and SLURLs."],
     ["Event Discovery", "Find clubs, DJs, live music, parties, and themed grid nights."],
@@ -101,6 +101,11 @@ function LandingPage({ onEnter }) {
         <div className="landing-actions">
           <button className="landing-primary" onClick={onEnter}>Enter Gridster</button>
           <button className="landing-secondary" onClick={showFeatures}>Explore Features</button>
+        </div>
+
+        <div className="landing-auth-actions">
+          <button className="landing-login-button" onClick={() => onNavigate?.("Auth")}>Log In</button>
+          <button className="landing-signup-button" onClick={() => onNavigate?.("Auth")}>Sign Up</button>
         </div>
       </section>
 

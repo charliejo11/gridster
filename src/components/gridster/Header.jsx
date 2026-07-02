@@ -9,6 +9,7 @@ function Header({
   setShowNotifications,
   showThemeMenu,
   setShowThemeMenu,
+  onAuthOpen,
   themeOptions,
   activeThemeLabel,
   notifications,
@@ -99,7 +100,7 @@ function Header({
         </button>
         <button
           className="header-auth-button"
-          onClick={() => setActivePage("Auth")}
+          onClick={onAuthOpen}
         >
           Log In
         </button>

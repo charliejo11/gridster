@@ -99,13 +99,25 @@ function LandingPage({ onEnter, onNavigate }) {
         </div>
 
         <div className="landing-actions">
-          <button className="landing-primary" onClick={onEnter}>Enter Gridster</button>
-          <button className="landing-secondary" onClick={showFeatures}>Explore Features</button>
+          <button type="button" className="landing-primary" onClick={onEnter}>Enter Gridster</button>
+          <button type="button" className="landing-secondary" onClick={showFeatures}>Explore Features</button>
         </div>
 
         <div className="landing-auth-actions">
-          <button className="landing-login-button" onClick={() => onNavigate?.("Auth")}>Log In</button>
-          <button className="landing-signup-button" onClick={() => onNavigate?.("Auth")}>Sign Up</button>
+          <button
+            type="button"
+            className="landing-secondary landing-login-button"
+            onClick={() => onNavigate?.("Auth", "login")}
+          >
+            Log In
+          </button>
+          <button
+            type="button"
+            className="landing-primary landing-signup-button"
+            onClick={() => onNavigate?.("Auth", "signup")}
+          >
+            Sign Up
+          </button>
         </div>
       </section>
 

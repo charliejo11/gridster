@@ -1,12 +1,22 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabaseClient";
 
-function AuthPage() {
+function getAuthMode(mode) {
+  return mode === "signup" ? "signup" : "login";
+}
+
+function AuthPage({ initialMode = "login" }) {
+  const [mode, setMode] = useState(() => getAuthMode(initialMode));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const isSignupMode = mode === "signup";
+
+  useEffect(() => {
+    setMode(getAuthMode(initialMode));
+  }, [initialMode]);
 
   useEffect(() => {
     const currentUser = supabase.auth.getUser();
@@ -92,9 +102,9 @@ function AuthPage() {
     <section className="auth-page">
       <div className="auth-card glass-card">
         <span>Gridster Account</span>
-        <h3>Sign In</h3>
+        <h3>{isSignupMode ? "Create Account" : "Sign In"}</h3>
 
-        <form className="auth-form" onSubmit={handleLogin}>
+        <form className="auth-form" onSubmit={isSignupMode ? handleSignup : handleLogin}>
           <label className="auth-field">
             <span>Email</span>
             <input
@@ -118,11 +128,23 @@ function AuthPage() {
           </label>
 
           <div className="auth-actions">
-            <button type="submit" className="auth-login-button" disabled={loading}>
-              {loading ? "Signing in..." : "Log In"}
+            <button
+              type="submit"
+              className={isSignupMode ? "auth-signup-button" : "auth-login-button"}
+              disabled={loading}
+            >
+              {loading ? (isSignupMode ? "Signing up..." : "Signing in...") : (isSignupMode ? "Sign Up" : "Log In")}
             </button>
-            <button type="button" className="auth-signup-button" onClick={handleSignup} disabled={loading}>
-              {loading ? "Signing up..." : "Sign Up"}
+            <button
+              type="button"
+              className={isSignupMode ? "auth-login-button" : "auth-signup-button"}
+              onClick={() => {
+                setMode(isSignupMode ? "login" : "signup");
+                setMessage("");
+              }}
+              disabled={loading}
+            >
+              {isSignupMode ? "Log In Instead" : "Sign Up Instead"}
             </button>
           </div>
         </form>

@@ -184,6 +184,7 @@ function getTeleportButtonProps(destinationName, slurlOverride) {
 function GridsterHome() {
   const [activePage, setActivePage] = usePersistedGridsterValue("activePage", "Home");
   const [showLanding, setShowLanding] = usePersistedGridsterValue("showLanding", true);
+  const [authMode, setAuthMode] = useState("login");
   const [toast, setToast] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
@@ -226,6 +227,24 @@ function GridsterHome() {
     setActivePage("ProfilePreview");
   };
 
+  const openAuth = (mode = "login") => {
+    setAuthMode(mode === "signup" ? "signup" : "login");
+    setActivePage("Auth");
+    setShowLanding(false);
+    setShowNotifications(false);
+    setShowThemeMenu(false);
+  };
+
+  const handleLandingNavigate = (page, mode) => {
+    if (page === "Auth") {
+      openAuth(mode);
+      return;
+    }
+
+    setActivePage(page);
+    setShowLanding(false);
+  };
+
   const handleGridsterClick = (event) => {
     const button = event.target.closest("button");
 
@@ -239,7 +258,7 @@ function GridsterHome() {
   };
 
   if (showLanding) {
-    return <LandingPage onEnter={() => setShowLanding(false)} onNavigate={(page) => setActivePage(page)} />;
+    return <LandingPage onEnter={() => setShowLanding(false)} onNavigate={handleLandingNavigate} />;
   }
 
 
@@ -256,6 +275,7 @@ function GridsterHome() {
         setShowNotifications={setShowNotifications}
         showThemeMenu={showThemeMenu}
         setShowThemeMenu={setShowThemeMenu}
+        onAuthOpen={() => openAuth("login")}
         themeOptions={gridsterThemeOptions}
         activeThemeLabel={activeThemeLabel}
         notifications={gridsterNotifications}
@@ -282,6 +302,7 @@ function GridsterHome() {
         <CenterContent
           activePage={activePage}
           galleryItems={gridsterGalleryItems}
+          authMode={authMode}
           selectedProfileName={selectedProfileName}
           setActivePage={setActivePage}
           onOpenProfile={openProfile}
@@ -301,7 +322,7 @@ function GridsterHome() {
   );
 }
 
-function CenterContent({ activePage, galleryItems, selectedProfileName, setActivePage, onOpenProfile, showToast }) {
+function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, setActivePage, onOpenProfile, showToast }) {
   if (activePage === "Home") {
     return (
       <>
@@ -585,7 +606,7 @@ function CenterContent({ activePage, galleryItems, selectedProfileName, setActiv
   }
 
   if (activePage === "Auth") {
-    return <AuthPage />;
+    return <AuthPage initialMode={authMode} />;
   }
 
   if (activePage === "Settings") {

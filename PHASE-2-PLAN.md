@@ -60,6 +60,12 @@ src/
 - Confirmed npm run build passes.
 - Confirmed Netlify deploy published successfully.
 - Confirmed the live dashboard layout still looks good.
+- Created FeedPost.jsx and wired it into GridsterHome.jsx.
+- Confirmed npm run build passes.
+- Confirmed Netlify deploy published successfully.
+- Confirmed live site looks good.
+- Created SectionHeader.jsx and replaced repeated `*-section-heading` blocks in GridsterHome.jsx (15 occurrences).
+- Confirmed npm run build passes after SectionHeader refactor.
 
 ## Future Backend/App Features
 

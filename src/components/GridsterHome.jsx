@@ -75,6 +75,7 @@ import CardGrid from "./gridster/CardGrid";
 import DashboardLayout from "./gridster/DashboardLayout";
 import FeedPost from "./gridster/FeedPost";
 import PageHeader from "./gridster/PageHeader";
+import SectionHeader from "./gridster/SectionHeader";
 import "./GridsterHome.css";
 
 const GRIDSTER_STORAGE_KEY = "gridster-preferences-v1";
@@ -663,12 +664,7 @@ function ExplorePageContent({ galleryItems }) {
       </section>
 
       <section className="nav-list-card glass-card">
-        <div className="nav-section-heading">
-          <div>
-            <span>Live Discovery</span>
-            <h3>Trending Destinations</h3>
-          </div>
-        </div>
+        <SectionHeader className="nav-section-heading" eyebrow="Live Discovery" title="Trending Destinations" />
 
         <div className="nav-destination-list">
           {gridsterExploreDestinations.map(([title, rating, action]) => (
@@ -871,10 +867,7 @@ function ProfilePreviewPage({ profile, showToast }) {
 function ProfilePreviewSection({ title, items }) {
   return (
     <article className="profile-preview-section glass-card">
-      <div className="profile-preview-section-heading">
-        <span>Profile</span>
-        <h3>{title}</h3>
-      </div>
+      <SectionHeader className="profile-preview-section-heading" eyebrow="Profile" title={title} />
       <div className="profile-preview-list">
         {items.map((item) => (
           <div key={item}>
@@ -931,10 +924,7 @@ function FeedPreferencesPage() {
       <div className="feed-preferences-grid">
         {gridsterFeedPreferenceCards.map(([title, options]) => (
           <article className="feed-preference-card glass-card" key={title}>
-            <div className="feed-preference-heading">
-              <span>Feed Tuning</span>
-              <h3>{title}</h3>
-            </div>
+            <SectionHeader className="feed-preference-heading" eyebrow="Feed Tuning" title={title} />
 
             <div className="feed-preference-pills">
               {options.map((option) => (
@@ -1022,10 +1012,7 @@ function PhotoChallengePage() {
 
       <div className="photo-challenge-content">
         <section className="challenge-rules-card glass-card">
-          <div className="challenge-section-heading">
-            <span>Challenge Rules</span>
-            <h3>Keep It Fair</h3>
-          </div>
+          <SectionHeader className="challenge-section-heading" eyebrow="Challenge Rules" title="Keep It Fair" />
           <ul>
             {gridsterPhotoChallengeRules.map((rule) => (
               <li key={rule}>
@@ -1037,10 +1024,7 @@ function PhotoChallengePage() {
         </section>
 
         <section className="challenge-leaderboard-card glass-card">
-          <div className="challenge-section-heading">
-            <span>Top This Week</span>
-            <h3>Leaderboard</h3>
-          </div>
+          <SectionHeader className="challenge-section-heading" eyebrow="Top This Week" title="Leaderboard" />
           <div className="challenge-leader-list">
             {gridsterPhotoChallengeLeaders.map(([name, votes], index) => (
               <article key={name}>
@@ -1053,10 +1037,7 @@ function PhotoChallengePage() {
       </div>
 
       <section className="featured-entries-section">
-        <div className="challenge-section-heading">
-          <span>Community Gallery</span>
-          <h3>Featured Entries</h3>
-        </div>
+        <SectionHeader className="challenge-section-heading" eyebrow="Community Gallery" title="Featured Entries" />
         <div className="featured-entry-grid">
           {gridsterPhotoChallengeEntries.map(([title, creator, likes], index) => (
             <article className="featured-entry-card glass-card" key={title}>
@@ -1105,10 +1086,7 @@ function SpotlightAwardsPage() {
       </section>
 
       <section className="award-categories-card glass-card">
-        <div className="spotlight-section-heading">
-          <span>Award Categories</span>
-          <h3>Celebrate Every Corner Of The Grid</h3>
-        </div>
+        <SectionHeader className="spotlight-section-heading" eyebrow="Award Categories" title="Celebrate Every Corner Of The Grid" />
         <div className="award-category-grid">
           {gridsterSpotlightAwardCategories.map((category, index) => (
             <article className="award-category-tile" key={category}>
@@ -1121,10 +1099,7 @@ function SpotlightAwardsPage() {
 
       <div className="spotlight-lower-grid">
         <section className="nominees-section">
-          <div className="spotlight-section-heading">
-            <span>Community Nominees</span>
-            <h3>Vote For This Month’s Favorites</h3>
-          </div>
+          <SectionHeader className="spotlight-section-heading" eyebrow="Community Nominees" title="Vote For This Month’s Favorites" />
           <div className="nominee-grid">
             {gridsterSpotlightAwardNominees.map(([name, category, votes], index) => (
               <article className="nominee-card glass-card" key={name}>
@@ -1141,10 +1116,7 @@ function SpotlightAwardsPage() {
         </section>
 
         <aside className="spotlight-rules-card glass-card">
-          <div className="spotlight-section-heading">
-            <span>Spotlight Rules</span>
-            <h3>Keep Awards Fair</h3>
-          </div>
+          <SectionHeader className="spotlight-section-heading" eyebrow="Spotlight Rules" title="Keep Awards Fair" />
           <ul>
             {gridsterSpotlightAwardRules.map((rule) => (
               <li key={rule}>
@@ -1182,10 +1154,7 @@ function VerificationCenterPage() {
       </section>
 
       <section className="verification-type-section">
-        <div className="verification-section-heading">
-          <span>Verification Types</span>
-          <h3>Who Can Get Verified</h3>
-        </div>
+        <SectionHeader className="verification-section-heading" eyebrow="Verification Types" title="Who Can Get Verified" />
 
         <div className="verification-type-grid">
           {gridsterVerificationTypes.map(([icon, title, desc]) => (
@@ -1200,10 +1169,7 @@ function VerificationCenterPage() {
 
       <div className="verification-lower-grid">
         <section className="verification-requirements-card glass-card">
-          <div className="verification-section-heading">
-            <span>Verification Requirements</span>
-            <h3>Before You Apply</h3>
-          </div>
+          <SectionHeader className="verification-section-heading" eyebrow="Verification Requirements" title="Before You Apply" />
           <ul>
             {gridsterVerificationRequirements.map((item) => (
               <li key={item}>
@@ -1215,10 +1181,7 @@ function VerificationCenterPage() {
         </section>
 
         <aside className="verification-status-card glass-card">
-          <div className="verification-section-heading">
-            <span>Your Verification Status</span>
-            <h3>CharlieJo</h3>
-          </div>
+          <SectionHeader className="verification-section-heading" eyebrow="Your Verification Status" title="CharlieJo" />
           <strong>Eligible to Apply</strong>
 
           <div className="verification-strength">
@@ -1262,10 +1225,7 @@ function BlingBoostPage() {
         </div>
 
         <section className="boost-packages-card">
-          <div className="boost-packages-heading">
-            <span>Bling Packages</span>
-            <h3>Choose Your Boost</h3>
-          </div>
+          <SectionHeader className="boost-packages-heading" eyebrow="Bling Packages" title="Choose Your Boost" />
           <div className="boost-package-grid">
             {gridsterBlingBoostPackages.map(([icon, name, duration, cost]) => (
               <article className="boost-package-tile" key={name}>
@@ -1316,10 +1276,7 @@ function CreateCommunityHubPage() {
         </div>
 
         <section className="hub-sections-card">
-          <div className="hub-sections-heading">
-            <span>Hub Sections</span>
-            <h3>Hub Sections</h3>
-          </div>
+          <SectionHeader className="hub-sections-heading" eyebrow="Hub Sections" title="Hub Sections" />
           <div className="hub-section-list">
             {gridsterCreateCommunityHubSections.map((section) => (
               <article className="hub-section-row" key={section}>
@@ -1367,10 +1324,7 @@ function CreateBloggerPostPage() {
         </div>
 
         <section className="credit-builder-card">
-          <div className="credit-builder-heading">
-            <span>Credit Builder</span>
-            <h3>Credit Builder</h3>
-          </div>
+          <SectionHeader className="credit-builder-heading" eyebrow="Credit Builder" title="Credit Builder" />
           <div className="credit-row-list">
             {gridsterBloggerCreditRows.map((row) => (
               <article className="credit-row" key={row}>

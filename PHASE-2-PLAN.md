@@ -41,6 +41,21 @@ src/
     gridsterMockData.js
 ```
 
+## Phase 2 First Task
+
+## Completed Phase 2 Tasks
+
+- Created shared components:
+  - Widget.jsx
+  - PageHeader.jsx
+  - ActionButton.jsx
+  - CardGrid.jsx
+  - StatusDot.jsx
+- Wired shared components into the existing layout.
+- Confirmed npm run build passes.
+- Confirmed Netlify deploy published successfully.
+- Confirmed live site still looks good.
+
 ## Future Backend/App Features
 
 These are future real-app features to plan for after the frontend prototype is organized and stable.

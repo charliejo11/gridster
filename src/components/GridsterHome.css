@@ -1928,6 +1928,7 @@ button {
 
 .auth-card-heading,
 .auth-form,
+.auth-code-form,
 .auth-verification-panel,
 .auth-next-step,
 .auth-user-email,
@@ -1969,6 +1970,11 @@ button {
 .auth-form {
   display: grid;
   gap: 12px;
+}
+
+.auth-code-form {
+  display: grid;
+  gap: 11px;
 }
 
 .auth-field {
@@ -2013,6 +2019,7 @@ button {
 }
 
 .auth-generate-button,
+.auth-verify-button,
 .auth-login-button,
 .auth-signup-button,
 .auth-logout-button {
@@ -2029,6 +2036,7 @@ button {
 }
 
 .auth-generate-button:hover,
+.auth-verify-button:hover,
 .auth-login-button:hover,
 .auth-signup-button:hover,
 .auth-logout-button:hover {
@@ -2104,10 +2112,23 @@ button {
   line-height: 1.45;
 }
 
+.auth-im-note,
+.auth-verified-note {
+  margin: 0;
+  color: rgba(231, 235, 255, 0.8);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .auth-kiosk-note {
   margin: 0;
   color: #ffb7ef;
   font-size: 12px;
+  font-weight: 900;
+}
+
+.auth-verified-note {
+  color: #9ffff0;
   font-weight: 900;
 }
 

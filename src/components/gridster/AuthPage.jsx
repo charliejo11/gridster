@@ -9,6 +9,8 @@ function AuthPage({ initialMode = "login" }) {
   const [mode, setMode] = useState(() => getAuthMode(initialMode));
   const [slUsername, setSlUsername] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
+  const [enteredVerificationCode, setEnteredVerificationCode] = useState("");
+  const [avatarVerified, setAvatarVerified] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [user, setUser] = useState(null);
@@ -38,7 +40,14 @@ function AuthPage({ initialMode = "login" }) {
   const handleGenerateCode = (e) => {
     e.preventDefault();
     setVerificationCode(`GRID-${Math.floor(1000 + Math.random() * 9000)}`);
+    setEnteredVerificationCode("");
+    setAvatarVerified(false);
     setMessage("");
+  };
+
+  const handleVerifyCode = (e) => {
+    e.preventDefault();
+    setAvatarVerified(true);
   };
 
   const handleSignup = async (e) => {
@@ -116,7 +125,7 @@ function AuthPage({ initialMode = "login" }) {
           <h3>Verify your Second Life avatar</h3>
           <p>
             Gridster is for Second Life residents. Start by entering your SL legacy username.
-            We'll generate a one-time verification code for your avatar.
+            We'll send a one-time verification code to your avatar.
           </p>
         </div>
 
@@ -134,7 +143,7 @@ function AuthPage({ initialMode = "login" }) {
           </label>
 
           <button type="submit" className="auth-generate-button">
-            Generate Verification Code
+            Send Code to Second Life
           </button>
         </form>
 
@@ -145,15 +154,29 @@ function AuthPage({ initialMode = "login" }) {
               <strong>{verificationCode}</strong>
             </div>
 
-            <ol>
-              <li>Log into Second Life.</li>
-              <li>Visit the Gridster verification kiosk.</li>
-              <li>Touch the kiosk.</li>
-              <li>Paste or enter this code.</li>
-              <li>Gridster will connect your SL avatar UUID to your account.</li>
-            </ol>
+            <p className="auth-im-note">
+              We sent a private verification message to your Second Life avatar. Log into Second Life and check your IMs from Gridster Verification.
+            </p>
 
-            <p className="auth-kiosk-note">In-world kiosk connection coming soon.</p>
+            <form className="auth-code-form" onSubmit={handleVerifyCode}>
+              <label className="auth-field">
+                <span>Enter verification code</span>
+                <input
+                  className="auth-input"
+                  type="text"
+                  value={enteredVerificationCode}
+                  onChange={(e) => setEnteredVerificationCode(e.target.value)}
+                  placeholder="GRID-4829"
+                  required
+                />
+              </label>
+
+              <button type="submit" className="auth-verify-button">
+                Verify Code
+              </button>
+            </form>
+
+            {avatarVerified ? <p className="auth-verified-note">Second Life avatar verification marked complete for this preview.</p> : null}
           </div>
         ) : null}
 
@@ -162,9 +185,9 @@ function AuthPage({ initialMode = "login" }) {
 
       <div className="auth-card glass-card auth-login-card">
         <div className="auth-card-heading">
-          <span>Finish account login</span>
-          <h3>{isSignupMode ? "Create your login" : "Sign in with email"}</h3>
-          <p>Use this secondary account login after your Second Life avatar is verified.</p>
+          <span>Later step</span>
+          <h3>Create your Gridster login</h3>
+          <p>After your Second Life avatar is verified, you'll create your Gridster login.</p>
         </div>
 
         <form className="auth-form" onSubmit={isSignupMode ? handleSignup : handleLogin}>

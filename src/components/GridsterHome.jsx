@@ -73,6 +73,7 @@ import LandingPage from "./gridster/LandingPage";
 import ActionButton from "./gridster/ActionButton";
 import CardGrid from "./gridster/CardGrid";
 import DashboardLayout from "./gridster/DashboardLayout";
+import FeedPost from "./gridster/FeedPost";
 import PageHeader from "./gridster/PageHeader";
 import "./GridsterHome.css";
 
@@ -1611,14 +1612,17 @@ function LunarEclipsePost({ showToast }) {
   }
 
   return (
-    <article className="post-card glass-card">
-      <PostHeader
-        name="Club Elysium"
-        label="posted an event"
-        showToast={showToast}
-        onHide={() => setHidden(true)}
-      />
-
+    <FeedPost
+      header={(
+        <PostHeader
+          name="Club Elysium"
+          label="posted an event"
+          showToast={showToast}
+          onHide={() => setHidden(true)}
+        />
+      )}
+      actions={<PostActions likes="156" comments="32" postId="lunar-eclipse-event" showToast={showToast} />}
+    >
       <div className="event-card">
         <div className="event-poster">
           <span className="event-poster-label">CLUB ELYSIUM</span>
@@ -1657,9 +1661,7 @@ function LunarEclipsePost({ showToast }) {
           </div>
         </div>
       </div>
-
-      <PostActions likes="156" comments="32" postId="lunar-eclipse-event" showToast={showToast} />
-    </article>
+    </FeedPost>
   );
 }
 
@@ -1671,13 +1673,17 @@ function VoguePixelsPost({ showToast }) {
   }
 
   return (
-    <article className="post-card glass-card">
-      <PostHeader
-        name="Vogue Pixels"
-        label="shared a blog post"
-        showToast={showToast}
-        onHide={() => setHidden(true)}
-      />
+    <FeedPost
+      header={(
+        <PostHeader
+          name="Vogue Pixels"
+          label="shared a blog post"
+          showToast={showToast}
+          onHide={() => setHidden(true)}
+        />
+      )}
+      actions={<PostActions likes="98" comments="14" postId="vogue-pixels-blog" showToast={showToast} />}
+    >
       <p className="post-text">
         Neon dreams and city lights. New editorial is up on the blog! ✨
       </p>
@@ -1690,8 +1696,7 @@ function VoguePixelsPost({ showToast }) {
         </div>
       </div>
 
-      <PostActions likes="98" comments="14" postId="vogue-pixels-blog" showToast={showToast} />
-    </article>
+    </FeedPost>
   );
 }
 
@@ -1703,18 +1708,21 @@ function CreatorsCollectivePost({ showToast }) {
   }
 
   return (
-    <article className="post-card glass-card">
-      <PostHeader
-        name="The Creators Collective"
-        label="posted an update"
-        showToast={showToast}
-        onHide={() => setHidden(true)}
-      />
+    <FeedPost
+      header={(
+        <PostHeader
+          name="The Creators Collective"
+          label="posted an update"
+          showToast={showToast}
+          onHide={() => setHidden(true)}
+        />
+      )}
+      actions={<PostActions likes="72" comments="18" postId="creators-collective-update" showToast={showToast} />}
+    >
       <p className="post-text">
         We’re excited to welcome NovaVixen to the team as our new Events Coordinator. Get ready for even more amazing grid experiences.
       </p>
-      <PostActions likes="72" comments="18" postId="creators-collective-update" showToast={showToast} />
-    </article>
+    </FeedPost>
   );
 }
 
@@ -2005,15 +2013,18 @@ function UpcomingGridNights() {
 
 
   return (
-    <article className="post-card glass-card feed-card">
-      <div className="feed-card-header">
-        <div className="post-avatar">✦</div>
-        <div>
-          <strong>Upcoming Grid Nights</strong>
-          <span>Community calendar • This week</span>
+    <FeedPost
+      className="feed-card"
+      header={(
+        <div className="feed-card-header">
+          <div className="post-avatar">✦</div>
+          <div>
+            <strong>Upcoming Grid Nights</strong>
+            <span>Community calendar • This week</span>
+          </div>
         </div>
-      </div>
-
+      )}
+    >
       <div className="event-list">
         {gridsterUpcomingGridNights.map(([title, time, thumb]) => (
           <div className="grid-event-row" key={title}>
@@ -2026,21 +2037,24 @@ function UpcomingGridNights() {
           </div>
         ))}
       </div>
-    </article>
+    </FeedPost>
   );
 }
 
 function FeaturedPhotoSpots() {
   return (
-    <article className="post-card glass-card feed-card">
-      <div className="feed-card-header">
-        <div className="post-avatar">▣</div>
-        <div>
-          <strong>Featured Photo Spots</strong>
-          <span>Save-worthy landmarks • Curated</span>
+    <FeedPost
+      className="feed-card"
+      header={(
+        <div className="feed-card-header">
+          <div className="post-avatar">▣</div>
+          <div>
+            <strong>Featured Photo Spots</strong>
+            <span>Save-worthy landmarks • Curated</span>
+          </div>
         </div>
-      </div>
-
+      )}
+    >
       <div className="photo-spot-grid">
         {gridsterFeaturedPhotoSpots.map(([title, thumb]) => (
           <div className="photo-spot-card" key={title}>
@@ -2052,7 +2066,7 @@ function FeaturedPhotoSpots() {
           </div>
         ))}
       </div>
-    </article>
+    </FeedPost>
   );
 }
 

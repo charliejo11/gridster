@@ -55,6 +55,11 @@ src/
 - Confirmed npm run build passes.
 - Confirmed Netlify deploy published successfully.
 - Confirmed live site still looks good.
+- Created DashboardLayout.jsx to wrap the dashboard structure.
+- Wired DashboardLayout into GridsterHome.jsx.
+- Confirmed npm run build passes.
+- Confirmed Netlify deploy published successfully.
+- Confirmed the live dashboard layout still looks good.
 
 ## Future Backend/App Features
 

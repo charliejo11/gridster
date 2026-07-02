@@ -205,11 +205,49 @@ export const gridsterMessagePreview = [
   ["RavenHex", "Send me the SLURL when you can.", "received"],
 ];
 
+export const gridsterMessageQuickActions = ["Send SLURL", "Share Post", "Invite to Event"];
+
 export const gridsterSidebarAlerts = [
   ["R", "RavenHex", "commented on your photo", "2m"],
   ["S", "Sanctuary Rocks", "added a new event", "14m"],
   ["N", "NovaVixen", "followed you", "1h"],
   ["M", "Moonlit Market", "posted new releases", "3h"],
+];
+
+export const gridsterLeftSidebarProfile = {
+  initials: "CJ",
+  displayName: "CharlieJo",
+  role: "Second Life Blogger • Photographer • Creator",
+  bio: "Capturing fashion, nightlife, events, and beautiful chaos across the grid.",
+  strength: "82%",
+  stats: [
+    ["2.4K", "Followers"],
+    ["320", "Following"],
+    ["1.8K", "Posts"],
+  ],
+  tools: ["New Blog", "Upload Photo", "Add Event", "Save SLURL"],
+};
+
+export const gridsterLeftSidebarNavItems = [
+  ["✦", "Home", "Home"],
+  ["✧", "Groups", "Groups"],
+  ["◇", "Grid Nights", "GridNights"],
+  ["⌖", "Saved Landmarks & Posts", "SavedItems"],
+  ["▣", "Photo Challenge", "PhotoChallenge"],
+  ["♢", "Marketplace Finds", "Marketplace"],
+  ["✎", "Spotlight Awards", "SpotlightAwards"],
+  ["♫", "DJ Sets", "DJSets"],
+];
+
+export const gridsterLeftSidebarActionItems = [
+  { label: "Create Event", page: "CreateEvent", className: "create-post-button", suffix: "+" },
+  { label: "Create Store Post", page: "CreateStorePost", className: "add-slurl-button" },
+  { label: "Create Blogger Post", page: "CreateBloggerPost", className: "add-slurl-button" },
+  { label: "Create Community Hub", page: "CreateCommunityHub", className: "add-slurl-button" },
+  { label: "Bling Boost", page: "BlingBoost", className: "add-slurl-button" },
+  { label: "Feed Preferences", page: "FeedPreferences", className: "add-slurl-button" },
+  { label: "Verification", page: "VerificationCenter", className: "add-slurl-button" },
+  { label: "Add SLURL", page: "AddSLURL", className: "add-slurl-button" },
 ];
 
 export const gridsterSlurlTeleports = [
@@ -264,6 +302,43 @@ export const gridsterPostSampleComments = [
   ["R", "RavenHex", "This venue looks amazing. Saving this SLURL.", "8m"],
   ["N", "NovaVixen", "The neon lighting is everything.", "3m"],
 ];
+
+export const gridsterComposerActions = ["▣ Photo", "◇ Event", "⌖ SLURL", "✎ Blog", "♙ Outfit", "🛍 Marketplace Find"];
+
+export const gridsterComposerTemplates = ["Event Notice", "New Blog Post", "Store Release", "Photo Spot"];
+
+export const gridsterTrendingTopics = [
+  ["#SanctuaryRocks", "2.4K posts"],
+  ["#CyberRave", "1.8K posts"],
+  ["#BloggerDrop", "891 posts"],
+  ["#WeekendEvents", "3.2K posts"],
+  ["#PhotoSpots", "1.5K posts"],
+];
+
+export const gridsterWelcomeFeatures = ["Post", "Discover", "Teleport"];
+
+export const gridsterExplorePreviewTiles = [
+  ["♫", "Clubs", "Live DJs, events, parties"],
+  ["🛍", "Stores", "New releases and creator drops"],
+  ["✦", "Photo Spots", "Pretty sims and scenic backdrops"],
+  ["⌂", "Rentals", "Homes, skyboxes, beach villas"],
+];
+
+export const gridsterProfileSummary = {
+  initials: "CJ",
+  displayName: "CharlieJo",
+  role: "Second Life Blogger • Photographer • Creator",
+  bio: "Capturing fashion, nightlife, events, and beautiful chaos across the grid with a neon eye for detail.",
+  stats: [
+    ["2.4K", "Followers"],
+    ["320", "Following"],
+    ["1.8K", "Posts"],
+    ["1,250", "Bling Bits"],
+  ],
+  tags: ["Nightlife", "Fashion", "Photography", "Events"],
+};
+
+export const gridsterProfileFlairBadges = ["✨ Blogger", "🎧 DJ", "📸 Photographer", "💎 Bling Boosted"];
 
 export const gridsterProfileSections = [
     ["Recent Posts", "Latest photos, event posts, blog updates, and nightlife moments.", "View Posts"],

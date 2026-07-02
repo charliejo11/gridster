@@ -1,3 +1,9 @@
+import {
+  gridsterLeftSidebarActionItems,
+  gridsterLeftSidebarNavItems,
+  gridsterLeftSidebarProfile,
+} from "../../data/gridsterMockData";
+
 function LeftSidebar({
   activePage,
   setActivePage,
@@ -7,46 +13,39 @@ function LeftSidebar({
     <aside className="left-panel">
       <section className="profile-card glass-card">
         <div className="profile-cover"></div>
-        <div className="profile-avatar">CJ</div>
+        <div className="profile-avatar">{gridsterLeftSidebarProfile.initials}</div>
 
-        <h2>CharlieJo</h2>
-        <p className="profile-role">Second Life Blogger • Photographer • Creator</p>
+        <h2>{gridsterLeftSidebarProfile.displayName}</h2>
+        <p className="profile-role">{gridsterLeftSidebarProfile.role}</p>
         <p className="profile-bio">
-          Capturing fashion, nightlife, events, and beautiful chaos across the grid.
+          {gridsterLeftSidebarProfile.bio}
         </p>
 
         <div className="profile-stats">
-          <div>
-            <strong>2.4K</strong>
-            <span>Followers</span>
-          </div>
-          <div>
-            <strong>320</strong>
-            <span>Following</span>
-          </div>
-          <div>
-            <strong>1.8K</strong>
-            <span>Posts</span>
-          </div>
+          {gridsterLeftSidebarProfile.stats.map(([value, label]) => (
+            <div key={label}>
+              <strong>{value}</strong>
+              <span>{label}</span>
+            </div>
+          ))}
         </div>
 
         <div className="profile-strength">
           <div className="strength-label">
             <span>Profile Strength</span>
-            <span className="strength-percent">82%</span>
+            <span className="strength-percent">{gridsterLeftSidebarProfile.strength}</span>
           </div>
           <div className="strength-bar">
-            <div className="strength-fill" style={{ width: "82%" }}></div>
+            <div className="strength-fill" style={{ width: gridsterLeftSidebarProfile.strength }}></div>
           </div>
         </div>
 
         <div className="creator-tools">
           <span className="tools-label">Creator Tools</span>
           <div className="tools-buttons">
-            <button>New Blog</button>
-            <button>Upload Photo</button>
-            <button>Add Event</button>
-            <button>Save SLURL</button>
+            {gridsterLeftSidebarProfile.tools.map((tool) => (
+              <button key={tool}>{tool}</button>
+            ))}
           </div>
         </div>
       </section>
@@ -54,16 +53,7 @@ function LeftSidebar({
       {children}
 
       <section className="sidebar-menu glass-card">
-        {[
-          ["✦", "Home", "Home"],
-          ["✧", "Groups", "Groups"],
-          ["◇", "Grid Nights", "GridNights"],
-          ["⌖", "Saved Landmarks & Posts", "SavedItems"],
-          ["▣", "Photo Challenge", "PhotoChallenge"],
-          ["♢", "Marketplace Finds", "Marketplace"],
-          ["✎", "Spotlight Awards", "SpotlightAwards"],
-          ["♫", "DJ Sets", "DJSets"],
-        ].map(([icon, label, page]) => (
+        {gridsterLeftSidebarNavItems.map(([icon, label, page]) => (
           <button
             key={page}
             className={activePage === page ? "active" : ""}
@@ -74,54 +64,15 @@ function LeftSidebar({
           </button>
         ))}
 
-        <button
-          className={activePage === "CreateEvent" ? "create-post-button active" : "create-post-button"}
-          onClick={() => setActivePage("CreateEvent")}
-        >
-          Create Event <b>+</b>
-        </button>
-        <button
-          className={activePage === "CreateStorePost" ? "add-slurl-button active" : "add-slurl-button"}
-          onClick={() => setActivePage("CreateStorePost")}
-        >
-          Create Store Post
-        </button>
-        <button
-          className={activePage === "CreateBloggerPost" ? "add-slurl-button active" : "add-slurl-button"}
-          onClick={() => setActivePage("CreateBloggerPost")}
-        >
-          Create Blogger Post
-        </button>
-        <button
-          className={activePage === "CreateCommunityHub" ? "add-slurl-button active" : "add-slurl-button"}
-          onClick={() => setActivePage("CreateCommunityHub")}
-        >
-          Create Community Hub
-        </button>
-        <button
-          className={activePage === "BlingBoost" ? "add-slurl-button active" : "add-slurl-button"}
-          onClick={() => setActivePage("BlingBoost")}
-        >
-          Bling Boost
-        </button>
-        <button
-          className={activePage === "FeedPreferences" ? "add-slurl-button active" : "add-slurl-button"}
-          onClick={() => setActivePage("FeedPreferences")}
-        >
-          Feed Preferences
-        </button>
-        <button
-          className={activePage === "VerificationCenter" ? "add-slurl-button active" : "add-slurl-button"}
-          onClick={() => setActivePage("VerificationCenter")}
-        >
-          Verification
-        </button>
-        <button
-          className={activePage === "AddSLURL" ? "add-slurl-button active" : "add-slurl-button"}
-          onClick={() => setActivePage("AddSLURL")}
-        >
-          Add SLURL
-        </button>
+        {gridsterLeftSidebarActionItems.map(({ label, page, className, suffix }) => (
+          <button
+            className={activePage === page ? `${className} active` : className}
+            key={page}
+            onClick={() => setActivePage(page)}
+          >
+            {label} {suffix ? <b>{suffix}</b> : null}
+          </button>
+        ))}
       </section>
 
       <section className="premium-card glass-card">

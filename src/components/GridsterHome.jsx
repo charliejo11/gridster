@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import {
   getGridsterDestination,
   getGridsterProfile,
+  gridsterComposerActions,
+  gridsterComposerTemplates,
   gridsterDashboardEvents,
   gridsterDjSets,
   gridsterEventsPageEvents,
@@ -17,9 +19,11 @@ import {
   gridsterMarketplaceFinds,
   gridsterMessageConversations,
   gridsterMessagePreview,
+  gridsterMessageQuickActions,
   gridsterNotifications,
   gridsterPopularGroups,
   gridsterPostSampleComments,
+  gridsterProfileFlairBadges,
   gridsterSavedFilters,
   gridsterSavedItems,
   gridsterSearchFilters,
@@ -28,8 +32,12 @@ import {
   gridsterSuggestedCreators,
   gridsterTeleportCenterDestinations,
   gridsterThemeOptions,
+  gridsterTrendingTopics,
   gridsterUpcomingGridNights,
+  gridsterWelcomeFeatures,
+  gridsterExplorePreviewTiles,
   gridsterProfileSections,
+  gridsterProfileSummary,
   gridsterAddSlurlFields,
   gridsterFeedPreferenceCards,
   gridsterPhotoChallengeRules,
@@ -768,9 +776,9 @@ function MessagesPageContent({ onOpenProfile, showToast }) {
           </div>
 
           <div className="message-quick-actions">
-            <button>Send SLURL</button>
-            <button>Share Post</button>
-            <button>Invite to Event</button>
+            {gridsterMessageQuickActions.map((action) => (
+              <button key={action}>{action}</button>
+            ))}
           </div>
 
           <div className="dm-input-row">
@@ -1495,21 +1503,17 @@ function CreatePostComposer() {
       </div>
 
       <div className="composer-actions">
-        <button>▣ Photo</button>
-        <button>◇ Event</button>
-        <button>⌖ SLURL</button>
-        <button>✎ Blog</button>
-        <button>♙ Outfit</button>
-        <button>🛍 Marketplace Find</button>
+        {gridsterComposerActions.map((action) => (
+          <button key={action}>{action}</button>
+        ))}
       </div>
 
       <div className="composer-templates">
         <span className="templates-label">Quick Post Templates</span>
         <div className="template-chips">
-          <button className="template-chip">Event Notice</button>
-          <button className="template-chip">New Blog Post</button>
-          <button className="template-chip">Store Release</button>
-          <button className="template-chip">Photo Spot</button>
+          {gridsterComposerTemplates.map((template) => (
+            <button className="template-chip" key={template}>{template}</button>
+          ))}
         </div>
         <p className="composer-helper">Share a moment, promote an event, drop a SLURL, or show off your latest look.</p>
       </div>
@@ -1522,11 +1526,9 @@ function TrendingNow() {
     <section className="trending-card glass-card">
       <h3>Trending Now</h3>
       <div className="trending-pills">
-        <button className="trend-pill">#SanctuaryRocks <span>2.4K posts</span></button>
-        <button className="trend-pill">#CyberRave <span>1.8K posts</span></button>
-        <button className="trend-pill">#BloggerDrop <span>891 posts</span></button>
-        <button className="trend-pill">#WeekendEvents <span>3.2K posts</span></button>
-        <button className="trend-pill">#PhotoSpots <span>1.5K posts</span></button>
+        {gridsterTrendingTopics.map(([tag, count]) => (
+          <button className="trend-pill" key={tag}>{tag} <span>{count}</span></button>
+        ))}
       </div>
     </section>
   );
@@ -1538,9 +1540,9 @@ function WelcomeCard({ onExplore }) {
       <h2>Welcome to Gridster</h2>
       <p>Your Second Life social hub for posts, events, creators, stores, photo spots, and instant teleport discovery.</p>
       <div className="welcome-features">
-        <span className="feature-pill">Post</span>
-        <span className="feature-pill">Discover</span>
-        <span className="feature-pill">Teleport</span>
+        {gridsterWelcomeFeatures.map((feature) => (
+          <span className="feature-pill" key={feature}>{feature}</span>
+        ))}
       </div>
       <button className="cta-button" onClick={onExplore}>Explore The Grid</button>
     </section>
@@ -1555,30 +1557,14 @@ function ExplorePreview() {
         <p>Trending destinations, stores, clubs, and photo spots people are visiting right now.</p>
       </div>
       <div className="explore-tiles">
-        <div className="explore-tile">
-          <span className="explore-icon">♫</span>
-          <h4>Clubs</h4>
-          <p>Live DJs, events, parties</p>
-          <button>Browse</button>
-        </div>
-        <div className="explore-tile">
-          <span className="explore-icon">🛍</span>
-          <h4>Stores</h4>
-          <p>New releases and creator drops</p>
-          <button>Browse</button>
-        </div>
-        <div className="explore-tile">
-          <span className="explore-icon">✦</span>
-          <h4>Photo Spots</h4>
-          <p>Pretty sims and scenic backdrops</p>
-          <button>Browse</button>
-        </div>
-        <div className="explore-tile">
-          <span className="explore-icon">⌂</span>
-          <h4>Rentals</h4>
-          <p>Homes, skyboxes, beach villas</p>
-          <button>Browse</button>
-        </div>
+        {gridsterExplorePreviewTiles.map(([icon, title, desc]) => (
+          <div className="explore-tile" key={title}>
+            <span className="explore-icon">{icon}</span>
+            <h4>{title}</h4>
+            <p>{desc}</p>
+            <button>Browse</button>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -2118,38 +2104,25 @@ function ProfileSummary() {
     <section className="profile-summary-card glass-card">
       <div className="profile-summary-cover"></div>
       <div className="profile-summary-body">
-        <div className="profile-summary-avatar">CJ</div>
+        <div className="profile-summary-avatar">{gridsterProfileSummary.initials}</div>
         <div className="profile-summary-copy">
-          <span>CharlieJo</span>
-          <h3>Second Life Blogger • Photographer • Creator</h3>
-          <p>
-            Capturing fashion, nightlife, events, and beautiful chaos across the grid with a neon eye for detail.
-          </p>
+          <span>{gridsterProfileSummary.displayName}</span>
+          <h3>{gridsterProfileSummary.role}</h3>
+          <p>{gridsterProfileSummary.bio}</p>
         </div>
       </div>
       <div className="profile-summary-stats">
-        <div>
-          <strong>2.4K</strong>
-          <span>Followers</span>
-        </div>
-        <div>
-          <strong>320</strong>
-          <span>Following</span>
-        </div>
-        <div>
-          <strong>1.8K</strong>
-          <span>Posts</span>
-        </div>
-        <div>
-          <strong>1,250</strong>
-          <span>Bling Bits</span>
-        </div>
+        {gridsterProfileSummary.stats.map(([value, label]) => (
+          <div key={label}>
+            <strong>{value}</strong>
+            <span>{label}</span>
+          </div>
+        ))}
       </div>
       <div className="profile-summary-tags">
-        <span>Nightlife</span>
-        <span>Fashion</span>
-        <span>Photography</span>
-        <span>Events</span>
+        {gridsterProfileSummary.tags.map((tag) => (
+          <span key={tag}>{tag}</span>
+        ))}
       </div>
     </section>
   );
@@ -2167,10 +2140,9 @@ function ProfileFlairCard({ variant = "sidebar" }) {
       </div>
 
       <div className="flair-badges">
-        <button className="flair-badge">✨ Blogger</button>
-        <button className="flair-badge">🎧 DJ</button>
-        <button className="flair-badge">📸 Photographer</button>
-        <button className="flair-badge">💎 Bling Boosted</button>
+        {gridsterProfileFlairBadges.map((badge) => (
+          <button className="flair-badge" key={badge}>{badge}</button>
+        ))}
       </div>
 
       <p className="flair-note">Unlock more flair with Bling Bits.</p>

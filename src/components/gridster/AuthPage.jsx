@@ -8,11 +8,12 @@ function getAuthMode(mode) {
 function AuthPage({ initialMode = "login" }) {
   const [mode, setMode] = useState(() => getAuthMode(initialMode));
   const [slUsername, setSlUsername] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationRequestId, setVerificationRequestId] = useState("");
   const [enteredVerificationCode, setEnteredVerificationCode] = useState("");
   const [verificationMessage, setVerificationMessage] = useState("");
   const [verificationError, setVerificationError] = useState("");
   const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationSubmitting, setVerificationSubmitting] = useState(false);
   const [avatarVerified, setAvatarVerified] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,7 +44,7 @@ function AuthPage({ initialMode = "login" }) {
   const handleGenerateCode = async (e) => {
     e.preventDefault();
     setVerificationLoading(true);
-    setVerificationCode("");
+    setVerificationRequestId("");
     setEnteredVerificationCode("");
     setAvatarVerified(false);
     setVerificationMessage("");
@@ -64,8 +65,8 @@ function AuthPage({ initialMode = "login" }) {
         throw new Error(result.error || "Could not create a verification code.");
       }
 
-      setVerificationCode(result.code);
-      setVerificationMessage(result.message || "Verification code created and stored.");
+      setVerificationRequestId(result.id);
+      setVerificationMessage(result.message || "Verification request created.");
     } catch (error) {
       setVerificationError(error.message || "Could not reach the verification service.");
     } finally {
@@ -73,23 +74,45 @@ function AuthPage({ initialMode = "login" }) {
     }
   };
 
-  const handleVerifyCode = (e) => {
+  const handleVerifyCode = async (e) => {
     e.preventDefault();
     const submittedCode = enteredVerificationCode.trim().toUpperCase();
 
-    if (!verificationCode) {
-      setVerificationError("Generate a verification code first.");
+    if (!verificationRequestId) {
+      setVerificationError("Send a code to Second Life first.");
       return;
     }
 
-    if (submittedCode !== verificationCode) {
-      setAvatarVerified(false);
-      setVerificationError("That code does not match the current Gridster verification code.");
-      return;
-    }
-
+    setVerificationSubmitting(true);
     setVerificationError("");
-    setAvatarVerified(true);
+    setAvatarVerified(false);
+
+    try {
+      const response = await fetch("/.netlify/functions/verify-sl-verification-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: verificationRequestId,
+          code: submittedCode,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.error || "Could not verify that code.");
+      }
+
+      setVerificationMessage(result.message || "Second Life avatar verified.");
+      setVerificationError("");
+      setAvatarVerified(true);
+    } catch (error) {
+      setAvatarVerified(false);
+      setVerificationError(error.message || "Could not verify that code.");
+    } finally {
+      setVerificationSubmitting(false);
+    }
   };
 
   const handleSignup = async (e) => {
@@ -192,11 +215,11 @@ function AuthPage({ initialMode = "login" }) {
 
         {verificationError ? <p className="auth-message auth-error-message" role="alert">{verificationError}</p> : null}
 
-        {verificationCode ? (
+        {verificationRequestId ? (
           <div className="auth-verification-panel" aria-live="polite">
             <div className="auth-code-row">
-              <span>One-time avatar code</span>
-              <strong>{verificationCode}</strong>
+              <span>Verification request</span>
+              <strong>{avatarVerified ? "Verified" : "Queued"}</strong>
             </div>
 
             {verificationMessage ? <p className="auth-im-note">{verificationMessage}</p> : null}
@@ -210,16 +233,17 @@ function AuthPage({ initialMode = "login" }) {
                   value={enteredVerificationCode}
                   onChange={(e) => setEnteredVerificationCode(e.target.value.toUpperCase())}
                   placeholder="GRID-4829"
+                  disabled={verificationSubmitting}
                   required
                 />
               </label>
 
-              <button type="submit" className="auth-verify-button">
-                Verify Code
+              <button type="submit" className="auth-verify-button" disabled={verificationSubmitting}>
+                {verificationSubmitting ? "Verifying..." : "Verify Code"}
               </button>
             </form>
 
-            {avatarVerified ? <p className="auth-verified-note">Second Life avatar verification marked complete for this preview.</p> : null}
+            {avatarVerified ? <p className="auth-verified-note">Second Life avatar verification complete.</p> : null}
           </div>
         ) : null}
 

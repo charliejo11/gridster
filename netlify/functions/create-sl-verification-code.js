@@ -66,7 +66,7 @@ async function insertVerificationCode(supabaseAdmin, slUsername) {
         status: "pending",
         expires_at: expiresAt,
       })
-      .select("id, sl_username, code, status, expires_at")
+      .select("id, sl_username, status, expires_at")
       .single();
 
     if (!error) {
@@ -126,11 +126,10 @@ export const handler = async (event) => {
     return jsonResponse(200, {
       id: verification.id,
       slUsername: verification.sl_username,
-      code: verification.code,
       status: verification.status,
       expiresAt: verification.expires_at,
       message:
-        "Verification code created and stored. Second Life private-message delivery is the next bridge step.",
+        "We queued a private verification message for your Second Life avatar. Log into Second Life and check your IMs from Gridster Verification.",
     });
   } catch (error) {
     console.error("Failed to create SL verification code", error);

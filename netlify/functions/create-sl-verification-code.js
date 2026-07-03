@@ -24,6 +24,22 @@ function normalizeSlUsername(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+function getHeader(event, name) {
+  const normalizedName = name.toLowerCase();
+  const found = Object.entries(event.headers || {}).find(
+    ([key]) => key.toLowerCase() === normalizedName
+  );
+
+  return found?.[1] || "";
+}
+
+function getBearerToken(event) {
+  const authorization = getHeader(event, "Authorization");
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+
+  return match ? match[1].trim() : "";
+}
+
 function isValidSlUsername(value) {
   return (
     SL_USERNAME_PATTERN.test(value) &&
@@ -52,7 +68,7 @@ function createSupabaseAdminClient() {
   });
 }
 
-async function insertVerificationCode(supabaseAdmin, slUsername) {
+async function insertVerificationCode(supabaseAdmin, slUsername, userId) {
   let lastError = null;
 
   for (let attempt = 0; attempt < MAX_INSERT_ATTEMPTS; attempt += 1) {
@@ -65,6 +81,7 @@ async function insertVerificationCode(supabaseAdmin, slUsername) {
         code,
         status: "pending",
         expires_at: expiresAt,
+        user_id: userId,
       })
       .select("id, sl_username, status, expires_at")
       .single();
@@ -120,8 +137,24 @@ export const handler = async (event) => {
     });
   }
 
+  const accessToken = getBearerToken(event);
+
+  if (!accessToken) {
+    return jsonResponse(401, {
+      error: "Log in to Gridster before verifying your Second Life avatar.",
+    });
+  }
+
+  const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(accessToken);
+
+  if (userError || !userData?.user) {
+    return jsonResponse(401, {
+      error: "Your Gridster session has expired. Log in again and retry.",
+    });
+  }
+
   try {
-    const verification = await insertVerificationCode(supabaseAdmin, slUsername);
+    const verification = await insertVerificationCode(supabaseAdmin, slUsername, userData.user.id);
 
     return jsonResponse(200, {
       id: verification.id,

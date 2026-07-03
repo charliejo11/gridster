@@ -81,6 +81,7 @@ export const handler = async (event) => {
 
   const id = String(payload.id || "").trim();
   const status = payload.status === "failed" ? "failed" : "sent";
+  const avatarUuid = String(payload.avatarUuid || payload.avatar_uuid || "").trim();
 
   if (!id) {
     return jsonResponse(400, { error: "Missing verification id." });
@@ -94,10 +95,16 @@ export const handler = async (event) => {
     });
   }
 
+  const updatePayload = { status };
+
+  if (status === "sent" && avatarUuid) {
+    updatePayload.avatar_uuid = avatarUuid;
+  }
+
   try {
     const { data, error } = await supabaseAdmin
       .from("sl_verification_codes")
-      .update({ status })
+      .update(updatePayload)
       .eq("id", id)
       .eq("status", "pending")
       .select("id, status")

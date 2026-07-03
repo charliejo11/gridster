@@ -1,9 +1,11 @@
 // Gridster Verification sender object.
-// Drop this into an owned in-world object named "Gridster Verification".
+// Rez one official object in Second Life and name it "Gridster Verification".
+// Users do not rez this. They only enter their SL legacy username on Gridster.
 
 string GET_PENDING_URL = "https://gridster-social.netlify.app/.netlify/functions/get-pending-sl-verification-code";
 string MARK_SENT_URL = "https://gridster-social.netlify.app/.netlify/functions/mark-sl-verification-sent";
 string SENDER_SECRET = "CHANGE_ME_TO_MATCH_GRIDSTER_SL_SENDER_SECRET";
+
 float POLL_SECONDS = 30.0;
 integer DEBUG = TRUE;
 
@@ -15,8 +17,9 @@ integer isBusy = FALSE;
 string currentVerificationId = "";
 string currentSlUsername = "";
 string currentCode = "";
+string currentAvatarUuid = "";
 
-log(string message)
+debugLog(string message)
 {
     if (DEBUG)
     {
@@ -24,14 +27,14 @@ log(string message)
     }
 }
 
+integer isMissing(string value)
+{
+    return value == "" || value == JSON_INVALID;
+}
+
 integer isConfigured()
 {
-    if (llSubStringIndex(GET_PENDING_URL, "REAL-SITE") != -1)
-    {
-        return FALSE;
-    }
-
-    if (llSubStringIndex(MARK_SENT_URL, "REAL-SITE") != -1)
+    if (GET_PENDING_URL == "" || MARK_SENT_URL == "")
     {
         return FALSE;
     }
@@ -46,12 +49,13 @@ integer isConfigured()
 
 clearCurrent()
 {
+    pendingRequestId = NULL_KEY;
+    markRequestId = NULL_KEY;
+    userKeyRequestId = NULL_KEY;
     currentVerificationId = "";
     currentSlUsername = "";
     currentCode = "";
-    userKeyRequestId = NULL_KEY;
-    pendingRequestId = NULL_KEY;
-    markRequestId = NULL_KEY;
+    currentAvatarUuid = "";
     isBusy = FALSE;
 }
 
@@ -60,7 +64,7 @@ pollForVerification()
     if (!isConfigured())
     {
         llSetTimerEvent(0.0);
-        log("Set GET_PENDING_URL, MARK_SENT_URL, and SENDER_SECRET, then reset this script.");
+        debugLog("Set SENDER_SECRET to match GRIDSTER_SL_SENDER_SECRET in Netlify, then reset this script.");
         return;
     }
 
@@ -82,13 +86,23 @@ pollForVerification()
 
 markDelivery(string deliveryStatus)
 {
-    string body = llList2Json(
-        JSON_OBJECT,
-        [
-            "id", currentVerificationId,
-            "status", deliveryStatus
-        ]
-    );
+    if (currentVerificationId == "")
+    {
+        clearCurrent();
+        return;
+    }
+
+    list requestFields = [
+        "id", currentVerificationId,
+        "status", deliveryStatus
+    ];
+
+    if (deliveryStatus == "sent" && currentAvatarUuid != "")
+    {
+        requestFields += ["avatarUuid", currentAvatarUuid];
+    }
+
+    string requestBody = llList2Json(JSON_OBJECT, requestFields);
 
     markRequestId = llHTTPRequest(
         MARK_SENT_URL,
@@ -97,7 +111,7 @@ markDelivery(string deliveryStatus)
             HTTP_MIMETYPE, "application/json",
             HTTP_CUSTOM_HEADER, "X-Gridster-Sender-Secret", SENDER_SECRET
         ],
-        body
+        requestBody
     );
 }
 
@@ -105,7 +119,7 @@ default
 {
     state_entry()
     {
-        log("Sender online.");
+        debugLog("Sender online.");
         llSetTimerEvent(POLL_SECONDS);
         pollForVerification();
     }
@@ -127,7 +141,7 @@ default
     {
         if (llDetectedKey(0) == llGetOwner())
         {
-            log("Manual poll requested.");
+            debugLog("Manual poll requested.");
             pollForVerification();
         }
     }
@@ -145,7 +159,7 @@ default
 
             if (status < 200 || status >= 300)
             {
-                log("Pending-code request failed: HTTP " + (string)status + " " + body);
+                debugLog("Pending-code request failed: HTTP " + (string)status + " " + body);
                 clearCurrent();
                 return;
             }
@@ -160,14 +174,14 @@ default
             currentSlUsername = llJsonGetValue(body, ["slUsername"]);
             currentCode = llJsonGetValue(body, ["code"]);
 
-            if (currentVerificationId == "" || currentSlUsername == "" || currentCode == "")
+            if (isMissing(currentVerificationId) || isMissing(currentSlUsername) || isMissing(currentCode))
             {
-                log("Pending-code response was missing required fields.");
+                debugLog("Pending-code response was missing id, slUsername, or code.");
                 clearCurrent();
                 return;
             }
 
-            log("Resolving " + currentSlUsername + " for " + currentCode + ".");
+            debugLog("Resolving " + currentSlUsername + ".");
             userKeyRequestId = llRequestUserKey(currentSlUsername);
             return;
         }
@@ -178,11 +192,11 @@ default
 
             if (status < 200 || status >= 300)
             {
-                log("Delivery-status update failed: HTTP " + (string)status + " " + body);
+                debugLog("Delivery-status update failed: HTTP " + (string)status + " " + body);
             }
             else
             {
-                log("Delivery status updated.");
+                debugLog("Delivery status updated.");
             }
 
             clearCurrent();
@@ -200,19 +214,22 @@ default
 
         if ((key)data == NULL_KEY)
         {
-            log("Could not resolve legacy username for " + currentSlUsername + ".");
+            debugLog("Could not resolve legacy username: " + currentSlUsername + ".");
             markDelivery("failed");
             return;
         }
 
         key resolvedAvatar = (key)data;
+        currentAvatarUuid = (string)resolvedAvatar;
         string message =
             "Gridster Verification\n\n"
             + "Your Gridster verification code is: " + currentCode + "\n\n"
             + "Enter this code on Gridster to connect your Second Life avatar.";
 
         llInstantMessage(resolvedAvatar, message);
-        log("Sent verification IM to " + currentSlUsername + ".");
+        debugLog("Sent verification IM to " + currentSlUsername + ".");
+
+        // LSL does not provide an IM delivery receipt, so this marks the send attempt.
         markDelivery("sent");
     }
 }

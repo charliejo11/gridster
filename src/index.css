@@ -26,3 +26,184 @@ input {
 button {
   cursor: pointer;
 }
+
+/* ── Bling Utility Classes ────────────────────────────── */
+
+/* =========================================================
+   SEASONAL BACKGROUNDS
+========================================================= */
+
+/* Summer */
+
+.bling-bg-tropical-sunset {
+  background:
+    radial-gradient(circle at top left, rgba(255, 220, 80, 0.35), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(255, 72, 168, 0.32), transparent 35%),
+    linear-gradient(135deg, #ff8a00, #8f2cff 58%, #08182e);
+}
+
+.bling-bg-poolside-neon {
+  background:
+    radial-gradient(circle at top right, rgba(0, 229, 255, 0.38), transparent 32%),
+    radial-gradient(circle at bottom left, rgba(255, 47, 189, 0.34), transparent 34%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.08) 0 2px,
+      transparent 2px 18px
+    ),
+    #07172a;
+}
+
+/* Halloween */
+
+.bling-bg-haunted-manor {
+  background:
+    radial-gradient(circle at top, rgba(128, 0, 255, 0.25), transparent 35%),
+    linear-gradient(135deg, #16111f, #040406);
+}
+
+.bling-bg-blood-moon {
+  background:
+    radial-gradient(circle at center, rgba(255, 50, 50, 0.32), transparent 28%),
+    radial-gradient(circle at center, rgba(255, 50, 50, 0.18), transparent 40%),
+    linear-gradient(135deg, #22070c, #070203);
+}
+
+/* Winter */
+
+.bling-bg-frozen-glass {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.32), transparent 18%),
+    linear-gradient(45deg, transparent 38%, rgba(180, 240, 255, 0.28), transparent 62%),
+    linear-gradient(135deg, #dff8ff, #426b8f 52%, #071526);
+}
+
+.bling-bg-northern-lights {
+  background:
+    radial-gradient(circle at top left, rgba(86, 255, 194, 0.38), transparent 30%),
+    radial-gradient(circle at top right, rgba(144, 75, 255, 0.36), transparent 32%),
+    linear-gradient(135deg, #061324, #07101f 55%, #02040a);
+}
+
+/* Valentine */
+
+.bling-bg-velvet-hearts {
+  background:
+    radial-gradient(circle at top left, rgba(255, 175, 210, 0.34), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(255, 0, 96, 0.35), transparent 34%),
+    linear-gradient(135deg, #4b0716, #18020a);
+}
+
+.bling-bg-broken-heart {
+  background:
+    linear-gradient(135deg, rgba(255, 47, 93, 0.32), transparent 35%),
+    linear-gradient(225deg, rgba(120, 0, 255, 0.26), transparent 36%),
+    #10030a;
+}
+
+/* =========================================================
+   SEASONAL FRAMES
+========================================================= */
+
+/* Summer */
+
+.bling-frame-shell {
+  border: 8px double #ffe0b5;
+  box-shadow:
+    inset 0 0 18px rgba(255, 228, 180, 0.32),
+    0 0 28px rgba(0, 229, 255, 0.28);
+}
+
+/* Halloween */
+
+.bling-frame-black-lace-coffin {
+  border: 8px solid #2a0f30;
+  box-shadow:
+    inset 0 0 22px rgba(255, 255, 255, 0.08),
+    0 0 28px rgba(144, 0, 255, 0.28);
+}
+
+/* Winter */
+
+.bling-frame-snowflake {
+  border: 8px solid rgba(220, 250, 255, 0.95);
+  box-shadow:
+    inset 0 0 22px rgba(255, 255, 255, 0.35),
+    0 0 32px rgba(160, 235, 255, 0.45);
+}
+
+/* Valentine */
+
+.bling-frame-cupid {
+  border: 8px double #ff77aa;
+  box-shadow:
+    inset 0 0 20px rgba(255, 119, 170, 0.35),
+    0 0 30px rgba(255, 47, 139, 0.42);
+}
+
+/* =========================================================
+   SEASONAL GLOWIES
+========================================================= */
+
+/* Summer */
+
+.bling-glow-sun-kissed {
+  box-shadow:
+    inset 0 0 60px rgba(255, 190, 65, 0.38),
+    0 0 45px rgba(255, 190, 65, 0.52);
+}
+
+/* Halloween */
+
+.bling-glow-ghost-flame {
+  box-shadow:
+    inset 0 0 60px rgba(120, 255, 220, 0.25),
+    0 0 45px rgba(120, 255, 220, 0.42);
+}
+
+/* Winter */
+
+.bling-glow-frost {
+  box-shadow:
+    inset 0 0 60px rgba(180, 240, 255, 0.32),
+    0 0 45px rgba(180, 240, 255, 0.52);
+}
+
+/* Valentine */
+
+.bling-glow-rose {
+  box-shadow:
+    inset 0 0 60px rgba(255, 47, 139, 0.32),
+    0 0 45px rgba(255, 47, 139, 0.5);
+}
+
+/* =========================================================
+   SEASONAL BADGES
+========================================================= */
+
+.bling-badge-beach-gremlin .bling-preview-badge,
+.profile-badge.bling-badge-beach-gremlin {
+  background: linear-gradient(135deg, #00e5ff, #ffe56b, #ff4fd8);
+}
+
+.bling-badge-witch-please .bling-preview-badge,
+.profile-badge.bling-badge-witch-please {
+  background: linear-gradient(135deg, #7c4dff, #39ff14);
+}
+
+.bling-badge-certified-creature .bling-preview-badge,
+.profile-badge.bling-badge-certified-creature {
+  background: linear-gradient(135deg, #111111, #7c4dff, #ff4fd8);
+  color: white;
+}
+
+.bling-badge-mistletoe-menace .bling-preview-badge,
+.profile-badge.bling-badge-mistletoe-menace {
+  background: linear-gradient(135deg, #0b7a3b, #e7334f, #ffe56b);
+}
+
+.bling-badge-red-flag-cute .bling-preview-badge,
+.profile-badge.bling-badge-red-flag-cute {
+  background: linear-gradient(135deg, #ff003c, #ff77aa);
+  color: white;
+}

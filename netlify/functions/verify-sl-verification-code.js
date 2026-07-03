@@ -84,7 +84,7 @@ export const handler = async (event) => {
   try {
     const { data: verification, error: fetchError } = await supabaseAdmin
       .from("sl_verification_codes")
-      .select("id, code, status, expires_at")
+      .select("id, code, status, expires_at, user_id, avatar_uuid")
       .eq("id", id)
       .maybeSingle();
 
@@ -135,6 +135,24 @@ export const handler = async (event) => {
 
     if (updateError) {
       throw updateError;
+    }
+
+    if (verification.user_id) {
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .upsert(
+          {
+            user_id: verification.user_id,
+            sl_avatar_uuid: verification.avatar_uuid || null,
+            sl_verified: true,
+            sl_verified_at: verified.verified_at,
+          },
+          { onConflict: "user_id" }
+        );
+
+      if (profileError) {
+        console.error("Failed to update profile after SL verification", profileError);
+      }
     }
 
     return jsonResponse(200, {

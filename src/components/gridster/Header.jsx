@@ -63,33 +63,35 @@ function Header({
         </div>
       </div>
 
-      <nav className="topnav">
-        {[
-          "Home",
-          "Search",
-          "Explore",
-          "Events",
-          "Groups",
-          "Messages",
-          "Profile",
-          "Settings",
-        ].map((item) => (
-          <a
-            key={item}
-            href={`#${item.toLowerCase()}`}
-            className={item === activePage ? "active" : ""}
-            aria-current={item === activePage ? "page" : undefined}
-            onClick={(event) => handleNavClick(event, item)}
-          >
-            {item}
-          </a>
-        ))}
-      </nav>
+      <div className="topbar-center">
+        <nav className="topnav">
+          {[
+            "Home",
+            "Search",
+            "Explore",
+            "Events",
+            "Groups",
+            "Messages",
+            "Profile",
+            "Settings",
+          ].map((item) => (
+            <a
+              key={item}
+              href={`#${item.toLowerCase()}`}
+              className={item === activePage ? "active" : ""}
+              aria-current={item === activePage ? "page" : undefined}
+              onClick={(event) => handleNavClick(event, item)}
+            >
+              {item}
+            </a>
+          ))}
+        </nav>
 
-      <label className="search-box">
-        <span>⌕</span>
-        <input placeholder="Search people, groups, events, sims..." />
-      </label>
+        <label className="search-box">
+          <span>⌕</span>
+          <input placeholder="Search people, groups, events, sims..." />
+        </label>
+      </div>
 
       <div className="top-actions">
         <button

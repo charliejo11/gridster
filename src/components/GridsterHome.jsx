@@ -48,8 +48,6 @@ import {
   gridsterSpotlightAwardRules,
   gridsterVerificationTypes,
   gridsterVerificationRequirements,
-  gridsterBlingBoostFields,
-  gridsterBlingBoostPackages,
   gridsterCreateCommunityHubFields,
   gridsterCreateCommunityHubSections,
   gridsterCreateBloggerPostFields,
@@ -57,7 +55,6 @@ import {
   gridsterCreateStorePostFields,
   gridsterCreateEventFields,
   gridsterSettingsCards,
-  gridsterBlingShopItems,
   gridsterCreatorDashboardStats,
   gridsterVenueTools,
   gridsterStoreToolFeatures,
@@ -77,6 +74,8 @@ import FeedPost from "./gridster/FeedPost";
 import PageHeader from "./gridster/PageHeader";
 import SectionHeader from "./gridster/SectionHeader";
 import AuthPage from "./gridster/AuthPage";
+import ProfileSetup from "./gridster/ProfileSetup";
+import BlingDepot from "./gridster/BlingDepot";
 import "./GridsterHome.css";
 
 const GRIDSTER_STORAGE_KEY = "gridster-preferences-v1";
@@ -90,6 +89,20 @@ const DEFAULT_GRIDSTER_STORAGE = {
   followedCreators: {},
   joinedGroups: {},
 };
+const GRIDSTER_PAGE_PATHS = {
+  BlingBoost: "/bling-depot",
+};
+const GRIDSTER_PATH_PAGES = Object.fromEntries(
+  Object.entries(GRIDSTER_PAGE_PATHS).map(([page, path]) => [path, page])
+);
+
+function getGridsterPageFromPath() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return GRIDSTER_PATH_PAGES[window.location.pathname] ?? null;
+}
 
 function readGridsterStorage() {
   if (typeof window === "undefined") {
@@ -182,8 +195,9 @@ function getTeleportButtonProps(destinationName, slurlOverride) {
 }
 
 function GridsterHome() {
-  const [activePage, setActivePage] = usePersistedGridsterValue("activePage", "Home");
-  const [showLanding, setShowLanding] = usePersistedGridsterValue("showLanding", true);
+  const routePage = getGridsterPageFromPath();
+  const [activePage, setActivePage] = usePersistedGridsterValue("activePage", routePage ?? "Home");
+  const [showLanding, setShowLanding] = usePersistedGridsterValue("showLanding", routePage ? false : true);
   const [authMode, setAuthMode] = useState("login");
   const [toast, setToast] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -194,6 +208,50 @@ function GridsterHome() {
   const toastIdRef = useRef(0);
 
   const activeThemeLabel = gridsterThemeOptions.find(([, themeClass]) => themeClass === theme)?.[0] ?? "Dark Neon";
+
+  useEffect(() => {
+    if (!routePage) {
+      return;
+    }
+
+    setActivePage(routePage);
+    setShowLanding(false);
+  }, [routePage, setActivePage, setShowLanding]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const handlePopState = () => {
+      const nextRoutePage = getGridsterPageFromPath();
+
+      if (nextRoutePage) {
+        setActivePage(nextRoutePage);
+        setShowLanding(false);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [setActivePage, setShowLanding]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const nextPath = !showLanding && GRIDSTER_PAGE_PATHS[activePage]
+      ? GRIDSTER_PAGE_PATHS[activePage]
+      : GRIDSTER_PATH_PAGES[window.location.pathname]
+        ? "/"
+        : null;
+
+    if (nextPath && window.location.pathname !== nextPath) {
+      window.history.pushState({}, "", nextPath);
+    }
+  }, [activePage, showLanding]);
 
   const showToast = (message) => {
     window.clearTimeout(toastTimerRef.current);
@@ -306,6 +364,7 @@ function GridsterHome() {
           selectedProfileName={selectedProfileName}
           setActivePage={setActivePage}
           onOpenProfile={openProfile}
+          onAuthOpen={openAuth}
           showToast={showToast}
         />
       </DashboardLayout>
@@ -322,7 +381,7 @@ function GridsterHome() {
   );
 }
 
-function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, setActivePage, onOpenProfile, showToast }) {
+function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, setActivePage, onOpenProfile, onAuthOpen, showToast }) {
   if (activePage === "Home") {
     return (
       <>
@@ -416,10 +475,10 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   if (activePage === "BlingBoost") {
     return (
       <PageShell
-        title="Bling Boost"
-        subtitle="Use Bling Bits to feature your posts, events, stores, venues, and profiles across Gridster discovery."
+        title="Bling Depot"
+        subtitle="Spend Bling Bits on profile glowies, backgrounds, stickers, badges, and boosts."
       >
-        <BlingBoostPage />
+        <BlingDepot onAuthOpen={() => onAuthOpen?.("login")} showToast={showToast} />
       </PageShell>
     );
   }
@@ -593,20 +652,19 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
 
   if (activePage === "Profile") {
     return (
-      <PageShell title="Profile" subtitle="Blogger, photographer, creator, and nightlife explorer across the grid.">
-        <ProfilePageContent />
+      <PageShell title="Profile" subtitle="Create, edit, and preview your Gridster resident identity.">
+        <ProfileSetup onAuthOpen={() => onAuthOpen?.("login")} showToast={showToast} />
         <CreatorDashboard />
         <BloggerNetwork />
         <StoreTools />
         <BlingBits />
-        <BlingBitsShop />
         <ProfileFlairCard variant="wide" />
       </PageShell>
     );
   }
 
   if (activePage === "Auth") {
-    return <AuthPage initialMode={authMode} />;
+    return <AuthPage initialMode={authMode} onProfileOpen={() => setActivePage("Profile")} />;
   }
 
   if (activePage === "Settings") {
@@ -615,7 +673,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Settings"
         subtitle="Manage profile, discovery, ratings, privacy, safety, and Bling Bits."
       >
-        <SettingsPage />
+        <SettingsPage setActivePage={setActivePage} />
       </PageShell>
     );
   }
@@ -1228,57 +1286,6 @@ function VerificationCenterPage() {
   );
 }
 
-function BlingBoostPage() {
-  return (
-    <section className="bling-boost-page">
-      <div className="bling-boost-card glass-card">
-        <div className="bling-boost-form-grid">
-          <div className="bling-boost-fields">
-            {gridsterBlingBoostFields.map(([label, value]) => (
-              <label className="bling-boost-field" key={label}>
-                <span>{label}</span>
-                <input value={value} readOnly />
-              </label>
-            ))}
-          </div>
-
-          <aside className="bling-boost-preview-panel">
-            <span>Featured on Gridster</span>
-            <h3>BOOST PREVIEW</h3>
-            <p>Sample cost</p>
-            <strong>250 Bling Bits</strong>
-          </aside>
-        </div>
-
-        <section className="boost-packages-card">
-          <SectionHeader className="boost-packages-heading" eyebrow="Bling Packages" title="Choose Your Boost" />
-          <div className="boost-package-grid">
-            {gridsterBlingBoostPackages.map(([icon, name, duration, cost]) => (
-              <article className="boost-package-tile" key={name}>
-                <div className="boost-package-icon">{icon}</div>
-                <h4>{name}</h4>
-                <p>{duration}</p>
-                <span className="boost-cost-pill">{cost}</span>
-                <button>Select</button>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <div className="bling-boost-actions">
-          <button>Save Boost</button>
-          <button>Preview Boost</button>
-          <button className="launch-boost-button">Launch Boost</button>
-        </div>
-
-        <p className="bling-boost-helper-note">
-          Boosts should respect content ratings, honest SLURLs, creator credits, and community rules.
-        </p>
-      </div>
-    </section>
-  );
-}
-
 function CreateCommunityHubPage() {
   return (
     <section className="create-community-page">
@@ -1447,7 +1454,7 @@ function CreateEventPage() {
   );
 }
 
-function SettingsPage() {
+function SettingsPage({ setActivePage }) {
   return (
     <div className="settings-grid">
       {gridsterSettingsCards.map(({ icon, title, desc, options }) => (
@@ -1469,7 +1476,9 @@ function SettingsPage() {
             ))}
           </ul>
 
-          <button>Manage</button>
+          <button onClick={() => title === "Profile Settings" ? setActivePage?.("Profile") : undefined}>
+            {title === "Profile Settings" ? "Edit Profile" : "Manage"}
+          </button>
         </article>
       ))}
     </div>
@@ -1794,34 +1803,6 @@ function BlingBits() {
         <div className="bling-progress-track">
           <div className="bling-progress-fill"></div>
         </div>
-      </div>
-    </section>
-  );
-}
-
-function BlingBitsShop() {
-  return (
-    <section className="bling-shop-card glass-card">
-      <div className="bling-shop-header">
-        <div>
-          <span>Bling Bits Market</span>
-          <h2>Bling Bits Shop</h2>
-          <p>Spend Bling Bits on boosts, profile flair, featured spots, and creator perks.</p>
-        </div>
-      </div>
-
-      <div className="shop-item-grid">
-        {gridsterBlingShopItems.map(([icon, title, desc, cost]) => (
-          <article className="shop-item-tile" key={title}>
-            <span className="shop-item-icon">{icon}</span>
-            <h3>{title}</h3>
-            <p>{desc}</p>
-            <div className="shop-item-footer">
-              <span className="cost-pill">{cost}</span>
-              <button>Unlock</button>
-            </div>
-          </article>
-        ))}
       </div>
     </section>
   );

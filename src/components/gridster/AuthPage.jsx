@@ -5,7 +5,7 @@ function getAuthMode(mode) {
   return mode === "signup" ? "signup" : "login";
 }
 
-function AuthPage({ initialMode = "login" }) {
+function AuthPage({ initialMode = "login", onProfileOpen }) {
   const [mode, setMode] = useState(() => getAuthMode(initialMode));
   const [slUsername, setSlUsername] = useState("");
   const [verificationRequestId, setVerificationRequestId] = useState("");
@@ -52,10 +52,18 @@ function AuthPage({ initialMode = "login" }) {
     setMessage("");
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error("Log in to Gridster before verifying your Second Life avatar.");
+      }
+
       const response = await fetch("/.netlify/functions/create-sl-verification-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ slUsername }),
       });
@@ -174,9 +182,80 @@ function AuthPage({ initialMode = "login" }) {
             <h3>Logged In</h3>
           </div>
           <p className="auth-user-email">{user.email}</p>
-          <button className="auth-logout-button" onClick={handleLogout} disabled={loading}>
-            {loading ? "Signing out..." : "Log Out"}
-          </button>
+          <div className="auth-actions">
+            <button className="auth-signup-button" type="button" onClick={onProfileOpen} disabled={loading}>
+              Set Up Profile
+            </button>
+            <button className="auth-logout-button" type="button" onClick={handleLogout} disabled={loading}>
+              {loading ? "Signing out..." : "Log Out"}
+            </button>
+          </div>
+        </div>
+
+        <div className="auth-card glass-card auth-verification-card">
+          <div className="auth-card-heading">
+            <span>Gridster Account</span>
+            <h3>Verify your Second Life avatar</h3>
+            <p>
+              Enter your SL legacy username and we'll send a one-time verification code to your
+              avatar. Verifying unlocks your Verified Resident badge.
+            </p>
+          </div>
+
+          {avatarVerified ? <p className="auth-verified-badge">Verified Resident</p> : null}
+
+          <form className="auth-form auth-sl-form" onSubmit={handleGenerateCode}>
+            <label className="auth-field">
+              <span>Second Life legacy username</span>
+              <input
+                className="auth-input"
+                type="text"
+                value={slUsername}
+                onChange={(e) => setSlUsername(e.target.value)}
+                placeholder="example: charliejo11.resident"
+                disabled={verificationLoading}
+                required
+              />
+            </label>
+
+            <button type="submit" className="auth-generate-button" disabled={verificationLoading}>
+              {verificationLoading ? "Creating Code..." : "Send Code to Second Life"}
+            </button>
+          </form>
+
+          {verificationError ? <p className="auth-message auth-error-message" role="alert">{verificationError}</p> : null}
+
+          {verificationRequestId ? (
+            <div className="auth-verification-panel" aria-live="polite">
+              <div className="auth-code-row">
+                <span>Verification request</span>
+                <strong>{avatarVerified ? "Verified" : "Queued"}</strong>
+              </div>
+
+              {verificationMessage ? <p className="auth-im-note">{verificationMessage}</p> : null}
+
+              <form className="auth-code-form" onSubmit={handleVerifyCode}>
+                <label className="auth-field">
+                  <span>Enter verification code</span>
+                  <input
+                    className="auth-input"
+                    type="text"
+                    value={enteredVerificationCode}
+                    onChange={(e) => setEnteredVerificationCode(e.target.value.toUpperCase())}
+                    placeholder="GRID-4829"
+                    disabled={verificationSubmitting}
+                    required
+                  />
+                </label>
+
+                <button type="submit" className="auth-verify-button" disabled={verificationSubmitting}>
+                  {verificationSubmitting ? "Verifying..." : "Verify Code"}
+                </button>
+              </form>
+
+              {avatarVerified ? <p className="auth-verified-note">Second Life avatar verification complete.</p> : null}
+            </div>
+          ) : null}
         </div>
       </section>
     );
@@ -184,77 +263,11 @@ function AuthPage({ initialMode = "login" }) {
 
   return (
     <section className="auth-page">
-      <div className="auth-card glass-card auth-verification-card">
-        <div className="auth-card-heading">
-          <span>Gridster Account</span>
-          <h3>Verify your Second Life avatar</h3>
-          <p>
-            Gridster is for Second Life residents. Start by entering your SL legacy username.
-            We'll send a one-time verification code to your avatar.
-          </p>
-        </div>
-
-        <form className="auth-form auth-sl-form" onSubmit={handleGenerateCode}>
-          <label className="auth-field">
-            <span>Second Life legacy username</span>
-            <input
-              className="auth-input"
-              type="text"
-              value={slUsername}
-              onChange={(e) => setSlUsername(e.target.value)}
-              placeholder="example: charliejo11.resident"
-              disabled={verificationLoading}
-              required
-            />
-          </label>
-
-          <button type="submit" className="auth-generate-button" disabled={verificationLoading}>
-            {verificationLoading ? "Creating Code..." : "Send Code to Second Life"}
-          </button>
-        </form>
-
-        {verificationError ? <p className="auth-message auth-error-message" role="alert">{verificationError}</p> : null}
-
-        {verificationRequestId ? (
-          <div className="auth-verification-panel" aria-live="polite">
-            <div className="auth-code-row">
-              <span>Verification request</span>
-              <strong>{avatarVerified ? "Verified" : "Queued"}</strong>
-            </div>
-
-            {verificationMessage ? <p className="auth-im-note">{verificationMessage}</p> : null}
-
-            <form className="auth-code-form" onSubmit={handleVerifyCode}>
-              <label className="auth-field">
-                <span>Enter verification code</span>
-                <input
-                  className="auth-input"
-                  type="text"
-                  value={enteredVerificationCode}
-                  onChange={(e) => setEnteredVerificationCode(e.target.value.toUpperCase())}
-                  placeholder="GRID-4829"
-                  disabled={verificationSubmitting}
-                  required
-                />
-              </label>
-
-              <button type="submit" className="auth-verify-button" disabled={verificationSubmitting}>
-                {verificationSubmitting ? "Verifying..." : "Verify Code"}
-              </button>
-            </form>
-
-            {avatarVerified ? <p className="auth-verified-note">Second Life avatar verification complete.</p> : null}
-          </div>
-        ) : null}
-
-        <p className="auth-next-step">After SL verification, you'll finish account setup with email and password.</p>
-      </div>
-
       <div className="auth-card glass-card auth-login-card">
         <div className="auth-card-heading">
-          <span>Later step</span>
-          <h3>Create your Gridster login</h3>
-          <p>After your Second Life avatar is verified, you'll create your Gridster login.</p>
+          <span>Gridster Account</span>
+          <h3>Create your Gridster account first.</h3>
+          <p>After you log in, you can verify your Second Life avatar and unlock your Verified Resident badge.</p>
         </div>
 
         <form className="auth-form" onSubmit={isSignupMode ? handleSignup : handleLogin}>

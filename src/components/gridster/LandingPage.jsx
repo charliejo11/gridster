@@ -1,3 +1,5 @@
+const GRIDSTER_PLUS_ARTWORK = "/gridster-logo.png";
+
 function LandingPage({ onEnter, onNavigate }) {
   const features = [
     ["Social Feed", "Post moments, photos, blogs, events, outfits, and SLURLs."],
@@ -160,10 +162,16 @@ function LandingPage({ onEnter, onNavigate }) {
       </section>
 
       <section className="landing-plus-panel glass-card">
-        <div className="landing-plus-heading">
-          <span>Premium Preview</span>
-          <h3>Gridster Plus</h3>
-          <p>Extra sparkle for creators, venues, stores, and residents who want more reach across the grid.</p>
+        <div className="landing-plus-intro">
+          <div className="landing-plus-heading">
+            <span>Premium Preview</span>
+            <h3>Gridster Plus</h3>
+            <p>Extra sparkle for creators, venues, stores, and residents who want more reach across the grid.</p>
+          </div>
+
+          <div className="landing-plus-art">
+            <img src={GRIDSTER_PLUS_ARTWORK} alt="Gridster logo" />
+          </div>
         </div>
 
         <div className="landing-pricing-grid">

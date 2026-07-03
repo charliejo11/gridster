@@ -438,9 +438,36 @@ button {
     rgba(12, 14, 30, 0.84);
 }
 
+.landing-plus-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 260px);
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
 .landing-plus-heading {
   max-width: 720px;
-  margin-bottom: 16px;
+}
+
+.landing-plus-art {
+  justify-self: end;
+  width: min(240px, 100%);
+  padding: 14px;
+  border: 1px solid rgba(255, 79, 216, 0.2);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 24% 18%, rgba(255, 79, 216, 0.2), transparent 34%),
+    radial-gradient(circle at 80% 86%, rgba(22, 140, 255, 0.16), transparent 34%),
+    rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035), 0 0 28px rgba(215, 44, 255, 0.12);
+}
+
+.landing-plus-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 18px 26px rgba(7, 9, 24, 0.4)) drop-shadow(0 0 18px rgba(215, 44, 255, 0.26));
 }
 
 .landing-plus-heading span {
@@ -1205,6 +1232,7 @@ button {
   position: relative;
   z-index: 9000;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
@@ -1224,11 +1252,12 @@ button {
   display: flex;
   align-items: center;
   gap: 12px;
+  order: 1;
 }
 
 .brand-logo {
-  width: 58px;
-  height: 58px;
+  width: 66px;
+  height: 66px;
   object-fit: contain;
   display: block;
   border-radius: 12px;
@@ -1251,6 +1280,15 @@ button {
   letter-spacing: 2px;
   color: #aaa7c8;
   text-transform: uppercase;
+}
+
+.topbar-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  order: 3;
+  flex-basis: 100%;
 }
 
 .topnav {
@@ -1317,6 +1355,54 @@ button {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
+  order: 2;
+}
+
+@media (min-width: 1980px) {
+  .topbar {
+    flex-wrap: nowrap;
+  }
+
+  .brand,
+  .topbar-center,
+  .top-actions {
+    order: 0;
+  }
+
+  .topbar-center {
+    flex-basis: auto;
+  }
+}
+
+@media (max-width: 1099px) {
+  .topbar {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+
+  .brand,
+  .topbar-center,
+  .top-actions {
+    order: 0;
+  }
+
+  .topbar-center {
+    flex-basis: auto;
+    flex-direction: column;
+  }
+
+  .topnav {
+    justify-content: center;
+  }
+
+  .search-box {
+    min-width: 0;
+  }
+
+  .top-actions {
+    justify-content: space-between;
+  }
 }
 
 .theme-menu {
@@ -2542,7 +2628,173 @@ button {
 }
 
 .premium-card {
+  position: relative;
+  overflow: hidden;
   text-align: center;
+}
+
+.gridster-plus-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+}
+
+.bling-depot-big-card {
+  min-height: 370px;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 26px 16px 16px !important;
+  border: 1px solid rgba(184, 68, 255, 0.65);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top, rgba(173, 68, 255, 0.22), transparent 34%),
+    linear-gradient(180deg, #111024 0%, #080817 100%);
+  color: #ffffff;
+  text-align: center;
+  box-shadow:
+    0 0 24px rgba(143, 54, 255, 0.18),
+    inset 0 0 22px rgba(255, 255, 255, 0.03);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.bling-depot-big-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 79, 216, 0.9);
+  box-shadow:
+    0 0 34px rgba(255, 79, 216, 0.24),
+    0 0 48px rgba(124, 77, 255, 0.18);
+}
+
+.bling-big-preview {
+  width: 132px;
+  height: 132px;
+  margin-bottom: 18px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 79, 216, 0.28);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at bottom, rgba(124, 77, 255, 0.32), transparent 42%),
+    rgba(255, 255, 255, 0.035);
+  box-shadow:
+    inset 0 0 26px rgba(255, 255, 255, 0.04),
+    0 0 26px rgba(124, 77, 255, 0.18);
+}
+
+.bling-card-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  object-fit: cover;
+  filter: drop-shadow(0 12px 18px rgba(3, 7, 20, 0.45)) drop-shadow(0 0 16px rgba(255, 79, 216, 0.26));
+}
+
+.bling-stack-icon {
+  position: relative;
+  width: 86px;
+  height: 72px;
+}
+
+.bling-layer {
+  position: absolute;
+  left: 8px;
+  width: 70px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  transform: rotateX(58deg) rotateZ(-30deg);
+}
+
+.bling-layer.layer-top {
+  top: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+}
+
+.bling-layer.layer-bottom {
+  top: 28px;
+  background: linear-gradient(135deg, rgba(126, 54, 255, 0.75), rgba(255, 79, 216, 0.25));
+  box-shadow: 0 10px 24px rgba(124, 77, 255, 0.5);
+}
+
+.bling-glow-strip {
+  position: absolute;
+  left: 16px;
+  bottom: 7px;
+  width: 58px;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7c4dff, #ff4fd8);
+  filter: blur(4px);
+}
+
+.bling-crown {
+  margin-bottom: 10px;
+  font-size: 24px;
+  filter: drop-shadow(0 0 10px rgba(255, 229, 107, 0.6));
+}
+
+.bling-depot-big-card h3 {
+  margin: 0 0 14px;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.bling-depot-big-card p {
+  max-width: 230px;
+  margin: 0 auto 12px;
+  color: rgba(235, 230, 255, 0.78);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.bling-depot-big-card small {
+  max-width: 230px;
+  margin-bottom: 20px;
+  color: #aafcff;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.bling-open-button {
+  display: inline-flex;
+  width: calc(100% - 16px);
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  border: 0;
+  border-radius: 999px;
+  padding: 13px 18px;
+  background: linear-gradient(90deg, #2c91ff, #943dff);
+  color: #ffffff;
+  font-weight: 900;
+  box-shadow: 0 0 24px rgba(124, 77, 255, 0.25);
+}
+
+.premium-card-art {
+  width: min(132px, 78%);
+  margin: 0 auto 8px;
+  padding: 8px;
+  border: 1px solid rgba(255, 79, 216, 0.18);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255, 79, 216, 0.18), transparent 34%),
+    radial-gradient(circle at 78% 82%, rgba(22, 140, 255, 0.14), transparent 34%),
+    rgba(255, 255, 255, 0.035);
+}
+
+.premium-card-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 12px 18px rgba(3, 7, 20, 0.45)) drop-shadow(0 0 14px rgba(215, 44, 255, 0.22));
 }
 
 .crown {
@@ -2560,13 +2812,24 @@ button {
   line-height: 1.5;
 }
 
+.premium-card-link,
 .premium-card button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin-top: 12px;
   border: none;
   border-radius: 999px;
   padding: 10px 14px;
   color: white;
   background: linear-gradient(135deg, #168cff, #8d35ff);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.premium-card button {
+  width: 100%;
 }
 
 .create-post {
@@ -5983,6 +6246,563 @@ button {
   gap: 12px;
 }
 
+.bling-depot-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bling-depot-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 310px);
+  gap: 20px;
+  align-items: center;
+  padding: 22px !important;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(255, 79, 216, 0.2), transparent 34%),
+    radial-gradient(circle at 82% 18%, rgba(22, 140, 255, 0.18), transparent 32%),
+    radial-gradient(circle at 56% 100%, rgba(141, 53, 255, 0.14), transparent 38%),
+    rgba(11, 13, 29, 0.94);
+  border-color: rgba(255, 79, 216, 0.36);
+  box-shadow:
+    0 0 30px rgba(215, 44, 255, 0.16),
+    0 0 34px rgba(22, 140, 255, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+.bling-depot-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.bling-depot-copy span {
+  display: inline-flex;
+  margin-bottom: 8px;
+  color: #7ed0ff;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.bling-depot-copy h2 {
+  max-width: 600px;
+  margin: 0;
+  font-size: clamp(28px, 4vw, 48px);
+  line-height: 1.04;
+  background: linear-gradient(90deg, #ffffff 0%, #ff4fd8 46%, #168cff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bling-depot-copy p {
+  max-width: 620px;
+  margin: 12px 0 0;
+  color: #d8d2ea;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.bling-depot-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.bling-depot-tags span {
+  min-height: 30px;
+  margin: 0;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 79, 216, 0.24);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(215, 44, 255, 0.16), rgba(22, 140, 255, 0.12));
+  color: #f3e7ff;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.bling-depot-art-shell {
+  position: relative;
+  z-index: 1;
+  justify-self: center;
+  width: min(292px, 100%);
+  padding: 16px;
+  border: 1px solid rgba(255, 79, 216, 0.24);
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 79, 216, 0.24), transparent 34%),
+    radial-gradient(circle at 70% 82%, rgba(22, 140, 255, 0.2), transparent 36%),
+    rgba(255, 255, 255, 0.045);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035), 0 0 30px rgba(215, 44, 255, 0.14);
+}
+
+.bling-depot-art-shell img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 18px 30px rgba(3, 6, 18, 0.5)) drop-shadow(0 0 22px rgba(215, 44, 255, 0.3));
+}
+
+.bling-depot-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px !important;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 18% 10%, rgba(22, 140, 255, 0.12), transparent 34%),
+    rgba(12, 14, 30, 0.92);
+}
+
+.bling-depot-toolbar div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bling-depot-toolbar span {
+  color: #d8b7ff;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.bling-depot-toolbar strong {
+  color: #ffffff;
+  font-size: clamp(20px, 4vw, 30px);
+  line-height: 1.1;
+}
+
+.bling-depot-toolbar button,
+.bling-depot-item-actions button {
+  min-height: 38px;
+  border: 1px solid rgba(22, 140, 255, 0.44);
+  border-radius: 999px;
+  padding: 9px 13px;
+  background: linear-gradient(135deg, rgba(215, 44, 255, 0.72), rgba(22, 140, 255, 0.66));
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 0 18px rgba(215, 44, 255, 0.16), 0 0 20px rgba(22, 140, 255, 0.12);
+  transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
+}
+
+.bling-depot-toolbar button:hover,
+.bling-depot-item-actions button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.bling-depot-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bling-depot-filters button {
+  min-height: 36px;
+  border: 1px solid rgba(255, 79, 216, 0.22);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.045);
+  color: #dcd6ef;
+  font-size: 12px;
+  font-weight: 800;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.bling-depot-filters button:hover,
+.bling-depot-filters button.active {
+  transform: translateY(-1px);
+  border-color: rgba(22, 140, 255, 0.4);
+  background: linear-gradient(135deg, rgba(215, 44, 255, 0.16), rgba(22, 140, 255, 0.12));
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(22, 140, 255, 0.12);
+}
+
+.bling-depot-message {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.bling-depot-error {
+  border: 1px solid rgba(255, 79, 216, 0.3);
+  background: rgba(255, 79, 216, 0.08);
+  color: #ffb7ef;
+}
+
+.bling-depot-success {
+  border: 1px solid rgba(93, 255, 214, 0.28);
+  background: rgba(93, 255, 214, 0.08);
+  color: #a9fff2;
+}
+
+.bling-depot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.bling-depot-item-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  min-height: 390px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 15px !important;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 79, 216, 0.12), transparent 30%),
+    radial-gradient(circle at 86% 18%, rgba(22, 140, 255, 0.1), transparent 34%),
+    rgba(12, 14, 30, 0.94);
+  border-color: rgba(157, 64, 255, 0.32);
+}
+
+.bling-depot-item-preview {
+  position: relative;
+  display: grid;
+  min-height: 132px;
+  place-items: center;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255, 79, 216, 0.16), transparent 34%),
+    radial-gradient(circle at 78% 82%, rgba(22, 140, 255, 0.14), transparent 34%),
+    rgba(255, 255, 255, 0.04);
+}
+
+.bling-depot-preview-fill {
+  display: grid;
+  width: min(150px, 100%);
+  min-height: 92px;
+  place-items: center;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(215, 44, 255, 0.28), rgba(22, 140, 255, 0.18));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 14px 24px rgba(4, 8, 28, 0.24);
+}
+
+.bling-depot-preview-fill span {
+  font-size: 30px;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.34);
+}
+
+.bling-depot-preview-fill img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.bling-depot-preview-fill.bling-bg-midnight-lux {
+  background:
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.12), transparent 30%),
+    linear-gradient(135deg, #151527, #050508);
+}
+
+.bling-depot-preview-fill.bling-bg-pink-neon {
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.28), transparent 20%),
+    linear-gradient(135deg, #ff2fbd, #3b0a45);
+}
+
+.bling-depot-preview-fill.bling-bg-cyber-club,
+.bling-depot-preview-fill.bling-bg-cyber-club-wall {
+  background:
+    linear-gradient(135deg, rgba(255, 0, 200, 0.35), transparent 35%),
+    linear-gradient(225deg, rgba(0, 229, 255, 0.32), transparent 35%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.06) 0 1px,
+      transparent 1px 16px
+    ),
+    #080817;
+}
+
+.bling-depot-preview-fill.bling-bg-goth-castle,
+.bling-depot-preview-fill.bling-bg-goth-castle-mood {
+  background:
+    radial-gradient(circle at top, rgba(150, 0, 255, 0.22), transparent 35%),
+    linear-gradient(135deg, #19101f, #050406);
+}
+
+.bling-depot-preview-fill.bling-bg-black-marble,
+.bling-depot-preview-fill.bling-bg-luxury-black-marble {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 18%),
+    linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.08), transparent 58%),
+    #050507;
+}
+
+.bling-depot-preview-fill.bling-bg-haunted-manor {
+  background:
+    radial-gradient(circle at top, rgba(128, 0, 255, 0.25), transparent 35%),
+    linear-gradient(135deg, #16111f, #040406);
+}
+
+.bling-depot-preview-fill.bling-bg-blood-moon {
+  background:
+    radial-gradient(circle at center, rgba(255, 50, 50, 0.28), transparent 30%),
+    linear-gradient(135deg, #22070c, #070203);
+}
+
+.bling-depot-preview-fill.bling-frame-chrome {
+  border: 8px solid #cfd7ff;
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.32), 0 14px 24px rgba(4, 8, 28, 0.24);
+}
+
+.bling-depot-preview-fill.bling-frame-hot-pink {
+  border: 8px solid #ff2fbd;
+  box-shadow:
+    inset 0 0 24px rgba(255, 47, 189, 0.42),
+    0 0 30px rgba(255, 47, 189, 0.32);
+}
+
+.bling-depot-preview-fill.bling-frame-diamond-drip {
+  border: 8px solid rgba(220, 245, 255, 0.95);
+  box-shadow:
+    inset 0 0 18px rgba(255, 255, 255, 0.45),
+    0 0 28px rgba(180, 235, 255, 0.45);
+}
+
+.bling-depot-preview-fill.bling-frame-barbed-heart,
+.bling-depot-preview-fill.bling-frame-barbed-wire-heart {
+  border: 8px double #ff4f8b;
+  box-shadow:
+    inset 0 0 16px rgba(255, 79, 139, 0.35),
+    0 0 28px rgba(255, 79, 139, 0.35);
+}
+
+.bling-depot-preview-fill.bling-frame-pixel-glitch {
+  border: 8px solid #22d3ee;
+  box-shadow:
+    5px 0 0 rgba(255, 47, 189, 0.85),
+    -5px 0 0 rgba(124, 77, 255, 0.85),
+    0 0 26px rgba(0, 229, 255, 0.35);
+}
+
+.bling-depot-preview-fill.bling-frame-black-lace-coffin {
+  border: 8px solid #2a0f30;
+  box-shadow:
+    inset 0 0 22px rgba(255, 255, 255, 0.08),
+    0 0 28px rgba(144, 0, 255, 0.28);
+}
+
+.bling-depot-preview-fill.bling-glow-blue {
+  box-shadow:
+    inset 0 0 60px rgba(0, 229, 255, 0.35),
+    0 0 45px rgba(0, 229, 255, 0.45);
+}
+
+.bling-depot-preview-fill.bling-glow-gold {
+  box-shadow:
+    inset 0 0 60px rgba(255, 229, 107, 0.35),
+    0 0 45px rgba(255, 229, 107, 0.45);
+}
+
+.bling-depot-preview-fill.bling-glow-toxic-green {
+  box-shadow:
+    inset 0 0 60px rgba(57, 255, 20, 0.28),
+    0 0 45px rgba(57, 255, 20, 0.45);
+}
+
+.bling-depot-preview-fill.bling-glow-inferno {
+  box-shadow:
+    inset 0 0 60px rgba(255, 80, 0, 0.35),
+    0 0 45px rgba(255, 80, 0, 0.55);
+}
+
+.bling-depot-preview-fill.bling-glow-void {
+  box-shadow:
+    inset 0 0 60px rgba(150, 0, 255, 0.22),
+    0 0 45px rgba(0, 0, 0, 0.9);
+}
+
+.bling-depot-preview-fill.bling-glow-ghost-flame {
+  box-shadow:
+    inset 0 0 60px rgba(120, 255, 220, 0.25),
+    0 0 45px rgba(120, 255, 220, 0.42);
+}
+
+.bling-depot-preview-fill .bling-preview-badge {
+  padding: 12px 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffe56b, #ff4fd8);
+  color: #111111;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-align: center;
+  text-shadow: none;
+}
+
+.bling-depot-preview-fill.bling-badge-afk-judging .bling-preview-badge,
+.profile-badge.bling-badge-afk-judging {
+  background: linear-gradient(135deg, #d9d9d9, #ff4fd8);
+}
+
+.bling-depot-preview-fill.bling-badge-gremlin .bling-preview-badge,
+.bling-depot-preview-fill.bling-badge-gridster-gremlin .bling-preview-badge,
+.profile-badge.bling-badge-gremlin,
+.profile-badge.bling-badge-gridster-gremlin {
+  background: linear-gradient(135deg, #39ff14, #7c4dff);
+}
+
+.bling-depot-preview-fill.bling-badge-main-character .bling-preview-badge,
+.profile-badge.bling-badge-main-character {
+  background: linear-gradient(135deg, #ffe56b, #ff4fd8, #7c4dff);
+}
+
+.bling-depot-preview-fill.bling-badge-witch-please .bling-preview-badge,
+.profile-badge.bling-badge-witch-please {
+  background: linear-gradient(135deg, #19101f, #39ff14, #ff4fd8);
+}
+
+.bling-depot-preview-fill.bling-badge-certified-creature .bling-preview-badge,
+.profile-badge.bling-badge-certified-creature {
+  background: linear-gradient(135deg, #ff7a18, #7c4dff, #111111);
+  color: #ffffff;
+}
+
+.item-type-badge .bling-depot-preview-fill,
+.item-type-sticker_pack .bling-depot-preview-fill,
+.item-type-emote .bling-depot-preview-fill,
+.item-type-boost .bling-depot-preview-fill {
+  width: 92px;
+  min-height: 92px;
+  border-radius: 28px;
+}
+
+.bling-depot-item-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bling-depot-item-meta,
+.bling-depot-item-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bling-depot-item-meta span {
+  color: #7ed0ff;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bling-rarity,
+.bling-limited-pill,
+.bling-price-pill,
+.bling-owned-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 999px;
+  padding: 6px 9px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.bling-rarity {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #f7f3ff;
+}
+
+.bling-limited-pill {
+  border: 1px solid rgba(255, 122, 24, 0.34);
+  background: linear-gradient(135deg, rgba(255, 122, 24, 0.14), rgba(124, 77, 255, 0.14));
+  color: #ffd7b0;
+  text-transform: uppercase;
+}
+
+.rarity-common {
+  color: #dcd6ef;
+}
+
+.rarity-rare {
+  border-color: rgba(22, 140, 255, 0.28);
+  color: #9bdfff;
+}
+
+.rarity-epic {
+  border-color: rgba(255, 79, 216, 0.34);
+  color: #ffb7ef;
+}
+
+.rarity-legendary {
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #ffe0a3;
+}
+
+.bling-depot-item-copy h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.bling-depot-item-copy p {
+  margin: 0;
+  color: #aaa7c8;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.bling-price-pill {
+  border: 1px solid rgba(22, 140, 255, 0.24);
+  background: rgba(22, 140, 255, 0.1);
+  color: #d8b7ff;
+}
+
+.bling-owned-pill {
+  border: 1px solid rgba(93, 255, 214, 0.28);
+  background: rgba(93, 255, 214, 0.09);
+  color: #a9fff2;
+}
+
+.bling-depot-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bling-depot-item-actions button {
+  flex: 1 1 150px;
+}
+
+.bling-depot-item-actions button.is-equipped {
+  border-color: rgba(93, 255, 214, 0.34);
+  background: rgba(93, 255, 214, 0.12);
+  color: #a9fff2;
+}
+
+.bling-depot-item-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.66;
+  transform: none;
+  filter: none;
+}
+
 .bling-boost-card {
   position: relative;
   overflow: hidden;
@@ -8525,6 +9345,29 @@ button.join-toggle.is-joined {
   line-height: 1.45;
 }
 
+.bling-shop-subtitle {
+  color: #d8b7ff !important;
+}
+
+.bling-shop-art-shell {
+  flex: 0 0 min(164px, 28%);
+  padding: 10px;
+  border: 1px solid rgba(255, 79, 216, 0.2);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255, 79, 216, 0.18), transparent 34%),
+    radial-gradient(circle at 74% 84%, rgba(22, 140, 255, 0.14), transparent 34%),
+    rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035), 0 0 24px rgba(22, 140, 255, 0.1);
+}
+
+.bling-shop-art-shell img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 14px 20px rgba(3, 7, 20, 0.46)) drop-shadow(0 0 16px rgba(215, 44, 255, 0.22));
+}
+
 .shop-item-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -9489,6 +10332,7 @@ button.join-toggle.is-joined {
 
 @media (max-width: 860px) {
   .bling-header,
+  .bling-shop-header,
   .creator-dashboard-header,
   .venue-tools-header,
   .store-tools-header,
@@ -9497,7 +10341,23 @@ button.join-toggle.is-joined {
     flex-direction: column;
   }
 
+  .bling-depot-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .bling-depot-art-shell,
+  .bling-shop-art-shell {
+    justify-self: start;
+    width: min(210px, 100%);
+  }
+
+  .bling-depot-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .reward-tiles,
+  .bling-depot-grid,
   .shop-item-grid,
   .creator-stat-grid,
   .venue-tool-grid,
@@ -9510,6 +10370,7 @@ button.join-toggle.is-joined {
 
 @media (max-width: 520px) {
   .reward-tiles,
+  .bling-depot-grid,
   .shop-item-grid,
   .creator-stat-grid,
   .venue-tool-grid,
@@ -10264,6 +11125,15 @@ button.join-toggle.is-joined {
     padding: 18px;
   }
 
+  .landing-plus-intro {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-plus-art {
+    justify-self: start;
+    width: min(210px, 100%);
+  }
+
   .landing-hero {
     min-height: auto;
     padding: 38px 0 12px;
@@ -10300,23 +11170,6 @@ button.join-toggle.is-joined {
 
   .gridster-page {
     padding: 14px;
-  }
-
-  .topbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .topnav {
-    justify-content: center;
-  }
-
-  .search-box {
-    min-width: 0;
-  }
-
-  .top-actions {
-    justify-content: space-between;
   }
 
   .theme-dropdown,
@@ -10479,4 +11332,602 @@ button.join-toggle.is-joined {
   .landing-back-button {
     width: 100%;
   }
+}
+
+.gridster-profile-setup {
+  display: grid;
+  gap: 14px;
+}
+
+.profile-setup-empty,
+.profile-setup-form,
+.profile-setup-display {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(215, 44, 255, 0.13), transparent 36%),
+    radial-gradient(circle at bottom right, rgba(22, 140, 255, 0.12), transparent 40%),
+    rgba(12, 14, 30, 0.94);
+}
+
+.profile-setup-empty,
+.profile-setup-form {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.profile-setup-empty span,
+.profile-setup-heading span,
+.profile-field > span,
+.profile-setup-copy span,
+.profile-setup-links span {
+  color: #d8b7ff;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.profile-setup-empty h3,
+.profile-setup-heading h3,
+.profile-setup-copy h3 {
+  margin: 0;
+  color: #ffffff;
+  line-height: 1.08;
+}
+
+.profile-setup-empty h3,
+.profile-setup-heading h3 {
+  font-size: clamp(24px, 4vw, 34px);
+}
+
+.profile-setup-empty p,
+.profile-setup-heading p,
+.profile-setup-copy p {
+  margin: 0;
+  color: rgba(231, 235, 255, 0.74);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.profile-setup-empty button,
+.profile-save-button,
+.profile-cancel-button,
+.profile-edit-button {
+  min-height: 40px;
+  border: 1px solid rgba(22, 140, 255, 0.46);
+  border-radius: 999px;
+  padding: 9px 14px;
+  background: linear-gradient(135deg, rgba(215, 44, 255, 0.82), rgba(22, 140, 255, 0.74));
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 0 20px rgba(22, 140, 255, 0.18), 0 0 24px rgba(215, 44, 255, 0.14);
+  transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
+}
+
+.profile-setup-empty button,
+.profile-edit-button {
+  width: fit-content;
+}
+
+.profile-cancel-button {
+  border-color: rgba(215, 44, 255, 0.32);
+  background: rgba(12, 14, 30, 0.72);
+  box-shadow: 0 0 18px rgba(141, 53, 255, 0.13);
+}
+
+.profile-setup-empty button:hover,
+.profile-save-button:hover,
+.profile-cancel-button:hover,
+.profile-edit-button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.profile-save-button:disabled,
+.profile-cancel-button:disabled,
+.profile-edit-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+  filter: none;
+}
+
+.profile-setup-heading {
+  display: grid;
+  gap: 8px;
+}
+
+.profile-form-grid,
+.profile-link-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.profile-field {
+  display: grid;
+  gap: 7px;
+}
+
+.profile-setup-input {
+  min-height: 42px;
+  width: 100%;
+  border: 1px solid rgba(215, 44, 255, 0.25);
+  border-radius: 14px;
+  outline: none;
+  padding: 10px 12px;
+  background:
+    linear-gradient(135deg, rgba(141, 53, 255, 0.12), rgba(22, 140, 255, 0.08)),
+    rgba(5, 6, 13, 0.7);
+  color: #ffffff;
+  font: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.025);
+  transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.profile-setup-input:focus {
+  border-color: rgba(255, 79, 216, 0.46);
+  background:
+    linear-gradient(135deg, rgba(215, 44, 255, 0.16), rgba(22, 140, 255, 0.11)),
+    rgba(5, 6, 13, 0.82);
+  box-shadow: 0 0 18px rgba(215, 44, 255, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.035);
+}
+
+.profile-setup-input::placeholder {
+  color: #8f82a6;
+}
+
+.profile-setup-input option {
+  background: #0c0e1e;
+  color: #ffffff;
+}
+
+.profile-setup-textarea {
+  min-height: 116px;
+  resize: vertical;
+}
+
+.profile-tag-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-tag-picker button {
+  min-height: 34px;
+  border: 1px solid rgba(215, 44, 255, 0.24);
+  border-radius: 999px;
+  padding: 7px 11px;
+  background: rgba(255, 255, 255, 0.045);
+  color: #dcd6ef;
+  font-size: 12px;
+  font-weight: 800;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.profile-tag-picker button.active {
+  border-color: rgba(93, 255, 214, 0.42);
+  background: linear-gradient(135deg, rgba(93, 255, 214, 0.16), rgba(22, 140, 255, 0.14));
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(93, 255, 214, 0.12);
+}
+
+.profile-tag-picker button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 79, 216, 0.4);
+}
+
+.profile-setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.profile-setup-error,
+.profile-setup-message {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.profile-setup-error {
+  color: #ffb7ef;
+}
+
+.profile-setup-message {
+  color: #9ffff0;
+}
+
+.profile-setup-display {
+  padding: 0;
+}
+
+.gridster-profile-setup.profile-page {
+  min-height: 100%;
+  padding: 18px;
+  border-radius: 24px;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 30%),
+    #080810;
+}
+
+.gridster-profile-setup.profile-page .profile-setup-display {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.profile-setup-banner {
+  min-height: 168px;
+  border-bottom: 1px solid rgba(157, 64, 255, 0.32);
+  background:
+    radial-gradient(circle at 18% 28%, rgba(255, 79, 216, 0.42), transparent 34%),
+    radial-gradient(circle at 82% 20%, rgba(22, 140, 255, 0.42), transparent 34%),
+    linear-gradient(135deg, #180c31 0%, #07152d 66%, #060914 100%);
+  background-position: center;
+  background-size: cover;
+}
+
+.profile-setup-display-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding: 0 20px 18px;
+}
+
+.profile-setup-avatar {
+  display: grid;
+  width: 96px;
+  height: 96px;
+  margin-top: -48px;
+  place-items: center;
+  overflow: hidden;
+  border: 3px solid #05060d;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #d72cff, #168cff);
+  color: #ffffff;
+  font-size: 26px;
+  font-weight: 900;
+  box-shadow: 0 0 30px rgba(215, 44, 255, 0.38), 0 0 24px rgba(22, 140, 255, 0.18);
+}
+
+.profile-setup-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gridster-profile-setup.profile-page.bling-bg-midnight-lux {
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.12), transparent 25%),
+    linear-gradient(135deg, #151527, #050508);
+}
+
+.gridster-profile-setup.profile-page.bling-bg-pink-neon {
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.2), transparent 20%),
+    linear-gradient(135deg, #ff2fbd, #3b0a45);
+}
+
+.gridster-profile-setup.profile-page.bling-bg-cyber-club,
+.gridster-profile-setup.profile-page.bling-bg-cyber-club-wall {
+  background:
+    linear-gradient(135deg, rgba(255, 0, 200, 0.35), transparent 35%),
+    linear-gradient(225deg, rgba(0, 229, 255, 0.32), transparent 35%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.06) 0 1px,
+      transparent 1px 16px
+    ),
+    #080817;
+}
+
+.gridster-profile-setup.profile-page.bling-bg-goth-castle,
+.gridster-profile-setup.profile-page.bling-bg-goth-castle-mood {
+  background:
+    radial-gradient(circle at top, rgba(150, 0, 255, 0.22), transparent 35%),
+    linear-gradient(135deg, #19101f, #050406);
+}
+
+.gridster-profile-setup.profile-page.bling-bg-black-marble,
+.gridster-profile-setup.profile-page.bling-bg-luxury-black-marble {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 18%),
+    linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.08), transparent 58%),
+    #050507;
+}
+
+.gridster-profile-setup.profile-page.bling-bg-haunted-manor {
+  background:
+    radial-gradient(circle at top, rgba(128, 0, 255, 0.25), transparent 35%),
+    linear-gradient(135deg, #16111f, #040406);
+}
+
+.gridster-profile-setup.profile-page.bling-bg-blood-moon {
+  background:
+    radial-gradient(circle at center, rgba(255, 50, 50, 0.28), transparent 30%),
+    linear-gradient(135deg, #22070c, #070203);
+}
+
+.profile-setup-display.bling-glow-blue {
+  box-shadow: 0 0 45px rgba(0, 229, 255, 0.45);
+}
+
+.profile-setup-display.bling-glow-gold {
+  box-shadow: 0 0 45px rgba(255, 229, 107, 0.45);
+}
+
+.profile-setup-display.bling-glow-toxic-green {
+  box-shadow:
+    inset 0 0 60px rgba(57, 255, 20, 0.28),
+    0 0 45px rgba(57, 255, 20, 0.45);
+}
+
+.profile-setup-display.bling-glow-inferno {
+  box-shadow:
+    inset 0 0 60px rgba(255, 80, 0, 0.35),
+    0 0 45px rgba(255, 80, 0, 0.55);
+}
+
+.profile-setup-display.bling-glow-void {
+  box-shadow:
+    inset 0 0 60px rgba(150, 0, 255, 0.22),
+    0 0 45px rgba(0, 0, 0, 0.9);
+}
+
+.profile-setup-display.bling-glow-ghost-flame {
+  box-shadow:
+    inset 0 0 60px rgba(120, 255, 220, 0.25),
+    0 0 45px rgba(120, 255, 220, 0.42);
+}
+
+.profile-setup-avatar.bling-frame-chrome {
+  border: 6px solid #cfd7ff;
+  box-shadow:
+    inset 0 0 20px rgba(255, 255, 255, 0.32),
+    0 0 26px rgba(148, 163, 184, 0.72);
+}
+
+.profile-setup-avatar.bling-frame-hot-pink {
+  border: 6px solid #ff2fbd;
+  box-shadow:
+    inset 0 0 24px rgba(255, 47, 189, 0.42),
+    0 0 30px rgba(255, 47, 189, 0.32);
+}
+
+.profile-setup-avatar.bling-frame-diamond-drip {
+  border: 8px solid rgba(220, 245, 255, 0.95);
+  box-shadow:
+    inset 0 0 18px rgba(255, 255, 255, 0.45),
+    0 0 28px rgba(180, 235, 255, 0.45);
+}
+
+.profile-setup-avatar.bling-frame-barbed-heart,
+.profile-setup-avatar.bling-frame-barbed-wire-heart {
+  border: 8px double #ff4f8b;
+  box-shadow:
+    inset 0 0 16px rgba(255, 79, 139, 0.35),
+    0 0 28px rgba(255, 79, 139, 0.35);
+}
+
+.profile-setup-avatar.bling-frame-pixel-glitch {
+  border: 8px solid #00e5ff;
+  box-shadow:
+    5px 0 0 rgba(255, 47, 189, 0.85),
+    -5px 0 0 rgba(124, 77, 255, 0.85),
+    0 0 26px rgba(0, 229, 255, 0.35);
+}
+
+.profile-setup-avatar.bling-frame-black-lace-coffin {
+  border: 8px solid #2a0f30;
+  box-shadow:
+    inset 0 0 22px rgba(255, 255, 255, 0.08),
+    0 0 28px rgba(144, 0, 255, 0.28);
+}
+
+.profile-setup-copy {
+  min-width: 0;
+  padding-top: 17px;
+}
+
+.profile-setup-copy h3 {
+  margin: 4px 0 3px;
+  font-size: clamp(28px, 4vw, 42px);
+}
+
+.profile-setup-copy strong {
+  display: block;
+  color: #9ffff0;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.profile-setup-copy p {
+  margin-top: 10px;
+  max-width: 680px;
+}
+
+.profile-edit-button {
+  margin-top: 18px;
+}
+
+.profile-setup-tags,
+.profile-equipped-badges,
+.profile-setup-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 20px 20px;
+}
+
+.profile-setup-tags span,
+.profile-equipped-badges span,
+.profile-setup-links a,
+.profile-setup-links div {
+  border: 1px solid rgba(215, 44, 255, 0.24);
+  border-radius: 999px;
+  padding: 8px 11px;
+  background: rgba(141, 53, 255, 0.14);
+  color: #d8b7ff;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.profile-equipped-badges {
+  padding-top: 0;
+  padding-bottom: 12px;
+}
+
+.profile-equipped-badges span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-color: rgba(93, 255, 214, 0.28);
+  background: linear-gradient(135deg, rgba(93, 255, 214, 0.1), rgba(22, 140, 255, 0.1));
+  color: #eafffb;
+  box-shadow: 0 0 14px rgba(93, 255, 214, 0.1);
+}
+
+.profile-equipped-badges b {
+  font-size: 14px;
+}
+
+.profile-equipped-badges span.bling-badge-afk-judging {
+  background: linear-gradient(135deg, #d9d9d9, #ff4fd8);
+  color: #111111;
+}
+
+.profile-equipped-badges span.bling-badge-gremlin,
+.profile-equipped-badges span.bling-badge-gridster-gremlin {
+  background: linear-gradient(135deg, #39ff14, #7c4dff);
+  color: #111111;
+}
+
+.profile-equipped-badges span.bling-badge-main-character {
+  background: linear-gradient(135deg, #ffe56b, #ff4fd8, #7c4dff);
+  color: #111111;
+}
+
+.profile-equipped-badges span.bling-badge-witch-please {
+  background: linear-gradient(135deg, #19101f, #39ff14, #ff4fd8);
+  color: #ffffff;
+}
+
+.profile-equipped-badges span.bling-badge-certified-creature {
+  background: linear-gradient(135deg, #ff7a18, #7c4dff, #111111);
+  color: #ffffff;
+}
+
+.profile-setup-links a,
+.profile-setup-links div {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.profile-setup-links a {
+  color: #f7f3ff;
+}
+
+.profile-setup-links a:hover {
+  border-color: rgba(93, 255, 214, 0.36);
+  color: #9ffff0;
+}
+
+@media (max-width: 720px) {
+  .profile-form-grid,
+  .profile-link-grid,
+  .profile-setup-display-body {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-edit-button {
+    margin-top: 0;
+    width: 100%;
+  }
+
+  .profile-setup-actions,
+  .profile-setup-actions button {
+    width: 100%;
+  }
+}
+
+.bling-category-tabs {
+  position: sticky;
+  top: 12px;
+  z-index: 20;
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  margin: 0 0 22px;
+  border-radius: 999px;
+  background: rgba(8, 7, 18, 0.88);
+  border: 1px solid rgba(176, 83, 255, 0.28);
+  backdrop-filter: blur(16px);
+  overflow-x: auto;
+}
+
+.bling-category-tabs button {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px;
+  color: rgba(241, 235, 255, 0.78);
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: capitalize;
+  white-space: nowrap;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.bling-category-tabs button.active {
+  color: white;
+  background: linear-gradient(90deg, #2c91ff, #943dff, #ff3ecf);
+  box-shadow: 0 0 24px rgba(148, 61, 255, 0.28);
+}
+
+.bling-category-tabs button:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.bling-category-tabs button.active:hover {
+  background: linear-gradient(90deg, #2c91ff, #943dff, #ff3ecf);
+}
+
+.bling-card button,
+.bling-depot-item-actions button {
+  min-height: 38px;
+  border: 1px solid rgba(176, 83, 255, 0.32);
+  border-radius: 999px;
+  padding: 9px 14px;
+  color: white;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  background: linear-gradient(90deg, #2c91ff, #943dff, #ff3ecf);
+  box-shadow: 0 0 24px rgba(148, 61, 255, 0.28);
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+
+.bling-card button:hover,
+.bling-depot-item-actions button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: 0 0 30px rgba(148, 61, 255, 0.36);
+}
+
+.bling-depot-item-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.66;
+  transform: none;
+  filter: none;
 }

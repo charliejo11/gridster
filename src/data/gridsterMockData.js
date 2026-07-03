@@ -245,7 +245,7 @@ export const gridsterLeftSidebarActionItems = [
   { label: "Create Store Post", page: "CreateStorePost", className: "add-slurl-button" },
   { label: "Create Blogger Post", page: "CreateBloggerPost", className: "add-slurl-button" },
   { label: "Create Community Hub", page: "CreateCommunityHub", className: "add-slurl-button" },
-  { label: "Bling Boost", page: "BlingBoost", className: "add-slurl-button" },
+  { label: "Bling Depot", page: "BlingBoost", className: "add-slurl-button" },
   { label: "Feed Preferences", page: "FeedPreferences", className: "add-slurl-button" },
   { label: "Verification", page: "VerificationCenter", className: "add-slurl-button" },
   { label: "Add SLURL", page: "AddSLURL", className: "add-slurl-button" },

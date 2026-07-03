@@ -4,11 +4,19 @@ import {
   gridsterLeftSidebarProfile,
 } from "../../data/gridsterMockData";
 
+const GRIDSTER_PLUS_ARTWORK = "/gridster-logo.png";
+
 function LeftSidebar({
   activePage,
   setActivePage,
   children,
 }) {
+  const openBlingDepot = (event) => {
+    event.preventDefault();
+    setActivePage("BlingBoost");
+    window.history.pushState({}, "", "/bling-depot");
+  };
+
   return (
     <aside className="left-panel">
       <section className="profile-card glass-card">
@@ -75,7 +83,27 @@ function LeftSidebar({
         ))}
       </section>
 
+      <a href="/bling-depot" className="gridster-plus-card bling-depot-big-card" onClick={openBlingDepot}>
+        <div className="bling-big-preview">
+          <img
+            src="/images/bling%20card.png.png"
+            alt="Bling Depot"
+            className="bling-card-photo"
+          />
+        </div>
+
+        <div className="bling-crown" aria-hidden="true">&#128142;</div>
+
+        <h3>Bling Depot</h3>
+        <p>Profile glowies, badges, frames, backgrounds, and chat extras.</p>
+        <small>For when your profile needs to be extra.</small>
+        <span className="bling-open-button">Open Shop</span>
+      </a>
+
       <section className="premium-card glass-card">
+        <div className="premium-card-art">
+          <img src={GRIDSTER_PLUS_ARTWORK} alt="Gridster logo" />
+        </div>
         <span className="crown">♛</span>
         <h3>Gridster Plus</h3>
         <p>Unlock featured posts, bigger uploads, boosted events, and more sparkle.</p>

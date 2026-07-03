@@ -2044,6 +2044,22 @@ button {
   filter: brightness(1.08);
 }
 
+.auth-generate-button:disabled,
+.auth-verify-button:disabled,
+.auth-login-button:disabled,
+.auth-signup-button:disabled,
+.auth-logout-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+  filter: none;
+}
+
+.auth-error-message {
+  color: #ffb7ef;
+  font-weight: 900;
+}
+
 .auth-actions {
   display: flex;
   flex-wrap: wrap;

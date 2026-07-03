@@ -10,6 +10,9 @@ function AuthPage({ initialMode = "login" }) {
   const [slUsername, setSlUsername] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [enteredVerificationCode, setEnteredVerificationCode] = useState("");
+  const [verificationMessage, setVerificationMessage] = useState("");
+  const [verificationError, setVerificationError] = useState("");
+  const [verificationLoading, setVerificationLoading] = useState(false);
   const [avatarVerified, setAvatarVerified] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,16 +40,55 @@ function AuthPage({ initialMode = "login" }) {
     return () => listener?.subscription?.unsubscribe();
   }, []);
 
-  const handleGenerateCode = (e) => {
+  const handleGenerateCode = async (e) => {
     e.preventDefault();
-    setVerificationCode(`GRID-${Math.floor(1000 + Math.random() * 9000)}`);
+    setVerificationLoading(true);
+    setVerificationCode("");
     setEnteredVerificationCode("");
     setAvatarVerified(false);
+    setVerificationMessage("");
+    setVerificationError("");
     setMessage("");
+
+    try {
+      const response = await fetch("/.netlify/functions/create-sl-verification-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ slUsername }),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.error || "Could not create a verification code.");
+      }
+
+      setVerificationCode(result.code);
+      setVerificationMessage(result.message || "Verification code created and stored.");
+    } catch (error) {
+      setVerificationError(error.message || "Could not reach the verification service.");
+    } finally {
+      setVerificationLoading(false);
+    }
   };
 
   const handleVerifyCode = (e) => {
     e.preventDefault();
+    const submittedCode = enteredVerificationCode.trim().toUpperCase();
+
+    if (!verificationCode) {
+      setVerificationError("Generate a verification code first.");
+      return;
+    }
+
+    if (submittedCode !== verificationCode) {
+      setAvatarVerified(false);
+      setVerificationError("That code does not match the current Gridster verification code.");
+      return;
+    }
+
+    setVerificationError("");
     setAvatarVerified(true);
   };
 
@@ -138,14 +180,17 @@ function AuthPage({ initialMode = "login" }) {
               value={slUsername}
               onChange={(e) => setSlUsername(e.target.value)}
               placeholder="example: charliejo11.resident"
+              disabled={verificationLoading}
               required
             />
           </label>
 
-          <button type="submit" className="auth-generate-button">
-            Send Code to Second Life
+          <button type="submit" className="auth-generate-button" disabled={verificationLoading}>
+            {verificationLoading ? "Creating Code..." : "Send Code to Second Life"}
           </button>
         </form>
+
+        {verificationError ? <p className="auth-message auth-error-message" role="alert">{verificationError}</p> : null}
 
         {verificationCode ? (
           <div className="auth-verification-panel" aria-live="polite">
@@ -154,9 +199,7 @@ function AuthPage({ initialMode = "login" }) {
               <strong>{verificationCode}</strong>
             </div>
 
-            <p className="auth-im-note">
-              We sent a private verification message to your Second Life avatar. Log into Second Life and check your IMs from Gridster Verification.
-            </p>
+            {verificationMessage ? <p className="auth-im-note">{verificationMessage}</p> : null}
 
             <form className="auth-code-form" onSubmit={handleVerifyCode}>
               <label className="auth-field">
@@ -165,7 +208,7 @@ function AuthPage({ initialMode = "login" }) {
                   className="auth-input"
                   type="text"
                   value={enteredVerificationCode}
-                  onChange={(e) => setEnteredVerificationCode(e.target.value)}
+                  onChange={(e) => setEnteredVerificationCode(e.target.value.toUpperCase())}
                   placeholder="GRID-4829"
                   required
                 />

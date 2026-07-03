@@ -1,6 +1,10 @@
+import { useState } from "react";
+import GridsterPlusModal from "./GridsterPlusModal";
+
 const GRIDSTER_PLUS_ARTWORK = "/gridster-logo.png";
 
 function LandingPage({ onEnter, onNavigate }) {
+  const [showPlusModal, setShowPlusModal] = useState(false);
   const features = [
     ["Social Feed", "Post moments, photos, blogs, events, outfits, and SLURLs."],
     ["Event Discovery", "Find clubs, DJs, live music, parties, and themed grid nights."],
@@ -188,7 +192,12 @@ function LandingPage({ onEnter, onNavigate }) {
                   </li>
                 ))}
               </ul>
-              <button>{plan.button}</button>
+              <button
+                type="button"
+                onClick={plan.popular ? () => setShowPlusModal(true) : undefined}
+              >
+                {plan.button}
+              </button>
             </article>
           ))}
         </div>
@@ -276,6 +285,8 @@ function LandingPage({ onEnter, onNavigate }) {
           <span>Creator Friendly</span>
         </div>
       </section>
+
+      {showPlusModal ? <GridsterPlusModal onClose={() => setShowPlusModal(false)} /> : null}
     </main>
   );
 }

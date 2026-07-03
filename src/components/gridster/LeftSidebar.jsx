@@ -1,8 +1,10 @@
+import { useState } from "react";
 import {
   gridsterLeftSidebarActionItems,
   gridsterLeftSidebarNavItems,
   gridsterLeftSidebarProfile,
 } from "../../data/gridsterMockData";
+import GridsterPlusModal from "./GridsterPlusModal";
 
 const GRIDSTER_PLUS_ARTWORK = "/gridster-logo.png";
 
@@ -11,6 +13,8 @@ function LeftSidebar({
   setActivePage,
   children,
 }) {
+  const [showPlusModal, setShowPlusModal] = useState(false);
+
   const openBlingDepot = (event) => {
     event.preventDefault();
     setActivePage("BlingBoost");
@@ -100,15 +104,17 @@ function LeftSidebar({
         <span className="bling-open-button">Open Shop</span>
       </a>
 
-      <section className="premium-card glass-card">
+      <section className="premium-card glass-card" onClick={() => setShowPlusModal(true)}>
         <div className="premium-card-art">
           <img src={GRIDSTER_PLUS_ARTWORK} alt="Gridster logo" />
         </div>
         <span className="crown">♛</span>
         <h3>Gridster Plus</h3>
         <p>Unlock featured posts, bigger uploads, boosted events, and more sparkle.</p>
-        <button>Upgrade Now</button>
+        <button type="button">Upgrade Now</button>
       </section>
+
+      {showPlusModal ? <GridsterPlusModal onClose={() => setShowPlusModal(false)} /> : null}
     </aside>
   );
 }

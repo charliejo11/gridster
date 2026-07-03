@@ -2832,6 +2832,95 @@ button {
   width: 100%;
 }
 
+.gridster-plus-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(5, 6, 13, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.gridster-plus-modal {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 26px;
+  border-radius: 24px;
+  text-align: center;
+  border: 1px solid rgba(215, 44, 255, 0.32);
+  box-shadow: 0 0 40px rgba(148, 53, 255, 0.24), 0 0 60px rgba(22, 140, 255, 0.14);
+}
+
+.gridster-plus-modal h3 {
+  margin: 8px 0 6px;
+}
+
+.gridster-plus-modal p {
+  color: #aaa7c8;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.gridster-plus-modal-benefits {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.gridster-plus-modal-benefits li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e7e4f4;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.gridster-plus-modal-benefits li span {
+  color: #9ffff0;
+  font-weight: 900;
+}
+
+.gridster-plus-modal-message {
+  color: #9ffff0 !important;
+  font-weight: 800;
+}
+
+.gridster-plus-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.gridster-plus-modal-upgrade,
+.gridster-plus-modal-later {
+  flex: 1;
+  min-height: 42px;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.gridster-plus-modal-upgrade {
+  background: linear-gradient(135deg, #168cff, #8d35ff);
+}
+
+.gridster-plus-modal-later {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
 .create-post {
   display: flex;
   flex-direction: column;

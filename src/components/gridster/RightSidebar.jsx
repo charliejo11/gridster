@@ -9,12 +9,34 @@ import ActionButton from "./ActionButton";
 import StatusDot from "./StatusDot";
 import Widget from "./Widget";
 
+function buildTeleportUrl(destination) {
+  if (!destination) {
+    return "";
+  }
+
+  if (destination.slurl) {
+    return destination.slurl;
+  }
+
+  if (destination.region) {
+    const x = destination.x ?? 128;
+    const y = destination.y ?? 128;
+    const z = destination.z ?? 25;
+
+    return `https://maps.secondlife.com/secondlife/${encodeURIComponent(destination.region)}/${x}/${y}/${z}`;
+  }
+
+  return "";
+}
+
 function getTeleportButtonProps(destinationName) {
   const destination = getGridsterDestination(destinationName);
+  const teleportUrl = buildTeleportUrl(destination);
 
   return {
     "data-destination": destination?.name ?? destinationName,
-    "data-slurl": destination?.slurl ?? "",
+    "data-slurl": teleportUrl,
+    disabled: !teleportUrl,
   };
 }
 

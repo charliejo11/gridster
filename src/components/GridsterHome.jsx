@@ -266,8 +266,7 @@ function GridsterHome() {
       return;
     }
 
-    const copyPromise = window.navigator?.clipboard?.writeText?.(slurl);
-    copyPromise?.catch(() => {});
+    window.open(slurl, "_blank", "noopener,noreferrer");
     showToast(`Teleport ready: ${destinationName}`);
   };
 

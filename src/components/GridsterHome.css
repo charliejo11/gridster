@@ -7166,7 +7166,19 @@ button {
 .bling-depot-preview-fill.bling-buddy-punk-panda,
 .bling-depot-preview-fill.bling-buddy-moon-moth,
 .bling-depot-preview-fill.bling-buddy-disco-duck,
-.bling-depot-preview-fill.bling-buddy-crystal-dragon {
+.bling-depot-preview-fill.bling-buddy-crystal-dragon,
+.bling-depot-preview-fill.bling-buddy-sir-sparkleton,
+.bling-depot-preview-fill.bling-buddy-pixel-puff,
+.bling-depot-preview-fill.bling-buddy-gloomi-bat,
+.bling-depot-preview-fill.bling-buddy-nova-nibbles,
+.bling-depot-preview-fill.bling-buddy-tiny-trouble,
+.bling-depot-preview-fill.bling-buddy-velvet-hex,
+.bling-depot-preview-fill.bling-buddy-glitter-gremlin,
+.bling-depot-preview-fill.bling-buddy-moonbun,
+.bling-depot-preview-fill.bling-buddy-starlash,
+.bling-depot-preview-fill.bling-buddy-puff-riot,
+.bling-depot-preview-fill.bling-buddy-baby-blaze,
+.bling-depot-preview-fill.bling-buddy-crystal-bite {
   animation: bling-buddy-float 2.4s ease-in-out infinite;
 }
 
@@ -7182,6 +7194,18 @@ button {
 .bling-depot-preview-fill.bling-buddy-moon-moth { background: linear-gradient(135deg, #0b1030, #7c8cff); }
 .bling-depot-preview-fill.bling-buddy-disco-duck { background: linear-gradient(135deg, #ffd166, #ff2fbd, #1de9d4); }
 .bling-depot-preview-fill.bling-buddy-crystal-dragon { background: linear-gradient(135deg, #7c2cff, #00e5ff); }
+.bling-depot-preview-fill.bling-buddy-sir-sparkleton { background: linear-gradient(135deg, #3d1f5c, #ffd166); }
+.bling-depot-preview-fill.bling-buddy-pixel-puff { background: linear-gradient(135deg, #ff9ecf, #7ec8ff); }
+.bling-depot-preview-fill.bling-buddy-gloomi-bat { background: linear-gradient(135deg, #14071f, #4b1f6b); }
+.bling-depot-preview-fill.bling-buddy-nova-nibbles { background: linear-gradient(135deg, #1a1f6b, #7c2cff); }
+.bling-depot-preview-fill.bling-buddy-tiny-trouble { background: linear-gradient(135deg, #ff2f6d, #7a0d0d); }
+.bling-depot-preview-fill.bling-buddy-velvet-hex { background: linear-gradient(135deg, #2a0a3d, #ba2fff); }
+.bling-depot-preview-fill.bling-buddy-glitter-gremlin { background: linear-gradient(135deg, #ff4fd8, #ffd166, #00e5ff); }
+.bling-depot-preview-fill.bling-buddy-moonbun { background: linear-gradient(135deg, #b7c7ff, #6c7cff); }
+.bling-depot-preview-fill.bling-buddy-starlash { background: linear-gradient(135deg, #ff2fbd, #2c6bff); }
+.bling-depot-preview-fill.bling-buddy-puff-riot { background: linear-gradient(135deg, #ff9ecf, #ba2fff); }
+.bling-depot-preview-fill.bling-buddy-baby-blaze { background: linear-gradient(135deg, #ff7a18, #7c2cff); }
+.bling-depot-preview-fill.bling-buddy-crystal-bite { background: linear-gradient(135deg, #b0f4ff, #ffffff); }
 
 .profile-bling-buddy {
   position: absolute;
@@ -7203,6 +7227,558 @@ button {
   height: 100%;
   border-radius: 999px;
   object-fit: cover;
+}
+
+@keyframes bling-buddy-sparkle-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-8px) scale(1.05); }
+  60% { transform: translateY(0) scale(0.97); }
+}
+
+@keyframes bling-buddy-wink-loop {
+  0%, 80%, 100% { transform: rotate(0deg); }
+  85% { transform: rotate(-8deg); }
+  90% { transform: rotate(6deg); }
+}
+
+@keyframes bling-buddy-tiny-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes bling-buddy-glow-pulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(215, 44, 255, 0.35); }
+  50% { box-shadow: 0 0 30px rgba(215, 44, 255, 0.7); }
+}
+
+@keyframes bling-buddy-chaos-wiggle {
+  0%, 100% { transform: rotate(0deg) translateX(0); }
+  25% { transform: rotate(-4deg) translateX(-2px); }
+  50% { transform: rotate(3deg) translateX(2px); }
+  75% { transform: rotate(-3deg) translateX(-1px); }
+}
+
+.bling-buddy-anim-floating-sass { animation: bling-buddy-float 2.4s ease-in-out infinite; }
+.bling-buddy-anim-sparkle-bounce { animation: bling-buddy-sparkle-bounce 2s ease-in-out infinite; }
+.bling-buddy-anim-wink-loop { animation: bling-buddy-wink-loop 2.6s ease-in-out infinite; }
+.bling-buddy-anim-tiny-spin { animation: bling-buddy-tiny-spin 1.8s linear infinite; }
+.bling-buddy-anim-glow-pulse { animation: bling-buddy-glow-pulse 2.2s ease-in-out infinite; }
+.bling-buddy-anim-chaos-wiggle { animation: bling-buddy-chaos-wiggle 1.9s ease-in-out infinite; }
+
+@keyframes bling-buddy-sparkle-twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.7) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.15) rotate(20deg); }
+}
+
+@keyframes bling-buddy-aura-pulse {
+  0%, 100% { opacity: 0.55; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.9; transform: translateX(-50%) scale(1.08); }
+}
+
+.bling-buddy-showcase {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 20% 15%, rgba(215, 44, 255, 0.14), transparent 55%),
+    radial-gradient(circle at 80% 85%, rgba(0, 229, 255, 0.12), transparent 55%),
+    rgba(8, 6, 18, 0.6);
+}
+
+.bling-buddy-showcase h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #ff9ecf, #d72cff, #7ec8ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bling-buddy-showcase-empty p {
+  margin: 0;
+  color: #aaa7c8;
+  font-size: 13px;
+}
+
+.bling-buddy-showcase-empty button {
+  align-self: flex-start;
+}
+
+.bling-buddy-showcase-body {
+  display: flex;
+  gap: 26px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.bling-buddy-showcase-art-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 220px;
+  padding: 12px;
+}
+
+.bling-buddy-showcase-aura {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 170px;
+  height: 46px;
+  border-radius: 50%;
+  filter: blur(6px);
+  animation: bling-buddy-aura-pulse 2.6s ease-in-out infinite;
+  background: radial-gradient(ellipse at center, rgba(215, 44, 255, 0.65), rgba(215, 44, 255, 0.1) 70%, transparent 100%);
+}
+
+.bling-buddy-showcase-aura.rarity-cute { background: radial-gradient(ellipse at center, rgba(255, 158, 207, 0.65), transparent 100%); }
+.bling-buddy-showcase-aura.rarity-shiny { background: radial-gradient(ellipse at center, rgba(126, 208, 255, 0.65), transparent 100%); }
+.bling-buddy-showcase-aura.rarity-extra { background: radial-gradient(ellipse at center, rgba(186, 47, 255, 0.65), transparent 100%); }
+.bling-buddy-showcase-aura.rarity-iconic { background: radial-gradient(ellipse at center, rgba(255, 79, 216, 0.7), transparent 100%); }
+.bling-buddy-showcase-aura.rarity-unhinged-luxury { background: radial-gradient(ellipse at center, rgba(255, 209, 102, 0.7), rgba(186, 47, 255, 0.4) 60%, transparent 100%); }
+
+.bling-buddy-showcase-sparkles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.bling-buddy-showcase-sparkles span {
+  position: absolute;
+  color: #fff2ff;
+  font-size: 16px;
+  animation: bling-buddy-sparkle-twinkle 1.8s ease-in-out infinite;
+  text-shadow: 0 0 8px rgba(255, 158, 207, 0.9);
+}
+
+.bling-buddy-showcase-sparkles span:nth-child(1) { top: 4px; left: 8px; animation-delay: 0s; }
+.bling-buddy-showcase-sparkles span:nth-child(2) { top: 18px; right: 10px; animation-delay: 0.3s; }
+.bling-buddy-showcase-sparkles span:nth-child(3) { bottom: 48px; left: 0; animation-delay: 0.6s; }
+.bling-buddy-showcase-sparkles span:nth-child(4) { bottom: 60px; right: 4px; animation-delay: 0.9s; }
+.bling-buddy-showcase-sparkles span:nth-child(5) { top: 44%; left: 46%; animation-delay: 1.2s; }
+
+.bling-buddy-showcase-avatar {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 190px;
+  height: 190px;
+  border-radius: 32px;
+  font-size: 96px;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  filter: drop-shadow(0 0 22px rgba(215, 44, 255, 0.55));
+}
+
+.bling-buddy-showcase-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 30px;
+  object-fit: cover;
+}
+
+.bling-buddy-showcase-art-shell .bling-buddy-vibe {
+  margin: 0;
+  font-style: italic;
+  color: #e2b7ff;
+  font-size: 12px;
+  text-align: center;
+}
+
+.bling-buddy-showcase-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.bling-buddy-info-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bling-buddy-info-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 14px;
+  padding: 9px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.bling-buddy-info-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 999px;
+  font-size: 15px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.bling-buddy-info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bling-buddy-info-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #837f9c;
+}
+
+.bling-buddy-info-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f7f3ff;
+}
+
+.bling-buddy-info-value-rarity {
+  color: #ff9ecf;
+}
+
+.bling-buddy-info-value-mood {
+  color: #d7a9ff;
+}
+
+.bling-buddy-info-value-animation {
+  color: #7ec8ff;
+}
+
+.bling-buddy-showcase-rarity-pill {
+  align-self: flex-start;
+  font-size: 12px;
+  padding: 8px 16px;
+}
+
+.bling-buddy-reactions-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bling-buddy-reactions-heading {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #e2b7ff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bling-buddy-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.bling-buddy-reactions button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 72px;
+  border-radius: 18px;
+  padding: 10px 14px;
+  font-size: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.bling-buddy-reactions button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(215, 44, 255, 0.4);
+}
+
+.bling-buddy-reaction-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #cfc9e8;
+}
+
+.bling-buddy-reactions button b {
+  font-size: 11px;
+  color: #ffd2f6;
+}
+
+.bling-buddy-reactions button.just-reacted {
+  transform: scale(1.14) translateY(-2px);
+  box-shadow: 0 0 18px rgba(215, 44, 255, 0.6);
+  border-color: rgba(215, 44, 255, 0.55);
+}
+
+@keyframes bling-buddy-card-lift-glow {
+  0%, 100% { box-shadow: 0 0 18px rgba(215, 44, 255, 0.25); }
+  50% { box-shadow: 0 0 28px rgba(0, 229, 255, 0.3); }
+}
+
+@keyframes bling-buddy-button-shine {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(220%); }
+}
+
+.bling-buddy-grid {
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 20px;
+}
+
+.bling-buddy-collectible-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 340px;
+  padding: 16px;
+  border-radius: 26px;
+  border: 1px solid rgba(215, 44, 255, 0.22);
+  background: linear-gradient(180deg, rgba(20, 12, 34, 0.92), rgba(8, 6, 16, 0.96));
+  box-shadow: 0 0 18px rgba(215, 44, 255, 0.18), inset 0 0 30px rgba(0, 229, 255, 0.05);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.bling-buddy-collectible-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(0, 229, 255, 0.4);
+  box-shadow: 0 12px 32px rgba(215, 44, 255, 0.35), 0 0 30px rgba(0, 229, 255, 0.3);
+}
+
+.bling-buddy-collectible-card:hover .bling-buddy-card-sparkles span {
+  animation-duration: 0.9s;
+}
+
+.bling-buddy-card-art-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 190px;
+  border-radius: 20px;
+  padding-top: 8px;
+  background: radial-gradient(circle at 50% 30%, rgba(215, 44, 255, 0.16), transparent 65%);
+}
+
+.bling-buddy-card-aura {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  width: 130px;
+  height: 34px;
+  border-radius: 50%;
+  filter: blur(5px);
+  transform: translateX(-50%);
+  animation: bling-buddy-aura-pulse 2.6s ease-in-out infinite;
+  background: radial-gradient(ellipse at center, rgba(215, 44, 255, 0.6), transparent 100%);
+}
+
+.bling-buddy-card-aura.rarity-cute { background: radial-gradient(ellipse at center, rgba(255, 158, 207, 0.6), transparent 100%); }
+.bling-buddy-card-aura.rarity-shiny { background: radial-gradient(ellipse at center, rgba(126, 208, 255, 0.6), transparent 100%); }
+.bling-buddy-card-aura.rarity-extra { background: radial-gradient(ellipse at center, rgba(186, 47, 255, 0.6), transparent 100%); }
+.bling-buddy-card-aura.rarity-iconic { background: radial-gradient(ellipse at center, rgba(255, 79, 216, 0.65), transparent 100%); }
+.bling-buddy-card-aura.rarity-unhinged-luxury { background: radial-gradient(ellipse at center, rgba(255, 209, 102, 0.65), rgba(186, 47, 255, 0.35) 60%, transparent 100%); }
+
+.bling-buddy-card-sparkles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.bling-buddy-card-sparkles span {
+  position: absolute;
+  color: #fff2ff;
+  font-size: 13px;
+  animation: bling-buddy-sparkle-twinkle 2.2s ease-in-out infinite;
+  text-shadow: 0 0 6px rgba(255, 158, 207, 0.9);
+}
+
+.bling-buddy-card-sparkles span:nth-child(1) { top: 6px; left: 10px; animation-delay: 0s; }
+.bling-buddy-card-sparkles span:nth-child(2) { top: 14px; right: 14px; animation-delay: 0.35s; }
+.bling-buddy-card-sparkles span:nth-child(3) { bottom: 42px; left: 4px; animation-delay: 0.7s; }
+.bling-buddy-card-sparkles span:nth-child(4) { bottom: 30px; right: 8px; animation-delay: 1.05s; }
+
+.bling-buddy-card-art {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 148px;
+  height: 148px;
+  margin: 0 auto;
+  border-radius: 28px;
+  font-size: 72px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  filter: drop-shadow(0 0 16px rgba(215, 44, 255, 0.5));
+  animation: bling-buddy-float 2.4s ease-in-out infinite;
+}
+
+.bling-buddy-card-art img {
+  width: 100%;
+  height: 100%;
+  border-radius: 26px;
+  object-fit: cover;
+}
+
+.bling-buddy-card-rarity {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 10px;
+}
+
+.bling-buddy-card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.bling-buddy-card-copy h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 17px;
+}
+
+.bling-buddy-card-subtitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #e2b7ff;
+}
+
+.bling-buddy-card-accessories {
+  margin: 0;
+  font-size: 11px;
+  color: #aaa7c8;
+}
+
+.bling-buddy-card-animation {
+  margin: 0;
+  font-size: 11px;
+  color: #7ec8ff;
+}
+
+.bling-buddy-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.bling-buddy-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.bling-buddy-card-actions button {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  border: 1px solid rgba(215, 44, 255, 0.4);
+  background: linear-gradient(135deg, rgba(215, 44, 255, 0.28), rgba(0, 229, 255, 0.2));
+  color: #ffffff;
+}
+
+.bling-buddy-card-actions button::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: translateX(-120%);
+}
+
+.bling-buddy-card-actions button:not(:disabled):hover::after {
+  animation: bling-buddy-button-shine 0.9s ease;
+}
+
+.bling-buddy-card-actions button.is-equipped {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #aaa7c8;
+}
+
+.bling-buddy-card-actions button:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
+.bling-buddy-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.bling-buddy-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bling-buddy-filter-label {
+  min-width: 52px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7ed0ff;
+}
+
+.bling-buddy-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bling-buddy-filter-pills button {
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f7f3ff;
+}
+
+.bling-buddy-filter-pills button.active {
+  border-color: rgba(215, 44, 255, 0.5);
+  background: linear-gradient(135deg, rgba(215, 44, 255, 0.25), rgba(0, 229, 255, 0.18));
+  color: #ffffff;
 }
 
 .bling-depot-item-copy {
@@ -7272,6 +7848,34 @@ button {
 .rarity-legendary {
   border-color: rgba(251, 191, 36, 0.4);
   color: #ffe0a3;
+}
+
+.rarity-cute {
+  border-color: rgba(255, 158, 207, 0.32);
+  color: #ffcbe6;
+}
+
+.rarity-shiny {
+  border-color: rgba(126, 208, 255, 0.34);
+  color: #b7e9ff;
+}
+
+.rarity-extra {
+  border-color: rgba(186, 47, 255, 0.36);
+  color: #e2b7ff;
+}
+
+.rarity-iconic {
+  border-color: rgba(255, 79, 216, 0.4);
+  background: linear-gradient(135deg, rgba(255, 79, 216, 0.12), rgba(124, 44, 255, 0.12));
+  color: #ffd2f6;
+}
+
+.rarity-unhinged-luxury {
+  border-color: rgba(255, 209, 102, 0.5);
+  background: linear-gradient(135deg, rgba(186, 47, 255, 0.18), rgba(255, 209, 102, 0.18));
+  color: #ffe9b0;
+  box-shadow: 0 0 14px rgba(186, 47, 255, 0.3);
 }
 
 .bling-depot-item-copy h3 {
@@ -13676,4 +14280,188 @@ button.join-toggle.is-joined {
   .group-photo-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* =========================================================
+   Profiles That Actually Matter
+   ========================================================= */
+
+.profile-card-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-view-public-button {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(235, 230, 255, 0.85);
+  font-weight: 700;
+}
+
+.profile-photo-field-list,
+.profile-favorite-place-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-photo-field-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.profile-photo-field-row input {
+  flex: 1;
+}
+
+.profile-favorite-place-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(235, 230, 255, 0.85);
+}
+
+.resident-profile-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.resident-profile-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 !important;
+  border-radius: 24px;
+}
+
+.resident-profile-banner {
+  height: 140px;
+  background:
+    radial-gradient(circle at top, rgba(173, 68, 255, 0.22), transparent 60%),
+    linear-gradient(145deg, #1a0d31 0%, #071633 64%, #070915 100%);
+}
+
+.resident-profile-body {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 0 22px 18px;
+  margin-top: -48px;
+}
+
+.resident-profile-avatar {
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  border: 3px solid rgba(5, 6, 13, 0.9);
+  background: linear-gradient(135deg, #7c4dff, #ff4fd8);
+  font-size: 28px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.resident-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.resident-profile-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resident-profile-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.resident-profile-name-row h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.resident-verified-badge {
+  border-radius: 999px;
+  padding: 3px 10px;
+  background: rgba(79, 255, 168, 0.18);
+  color: #b4ffd6;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.resident-creator-type {
+  color: #ff4fd8;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.resident-mood-badge {
+  align-self: flex-start;
+  border-radius: 999px;
+  padding: 3px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(235, 230, 255, 0.85);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.resident-available-for {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 22px 18px;
+}
+
+.resident-available-for-pill {
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: rgba(255, 79, 216, 0.1);
+  color: #ffd6f4;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.resident-featured-photos h3,
+.resident-favorite-places h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+@media (max-width: 640px) {
+  .resident-profile-body {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: -32px;
+  }
+}
+
+.group-member-name-button {
+  background: none !important;
+  border: 0;
+  padding: 0;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.group-member-name-button:hover {
+  color: #ff4fd8;
 }

@@ -25,7 +25,7 @@ const EMPTY_POST_FORM = {
 
 const TABS = ["Posts", "Events", "Announcements", "Photos", "Members"];
 
-function GroupDetailPage({ groupId, onAuthOpen, showToast }) {
+function GroupDetailPage({ groupId, onAuthOpen, onOpenResidentProfile, showToast }) {
   const [activeTab, setActiveTab] = useState("Posts");
   const [user, setUser] = useState(null);
   const [displayName, setDisplayName] = useState("");
@@ -333,7 +333,13 @@ function GroupDetailPage({ groupId, onAuthOpen, showToast }) {
           {members.length === 0 ? <p className="groups-directory-message">No members yet.</p> : null}
           {members.map((member) => (
             <div className="group-member-row" key={member.id}>
-              <strong>{member.display_name || "Resident"}</strong>
+              <button
+                type="button"
+                className="group-member-name-button"
+                onClick={() => onOpenResidentProfile?.(member.user_id)}
+              >
+                {member.display_name || "Resident"}
+              </button>
               <small>Joined {new Date(member.joined_at).toLocaleDateString()}</small>
             </div>
           ))}

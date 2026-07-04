@@ -94,6 +94,8 @@ import TonightInSL from "./gridster/TonightInSL";
 import BookingBoard from "./gridster/BookingBoard";
 import GroupsPage from "./gridster/GroupsPage";
 import GroupDetailPage from "./gridster/GroupDetailPage";
+import ResidentProfilePage from "./gridster/ResidentProfilePage";
+import ResidentDirectoryPage from "./gridster/ResidentDirectoryPage";
 import TeleportStatusChip from "./gridster/TeleportStatusChip";
 import "./GridsterHome.css";
 
@@ -143,6 +145,7 @@ function GridsterHome() {
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [selectedProfileName, setSelectedProfileName] = useState("CharlieJo");
   const [selectedGroupId, setSelectedGroupId] = useState(null);
+  const [selectedResidentUserId, setSelectedResidentUserId] = useState(null);
   const [theme, setTheme] = usePersistedGridsterValue("theme", "dark-neon");
   const toastTimerRef = useRef(null);
   const toastIdRef = useRef(0);
@@ -231,6 +234,13 @@ function GridsterHome() {
     setActivePage("GroupDetail");
   };
 
+  const openResidentProfile = (userId) => {
+    setSelectedResidentUserId(userId);
+    setShowNotifications(false);
+    setShowThemeMenu(false);
+    setActivePage("ResidentProfile");
+  };
+
   const openAuth = (mode = "login") => {
     setAuthMode(mode === "signup" ? "signup" : "login");
     setActivePage("Auth");
@@ -309,9 +319,11 @@ function GridsterHome() {
           authMode={authMode}
           selectedProfileName={selectedProfileName}
           selectedGroupId={selectedGroupId}
+          selectedResidentUserId={selectedResidentUserId}
           setActivePage={setActivePage}
           onOpenProfile={openProfile}
           onOpenGroup={openGroup}
+          onOpenResidentProfile={openResidentProfile}
           onAuthOpen={openAuth}
           showToast={showToast}
         />
@@ -329,7 +341,7 @@ function GridsterHome() {
   );
 }
 
-function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, selectedGroupId, setActivePage, onOpenProfile, onOpenGroup, onAuthOpen, showToast }) {
+function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, selectedGroupId, selectedResidentUserId, setActivePage, onOpenProfile, onOpenGroup, onOpenResidentProfile, onAuthOpen, showToast }) {
   if (activePage === "Home") {
     return (
       <>
@@ -542,7 +554,28 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   if (activePage === "GroupDetail") {
     return (
       <PageShell title="Group" subtitle="Posts, events, announcements, photos, and members for this community.">
-        <GroupDetailPage groupId={selectedGroupId} onAuthOpen={onAuthOpen} showToast={showToast} />
+        <GroupDetailPage
+          groupId={selectedGroupId}
+          onAuthOpen={onAuthOpen}
+          onOpenResidentProfile={onOpenResidentProfile}
+          showToast={showToast}
+        />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "ResidentProfile") {
+    return (
+      <PageShell title="Resident Profile" subtitle="A real Gridster profile — verified status, cosmetics, and more.">
+        <ResidentProfilePage userId={selectedResidentUserId} showToast={showToast} />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "ResidentDirectory") {
+    return (
+      <PageShell title="Residents" subtitle="Find residents by what they're available for.">
+        <ResidentDirectoryPage onOpenResidentProfile={onOpenResidentProfile} showToast={showToast} />
       </PageShell>
     );
   }
@@ -646,7 +679,12 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   if (activePage === "Profile") {
     return (
       <PageShell title="Profile" subtitle="Create, edit, and preview your Gridster resident identity.">
-        <ProfileSetup onAuthOpen={() => onAuthOpen?.("login")} showToast={showToast} />
+        <ProfileSetup
+          onAuthOpen={() => onAuthOpen?.("login")}
+          onOpenResidentProfile={onOpenResidentProfile}
+          onOpenBlingDepot={() => setActivePage("BlingBoost")}
+          showToast={showToast}
+        />
         <CreatorDashboard showToast={showToast} />
         <BloggerNetwork showToast={showToast} />
         <StoreTools showToast={showToast} />

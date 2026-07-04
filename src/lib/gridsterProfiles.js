@@ -1,7 +1,48 @@
 import { supabase } from "./supabaseClient";
 
 export const GRIDSTER_PROFILE_TABLE = "profiles";
+export const GRIDSTER_FAVORITE_PLACES_TABLE = "gridster_favorite_places";
 export const DEFAULT_BLING_BITS = 1250;
+
+export const GRIDSTER_AVAILABLE_FOR_TAGS = [
+  "dj",
+  "host",
+  "blogger",
+  "photographer",
+  "creator",
+  "model",
+  "club_owner",
+  "roleplayer",
+  "decorator",
+  "shopper",
+];
+
+export const GRIDSTER_AVAILABLE_FOR_LABELS = {
+  dj: "DJ",
+  host: "Host",
+  blogger: "Blogger",
+  photographer: "Photographer",
+  creator: "Creator",
+  model: "Model",
+  club_owner: "Club Owner",
+  roleplayer: "Roleplayer",
+  decorator: "Decorator",
+  shopper: "Shopper",
+};
+
+export const GRIDSTER_MOOD_PRESETS = [
+  "DJing",
+  "Shopping",
+  "Blogging",
+  "Taking Photos",
+  "At a Club",
+  "AFK But Judging",
+  "Looking for Trouble",
+  "Open to Chat",
+  "Do Not Disturb",
+];
+
+export const GRIDSTER_MAX_FEATURED_PHOTOS = 6;
 
 export const GRIDSTER_CREATOR_TYPES = [
   "Resident",
@@ -51,6 +92,9 @@ export const EMPTY_GRIDSTER_PROFILE = {
   equipped_profile_frame: "",
   equipped_glow_effect: "",
   equipped_badges: [],
+  available_for: [],
+  current_mood: "",
+  featured_photo_urls: [],
 };
 
 function normalizeUrl(value) {
@@ -70,6 +114,15 @@ export function normalizeGridsterProfileForm(form) {
   const interests = Array.isArray(form.interests)
     ? form.interests.filter((tag) => GRIDSTER_INTEREST_TAGS.includes(tag))
     : [];
+  const availableFor = Array.isArray(form.available_for)
+    ? form.available_for.filter((tag) => GRIDSTER_AVAILABLE_FOR_TAGS.includes(tag))
+    : [];
+  const featuredPhotoUrls = Array.isArray(form.featured_photo_urls)
+    ? form.featured_photo_urls
+        .map((url) => normalizeUrl(url))
+        .filter(Boolean)
+        .slice(0, GRIDSTER_MAX_FEATURED_PHOTOS)
+    : [];
 
   return {
     display_name: String(form.display_name || "").trim(),
@@ -84,6 +137,9 @@ export function normalizeGridsterProfileForm(form) {
     instagram_url: normalizeUrl(form.instagram_url),
     marketplace_url: normalizeUrl(form.marketplace_url),
     discord_name: String(form.discord_name || "").trim(),
+    available_for: availableFor,
+    current_mood: String(form.current_mood || "").trim(),
+    featured_photo_urls: featuredPhotoUrls,
   };
 }
 
@@ -169,4 +225,62 @@ export async function updateGridsterProfile(userId, updates) {
   }
 
   return data;
+}
+
+export async function fetchResidentProfile(userId) {
+  return fetchGridsterProfile(userId);
+}
+
+export async function fetchResidentDirectory() {
+  const { data, error } = await supabase
+    .from(GRIDSTER_PROFILE_TABLE)
+    .select("*")
+    .not("display_name", "is", null)
+    .neq("display_name", "")
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function fetchFavoritePlaces(userId) {
+  const { data, error } = await supabase
+    .from(GRIDSTER_FAVORITE_PLACES_TABLE)
+    .select("id, place_id, gridster_places(id, title, category, region_name, slurl, photo_url)")
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function addFavoritePlace(userId, placeId) {
+  const { data, error } = await supabase
+    .from(GRIDSTER_FAVORITE_PLACES_TABLE)
+    .insert({ user_id: userId, place_id: placeId })
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function removeFavoritePlace(userId, placeId) {
+  const { error } = await supabase
+    .from(GRIDSTER_FAVORITE_PLACES_TABLE)
+    .delete()
+    .eq("user_id", userId)
+    .eq("place_id", placeId);
+
+  if (error) {
+    throw error;
+  }
 }

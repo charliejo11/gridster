@@ -1,13 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   EMPTY_GRIDSTER_PROFILE,
+  GRIDSTER_AVAILABLE_FOR_LABELS,
+  GRIDSTER_AVAILABLE_FOR_TAGS,
   GRIDSTER_CREATOR_TYPES,
   GRIDSTER_INTEREST_TAGS,
+  GRIDSTER_MAX_FEATURED_PHOTOS,
+  GRIDSTER_MOOD_PRESETS,
+  addFavoritePlace,
+  fetchFavoritePlaces,
   fetchGridsterProfile,
+  removeFavoritePlace,
   saveGridsterProfile,
 } from "../../lib/gridsterProfiles";
+import { fetchGridsterPlaces } from "../../lib/gridsterPlaces";
 import { getEquippedCosmeticsForUser } from "../../lib/blingDepot";
 import { getBlingProfileStyles } from "./blingDepotItems";
+import BlingBuddyShowcase from "./BlingBuddyShowcase";
 import { supabase } from "../../lib/supabaseClient";
 
 const LINK_FIELDS = [
@@ -23,6 +32,9 @@ function profileToForm(profile, user) {
     display_name: user?.email?.split("@")[0] ?? "",
     ...profile,
     interests: Array.isArray(profile?.interests) ? profile.interests : [],
+    available_for: Array.isArray(profile?.available_for) ? profile.available_for : [],
+    featured_photo_urls: Array.isArray(profile?.featured_photo_urls) ? profile.featured_photo_urls : [],
+    current_mood: profile?.current_mood || "",
   };
 }
 
@@ -40,7 +52,7 @@ function compactUrl(url) {
   return String(url || "").replace(/^https?:\/\//i, "").replace(/\/$/, "");
 }
 
-function ProfileSetup({ onAuthOpen, showToast }) {
+function ProfileSetup({ onAuthOpen, onOpenResidentProfile, onOpenBlingDepot, showToast }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [equippedCosmetics, setEquippedCosmetics] = useState([]);
@@ -50,6 +62,10 @@ function ProfileSetup({ onAuthOpen, showToast }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [allPlaces, setAllPlaces] = useState([]);
+  const [favoritePlaceIds, setFavoritePlaceIds] = useState(new Set());
+  const [favoriteBusyId, setFavoriteBusyId] = useState("");
+  const [moodIsCustom, setMoodIsCustom] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -75,19 +91,40 @@ function ProfileSetup({ onAuthOpen, showToast }) {
       setLoading(true);
 
       try {
-        const [savedProfile, savedEquippedCosmetics] = await Promise.all([
-          fetchGridsterProfile(nextUser.id),
-          getEquippedCosmeticsForUser(nextUser.id),
-        ]);
+        const savedProfile = await fetchGridsterProfile(nextUser.id);
 
         if (!active) {
           return;
         }
 
         setProfile(savedProfile);
-        setEquippedCosmetics(savedEquippedCosmetics);
         setForm(profileToForm(savedProfile, nextUser));
         setEditing(!savedProfile);
+        setMoodIsCustom(
+          Boolean(savedProfile?.current_mood) && !GRIDSTER_MOOD_PRESETS.includes(savedProfile.current_mood)
+        );
+
+        // Equipped cosmetics and places/favorites are separate, best-effort
+        // loads - a failure here (e.g. a column/table not existing yet) must
+        // not break the core profile editor above.
+        getEquippedCosmeticsForUser(nextUser.id)
+          .then((savedEquippedCosmetics) => {
+            if (active) {
+              setEquippedCosmetics(savedEquippedCosmetics || []);
+            }
+          })
+          .catch(() => {});
+
+        Promise.all([fetchGridsterPlaces(), fetchFavoritePlaces(nextUser.id)])
+          .then(([places, favorites]) => {
+            if (!active) {
+              return;
+            }
+
+            setAllPlaces(places || []);
+            setFavoritePlaceIds(new Set((favorites || []).map((favorite) => favorite.place_id)));
+          })
+          .catch(() => {});
       } catch (loadError) {
         if (!active) {
           return;
@@ -124,6 +161,7 @@ function ProfileSetup({ onAuthOpen, showToast }) {
   }, []);
 
   const selectedInterests = useMemo(() => new Set(form.interests), [form.interests]);
+  const selectedAvailableFor = useMemo(() => new Set(form.available_for), [form.available_for]);
   const hasProfile = Boolean(profile?.id);
   const profileBling = useMemo(
     () => (hasProfile ? getBlingProfileStyles(profile, equippedCosmetics) : null),
@@ -157,6 +195,87 @@ function ProfileSetup({ onAuthOpen, showToast }) {
         interests: Array.from(currentTags),
       };
     });
+  };
+
+  const toggleAvailableFor = (tag) => {
+    setForm((current) => {
+      const currentTags = new Set(current.available_for);
+
+      if (currentTags.has(tag)) {
+        currentTags.delete(tag);
+      } else {
+        currentTags.add(tag);
+      }
+
+      return {
+        ...current,
+        available_for: Array.from(currentTags),
+      };
+    });
+  };
+
+  const handleMoodPresetChange = (value) => {
+    if (value === "__custom__") {
+      setMoodIsCustom(true);
+      updateField("current_mood", "");
+      return;
+    }
+
+    setMoodIsCustom(false);
+    updateField("current_mood", value);
+  };
+
+  const updateFeaturedPhoto = (index, value) => {
+    setForm((current) => {
+      const nextPhotos = [...current.featured_photo_urls];
+      nextPhotos[index] = value;
+      return { ...current, featured_photo_urls: nextPhotos };
+    });
+  };
+
+  const addFeaturedPhotoField = () => {
+    setForm((current) => {
+      if (current.featured_photo_urls.length >= GRIDSTER_MAX_FEATURED_PHOTOS) {
+        return current;
+      }
+
+      return { ...current, featured_photo_urls: [...current.featured_photo_urls, ""] };
+    });
+  };
+
+  const removeFeaturedPhotoField = (index) => {
+    setForm((current) => ({
+      ...current,
+      featured_photo_urls: current.featured_photo_urls.filter((_, itemIndex) => itemIndex !== index),
+    }));
+  };
+
+  const toggleFavoritePlace = async (place) => {
+    if (!user) {
+      return;
+    }
+
+    setFavoriteBusyId(place.id);
+
+    try {
+      if (favoritePlaceIds.has(place.id)) {
+        await removeFavoritePlace(user.id, place.id);
+        setFavoritePlaceIds((current) => {
+          const next = new Set(current);
+          next.delete(place.id);
+          return next;
+        });
+        showToast?.(`Removed ${place.title} from favorites.`);
+      } else {
+        await addFavoritePlace(user.id, place.id);
+        setFavoritePlaceIds((current) => new Set(current).add(place.id));
+        showToast?.(`Added ${place.title} to favorites.`);
+      }
+    } catch (favoriteError) {
+      showToast?.(favoriteError.message || "Could not update your favorite places.");
+    } finally {
+      setFavoriteBusyId("");
+    }
   };
 
   const handleSave = async (event) => {
@@ -224,6 +343,7 @@ function ProfileSetup({ onAuthOpen, showToast }) {
           equippedCosmetics={equippedCosmetics}
           blingProfile={profileBling}
           initials={getProfileInitials(profile, user)}
+          onViewPublicProfile={() => onOpenResidentProfile?.(user.id)}
           onEdit={() => {
             setForm(profileToForm(profile, user));
             setEditing(true);
@@ -238,6 +358,14 @@ function ProfileSetup({ onAuthOpen, showToast }) {
           <p>Add your Second Life identity, creator type, interests, and public links.</p>
         </article>
       )}
+
+      {hasProfile ? (
+        <BlingBuddyShowcase
+          buddy={profileBling?.buddy}
+          onOpenShop={onOpenBlingDepot}
+          showToast={showToast}
+        />
+      ) : null}
 
       {editing ? (
         <form className="profile-setup-form glass-card" onSubmit={handleSave}>
@@ -346,6 +474,89 @@ function ProfileSetup({ onAuthOpen, showToast }) {
             </div>
           </div>
 
+          <div className="profile-field">
+            <span>Available for</span>
+            <div className="profile-tag-picker" role="group" aria-label="Available for">
+              {GRIDSTER_AVAILABLE_FOR_TAGS.map((tag) => (
+                <button
+                  type="button"
+                  className={selectedAvailableFor.has(tag) ? "active" : ""}
+                  key={tag}
+                  onClick={() => toggleAvailableFor(tag)}
+                >
+                  {GRIDSTER_AVAILABLE_FOR_LABELS[tag]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="profile-field">
+            <span>Current mood</span>
+            <select
+              className="profile-setup-input"
+              value={moodIsCustom ? "__custom__" : form.current_mood}
+              onChange={(event) => handleMoodPresetChange(event.target.value)}
+            >
+              <option value="">No status set</option>
+              {GRIDSTER_MOOD_PRESETS.map((preset) => (
+                <option key={preset} value={preset}>{preset}</option>
+              ))}
+              <option value="__custom__">Custom...</option>
+            </select>
+          </label>
+
+          {moodIsCustom ? (
+            <label className="profile-field">
+              <span>Custom mood</span>
+              <input
+                className="profile-setup-input"
+                type="text"
+                value={form.current_mood}
+                onChange={(event) => updateField("current_mood", event.target.value)}
+                placeholder="Hunting for the perfect skybox"
+              />
+            </label>
+          ) : null}
+
+          <div className="profile-field">
+            <span>Featured photos</span>
+            <div className="profile-photo-field-list">
+              {form.featured_photo_urls.map((url, index) => (
+                <div className="profile-photo-field-row" key={index}>
+                  <input
+                    className="profile-setup-input"
+                    type="text"
+                    value={url}
+                    onChange={(event) => updateFeaturedPhoto(index, event.target.value)}
+                    placeholder="https://..."
+                  />
+                  <button type="button" onClick={() => removeFeaturedPhotoField(index)}>Remove</button>
+                </div>
+              ))}
+              {form.featured_photo_urls.length < GRIDSTER_MAX_FEATURED_PHOTOS ? (
+                <button type="button" onClick={addFeaturedPhotoField}>+ Add Photo</button>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="profile-field">
+            <span>Favorite places</span>
+            <div className="profile-favorite-place-list">
+              {allPlaces.length === 0 ? <p>No places to favorite yet — visit the Places directory first.</p> : null}
+              {allPlaces.map((place) => (
+                <label className="profile-favorite-place-row" key={place.id}>
+                  <input
+                    type="checkbox"
+                    checked={favoritePlaceIds.has(place.id)}
+                    disabled={favoriteBusyId === place.id}
+                    onChange={() => toggleFavoritePlace(place)}
+                  />
+                  <span>{place.title}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
           <div className="profile-link-grid">
             {LINK_FIELDS.map(([field, label, placeholder]) => (
               <label className="profile-field" key={field}>
@@ -390,7 +601,7 @@ function ProfileSetup({ onAuthOpen, showToast }) {
   );
 }
 
-function SavedProfileCard({ profile, equippedCosmetics = [], blingProfile: suppliedBlingProfile, initials, onEdit }) {
+function SavedProfileCard({ profile, equippedCosmetics = [], blingProfile: suppliedBlingProfile, initials, onEdit, onViewPublicProfile }) {
   const blingProfile = suppliedBlingProfile ?? getBlingProfileStyles(profile, equippedCosmetics);
   const displayClassName = [
     "profile-setup-display",
@@ -427,9 +638,14 @@ function SavedProfileCard({ profile, equippedCosmetics = [], blingProfile: suppl
           {profile.bio ? <p>{profile.bio}</p> : <p>Add a bio so residents know what you do across the grid.</p>}
         </div>
 
-        <button type="button" className="profile-edit-button" onClick={onEdit}>
-          Edit Profile
-        </button>
+        <div className="profile-card-header-actions">
+          <button type="button" className="profile-edit-button" onClick={onEdit}>
+            Edit Profile
+          </button>
+          <button type="button" className="profile-view-public-button" onClick={onViewPublicProfile}>
+            View My Public Profile
+          </button>
+        </div>
       </div>
 
       <div className="profile-setup-tags">

@@ -141,7 +141,16 @@ export async function getEquippedCosmeticsForUser(userId) {
         name,
         item_type,
         preview_class,
-        image_url
+        image_url,
+        icon,
+        rarity,
+        description,
+        price,
+        mood,
+        vibe,
+        accessories,
+        animation,
+        reactions
       )
     `)
     .eq("user_id", userId);

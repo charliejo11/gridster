@@ -4,6 +4,8 @@ import {
   getBlingDepotItemPresentation,
   parseBlingPreviewStyle,
 } from "./blingDepotItems";
+import BlingBuddyFilters, { BLING_BUDDY_FILTER_ALL, filterBlingBuddies } from "./BlingBuddyFilters";
+import BlingBuddyCard from "./BlingBuddyCard";
 import {
   buyBlingItem,
   equipBlingItem,
@@ -45,6 +47,9 @@ function normalizeShopData(data) {
 
 function BlingDepot({ onAuthOpen, showToast }) {
   const [activeTab, setActiveTab] = useState("all");
+  const [buddyRarityFilter, setBuddyRarityFilter] = useState(BLING_BUDDY_FILTER_ALL);
+  const [buddyMoodFilter, setBuddyMoodFilter] = useState(BLING_BUDDY_FILTER_ALL);
+  const [buddyVibeFilter, setBuddyVibeFilter] = useState(BLING_BUDDY_FILTER_ALL);
   const [user, setUser] = useState(null);
   const [shopData, setShopData] = useState({
     balance: null,
@@ -158,8 +163,23 @@ function BlingDepot({ onAuthOpen, showToast }) {
       bling_buddy: "Bling Buddies",
     };
 
-    return shopItems.filter((item) => item.category === categoryMap[activeTab]);
-  }, [shopItems, activeTab]);
+    const categoryItems = shopItems.filter((item) => item.category === categoryMap[activeTab]);
+
+    if (activeTab === "bling_buddy") {
+      return filterBlingBuddies(categoryItems, {
+        rarity: buddyRarityFilter,
+        mood: buddyMoodFilter,
+        vibe: buddyVibeFilter,
+      });
+    }
+
+    return categoryItems;
+  }, [shopItems, activeTab, buddyRarityFilter, buddyMoodFilter, buddyVibeFilter]);
+
+  const buddyCategoryItems = useMemo(
+    () => shopItems.filter((item) => item.category === "Bling Buddies"),
+    [shopItems]
+  );
 
   const featuredSeasonalItems = useMemo(() => {
     return shopItems.filter((item) => item.limited).slice(0, 4);
@@ -391,11 +411,40 @@ function BlingDepot({ onAuthOpen, showToast }) {
         </section>
       )}
 
-      <div className="bling-depot-grid">
+      {activeTab === "bling_buddy" ? (
+        <BlingBuddyFilters
+          items={buddyCategoryItems}
+          rarity={buddyRarityFilter}
+          mood={buddyMoodFilter}
+          vibe={buddyVibeFilter}
+          onRarityChange={setBuddyRarityFilter}
+          onMoodChange={setBuddyMoodFilter}
+          onVibeChange={setBuddyVibeFilter}
+        />
+      ) : null}
+
+      <div className={activeTab === "bling_buddy" ? "bling-depot-grid bling-buddy-grid" : "bling-depot-grid"}>
         {visibleItems.map((item) => {
           const owned = ownedItemIds.has(item.id);
           const equipped = equippedItemIds.has(item.id);
           const busy = busyItemId === item.id;
+
+          if (item.itemType === "bling_buddy") {
+            return (
+              <BlingBuddyCard
+                key={item.id}
+                item={item}
+                owned={owned}
+                equipped={equipped}
+                busy={busy}
+                loading={loading}
+                canBuy={!user || shopData.items.length > 0}
+                onBuy={handleBuy}
+                onEquip={handleEquip}
+              />
+            );
+          }
+
           const previewClassName = ["bling-depot-preview-fill", item.previewClass].filter(Boolean).join(" ");
           const previewStyle = item.previewClass ? undefined : getItemPreviewStyle(item);
           const hasPreview = item.itemType === "messenger_theme" || item.itemType === "emoji_pack";
@@ -416,7 +465,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
               <div className="bling-depot-item-copy">
                 <div className="bling-depot-item-meta">
                   <span>{item.category}</span>
-                  <b className={`bling-rarity rarity-${item.rarity.toLowerCase()}`}>{item.rarity}</b>
+                  <b className={`bling-rarity rarity-${item.rarity.toLowerCase().replace(/\s+/g, "-")}`}>{item.rarity}</b>
                   {item.limited ? <b className="bling-limited-pill">{item.season || "Limited"}</b> : null}
                 </div>
                 <h3>{item.name}</h3>

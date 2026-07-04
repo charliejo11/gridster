@@ -10,6 +10,7 @@ import {
   getBlingShopData,
 } from "../../lib/blingDepot";
 import { supabase } from "../../lib/supabaseClient";
+import MessengerThemePreviewModal from "./MessengerThemePreviewModal";
 
 const STARTING_BLING_BITS = 1250;
 const BLING_DEPOT_ARTWORK = "/images/bling%20card.png.png";
@@ -52,6 +53,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
   const [busyItemId, setBusyItemId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [previewTheme, setPreviewTheme] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -142,6 +144,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
       sticker_pack: "Chat Stickers",
       boost: "Event Boosts",
       bling_buddy: "Bling Buddies",
+      messenger_theme: "Messenger Themes",
     };
 
     return shopItems.filter((item) => item.category === categoryMap[activeTab]);
@@ -284,6 +287,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
           { id: "sticker_pack", label: "Stickers" },
           { id: "boost", label: "Boosts" },
           { id: "bling_buddy", label: "Bling Buddies" },
+          { id: "messenger_theme", label: "Messenger Themes" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -401,13 +405,19 @@ function BlingDepot({ onAuthOpen, showToast }) {
               </div>
 
               <div className="bling-depot-item-actions">
-                {!owned ? (
+                {item.itemType === "messenger_theme" ? (
+                  <button type="button" onClick={() => setPreviewTheme(item)}>
+                    Preview
+                  </button>
+                ) : null}
+
+                {item.itemType !== "messenger_theme" && !owned ? (
                   <button type="button" disabled={busy || loading || (user && !shopData.items.length)} onClick={() => handleBuy(item)}>
                     {busy ? "Buying..." : "Buy with Bling Bits"}
                   </button>
                 ) : null}
 
-                {owned && item.equipSlot ? (
+                {item.itemType !== "messenger_theme" && owned && item.equipSlot ? (
                   <button
                     type="button"
                     className={equipped ? "is-equipped" : ""}
@@ -418,7 +428,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
                   </button>
                 ) : null}
 
-                {owned && !item.equipSlot ? (
+                {item.itemType !== "messenger_theme" && owned && !item.equipSlot ? (
                   <button type="button" disabled>
                     Owned
                   </button>
@@ -428,6 +438,10 @@ function BlingDepot({ onAuthOpen, showToast }) {
           );
         })}
       </div>
+
+      {previewTheme ? (
+        <MessengerThemePreviewModal theme={previewTheme} onClose={() => setPreviewTheme(null)} />
+      ) : null}
     </section>
   );
 }

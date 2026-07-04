@@ -997,6 +997,54 @@ export const BLING_DEPOT_ITEMS = [
     previewClass: "bling-buddy-crystal-dragon",
     icon: "🐉",
   },
+  {
+    id: "chalk-talk-theme",
+    name: "Chalk Talk",
+    category: "Messenger Themes",
+    rarity: "Rare",
+    price: 400,
+    description: "A chalkboard-style messenger skin with doodled speech bubbles.",
+    itemType: "messenger_theme",
+    equipSlot: null,
+    previewClass: "messenger-theme-chalk-talk",
+    icon: "🖍️",
+  },
+  {
+    id: "goth-scribbles-theme",
+    name: "Goth Scribbles",
+    category: "Messenger Themes",
+    rarity: "Rare",
+    price: 450,
+    description: "Moody scribbled linework on dark parchment for your chat window.",
+    itemType: "messenger_theme",
+    equipSlot: null,
+    previewClass: "messenger-theme-goth-scribbles",
+    icon: "🖤",
+  },
+  {
+    id: "neon-night-chat-theme",
+    name: "Neon Night Chat",
+    category: "Messenger Themes",
+    rarity: "Epic",
+    price: 500,
+    description: "Neon cyberpunk chat bubbles that glow like the grid at midnight.",
+    itemType: "messenger_theme",
+    equipSlot: null,
+    previewClass: "messenger-theme-neon-night",
+    icon: "🌃",
+  },
+  {
+    id: "pink-notebook-chaos-theme",
+    name: "Pink Notebook Chaos",
+    category: "Messenger Themes",
+    rarity: "Rare",
+    price: 400,
+    description: "Scribbled pink notebook paper with chaotic doodle energy.",
+    itemType: "messenger_theme",
+    equipSlot: null,
+    previewClass: "messenger-theme-pink-notebook",
+    icon: "📓",
+  },
 ];
 
 export function asBlingItemIds(value) {
@@ -1072,6 +1120,7 @@ export const BLING_ITEM_TYPE_CATEGORIES = {
   sticker_pack: "Chat Stickers",
   boost: "Event Boosts",
   bling_buddy: "Bling Buddies",
+  messenger_theme: "Messenger Themes",
 };
 
 export const BLING_ITEM_TYPE_ICONS = {
@@ -1083,6 +1132,7 @@ export const BLING_ITEM_TYPE_ICONS = {
   sticker_pack: "+",
   boost: "↑",
   bling_buddy: "🐾",
+  messenger_theme: "💬",
 };
 
 export const BLING_PREVIEW_CLASS_STYLES = {

@@ -91,6 +91,7 @@ const DEFAULT_GRIDSTER_STORAGE = {
 };
 const GRIDSTER_PAGE_PATHS = {
   BlingBoost: "/bling-depot",
+  Messages: "/messenger",
 };
 const GRIDSTER_PATH_PAGES = Object.fromEntries(
   Object.entries(GRIDSTER_PAGE_PATHS).map(([page, path]) => [path, page])
@@ -198,6 +199,14 @@ function GridsterHome() {
   const routePage = getGridsterPageFromPath();
   const [activePage, setActivePage] = usePersistedGridsterValue("activePage", routePage ?? "Home");
   const [showLanding, setShowLanding] = usePersistedGridsterValue("showLanding", routePage ? false : true);
+  const [hasAppliedRoute, setHasAppliedRoute] = useState(false);
+
+  if (routePage && !hasAppliedRoute) {
+    setHasAppliedRoute(true);
+    setActivePage(routePage);
+    setShowLanding(false);
+  }
+
   const [authMode, setAuthMode] = useState("login");
   const [toast, setToast] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);

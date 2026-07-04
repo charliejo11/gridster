@@ -8,6 +8,7 @@ import {
   buyBlingItem,
   equipBlingItem,
   getBlingShopData,
+  notifyBlingBalanceChanged,
 } from "../../lib/blingDepot";
 import { supabase } from "../../lib/supabaseClient";
 import MessengerThemePreviewModal from "./MessengerThemePreviewModal";
@@ -35,6 +36,7 @@ function getItemPreviewStyle(item) {
 function normalizeShopData(data) {
   return {
     balance: data?.balance ?? null,
+    isAdmin: Boolean(data?.isAdmin),
     items: (data?.items || []).map((item) => getBlingDepotItemPresentation(item)).filter(Boolean),
     purchases: data?.purchases || [],
     equipped: data?.equipped || [],
@@ -46,6 +48,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
   const [user, setUser] = useState(null);
   const [shopData, setShopData] = useState({
     balance: null,
+    isAdmin: false,
     items: [],
     purchases: [],
     equipped: [],
@@ -71,6 +74,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
       if (!nextUser) {
         setShopData({
           balance: null,
+          isAdmin: false,
           items: [],
           purchases: [],
           equipped: [],
@@ -91,6 +95,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
         if (active) {
           setShopData({
             balance: null,
+            isAdmin: false,
             items: [],
             purchases: [],
             equipped: [],
@@ -181,6 +186,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
     const nextShopData = await getBlingShopData();
     const normalized = normalizeShopData(nextShopData);
     setShopData(normalized);
+    notifyBlingBalanceChanged();
     return normalized;
   };
 
@@ -197,7 +203,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
       return;
     }
 
-    if (balance < item.price) {
+    if (!shopData.isAdmin && balance < item.price) {
       setError(`Not enough Bling Bits for ${item.name}.`);
       showToast?.(`Not enough Bling Bits for ${item.name}.`);
       return;
@@ -276,7 +282,13 @@ function BlingDepot({ onAuthOpen, showToast }) {
       <article className="bling-depot-toolbar glass-card">
         <div>
           <span>Bling Bits Balance</span>
-          <strong>{loading ? "Loading..." : `${formatBits(balance)} Bling Bits`}</strong>
+          <strong>
+            {loading
+              ? "Loading..."
+              : shopData.isAdmin
+                ? "∞ Bling Bits (Owner Access)"
+                : `${formatBits(balance)} Bling Bits`}
+          </strong>
         </div>
         {!user ? (
           <button type="button" onClick={() => onAuthOpen?.("login")}>Log In to Buy</button>

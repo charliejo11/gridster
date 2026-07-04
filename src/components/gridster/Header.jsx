@@ -1,3 +1,7 @@
+import { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabaseClient";
+import { BLING_BALANCE_EVENT, getBlingBalanceSummary } from "../../lib/blingDepot";
+
 function Header({
   activePage,
   setActivePage,
@@ -14,6 +18,36 @@ function Header({
   activeThemeLabel,
   notifications,
 }) {
+  const [blingSummary, setBlingSummary] = useState({ balance: null, isAdmin: false });
+
+  useEffect(() => {
+    let active = true;
+
+    const refreshBalance = () => {
+      getBlingBalanceSummary()
+        .then((summary) => {
+          if (active) {
+            setBlingSummary(summary);
+          }
+        })
+        .catch(() => {});
+    };
+
+    refreshBalance();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      refreshBalance();
+    });
+
+    window.addEventListener(BLING_BALANCE_EVENT, refreshBalance);
+
+    return () => {
+      active = false;
+      listener?.subscription?.unsubscribe();
+      window.removeEventListener(BLING_BALANCE_EVENT, refreshBalance);
+    };
+  }, []);
+
   const handleNavClick = (event, item) => {
     event.preventDefault();
     setActivePage(item);
@@ -185,7 +219,12 @@ function Header({
           className="gem-button"
           onClick={() => showToast?.("Bling Bits can be used for boosts, flair, and featured visibility.")}
         >
-          💎 1,250 Bling Bits
+          💎{" "}
+          {blingSummary.isAdmin
+            ? "∞ Bling Bits"
+            : blingSummary.balance === null
+              ? "1,250 Bling Bits"
+              : `${blingSummary.balance.toLocaleString()} Bling Bits`}
         </button>
         <div className="mini-profile">
           <div className="mini-pic">CJ</div>

@@ -1,5 +1,34 @@
 import { supabase } from "./supabaseClient";
 
+export const BLING_BALANCE_EVENT = "gridster:bling-balance-changed";
+
+export function notifyBlingBalanceChanged() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(BLING_BALANCE_EVENT));
+  }
+}
+
+async function getCurrentUserIsAdmin() {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+
+  if (!userId) {
+    return false;
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return Boolean(data?.is_admin);
+}
+
 export async function getBlingBalance() {
   const { data, error } = await supabase.rpc("ensure_bling_balance");
 
@@ -10,12 +39,35 @@ export async function getBlingBalance() {
   return data;
 }
 
+export async function getBlingBalanceSummary() {
+  const { data: userData } = await supabase.auth.getUser();
+
+  if (!userData?.user) {
+    return { balance: null, isAdmin: false };
+  }
+
+  const balanceResult = await supabase.rpc("ensure_bling_balance");
+
+  if (balanceResult.error) {
+    throw balanceResult.error;
+  }
+
+  const isAdmin = await getCurrentUserIsAdmin();
+
+  return {
+    balance: balanceResult.data?.balance ?? 0,
+    isAdmin,
+  };
+}
+
 export async function getBlingShopData() {
   const balanceResult = await supabase.rpc("ensure_bling_balance");
 
   if (balanceResult.error) {
     throw balanceResult.error;
   }
+
+  const isAdmin = await getCurrentUserIsAdmin();
 
   const itemsResult = await supabase
     .from("bling_items")
@@ -46,6 +98,7 @@ export async function getBlingShopData() {
 
   return {
     balance: balanceResult.data,
+    isAdmin,
     items: itemsResult.data || [],
     purchases: purchasesResult.data || [],
     equipped: equippedResult.data || [],

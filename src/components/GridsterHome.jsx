@@ -84,6 +84,7 @@ import ProfileSetup from "./gridster/ProfileSetup";
 import BlingDepot from "./gridster/BlingDepot";
 import TeleportDiscoveryFeed from "./gridster/TeleportDiscoveryFeed";
 import TonightInSL from "./gridster/TonightInSL";
+import BookingBoard from "./gridster/BookingBoard";
 import "./GridsterHome.css";
 
 const GRIDSTER_PAGE_PATHS = {
@@ -91,6 +92,7 @@ const GRIDSTER_PAGE_PATHS = {
   Messages: "/messenger",
   TeleportDiscovery: "/places",
   TonightInSL: "/tonight",
+  BookingBoard: "/booking-board",
 };
 const GRIDSTER_PATH_PAGES = Object.fromEntries(
   Object.entries(GRIDSTER_PAGE_PATHS).map(([page, path]) => [path, page])
@@ -416,6 +418,17 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         subtitle="Real places worth a teleport — clubs, beaches, RP sims, stores, and more, verified by the community."
       >
         <TeleportDiscoveryFeed onAuthOpen={() => onAuthOpen?.("login")} showToast={showToast} />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "BookingBoard") {
+    return (
+      <PageShell
+        title="Booking Board"
+        subtitle="Clubs looking to hire DJs, hosts, dancers, and managers — and talent ready to work tonight."
+      >
+        <BookingBoard onAuthOpen={() => onAuthOpen?.("login")} showToast={showToast} />
       </PageShell>
     );
   }

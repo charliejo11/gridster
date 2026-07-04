@@ -193,11 +193,13 @@ function BlingDepot({ onAuthOpen, showToast }) {
 
     if (ownedItemIds.has(item.id)) {
       setMessage(`${item.name} is already in your inventory.`);
+      showToast?.(`${item.name} is already in your inventory.`);
       return;
     }
 
     if (balance < item.price) {
       setError(`Not enough Bling Bits for ${item.name}.`);
+      showToast?.(`Not enough Bling Bits for ${item.name}.`);
       return;
     }
 
@@ -226,11 +228,13 @@ function BlingDepot({ onAuthOpen, showToast }) {
 
     if (!item.equipSlot) {
       setMessage(`${item.name} is owned, but it does not equip to your profile yet.`);
+      showToast?.(`${item.name} does not equip to your profile yet.`);
       return;
     }
 
     if (!ownedItemIds.has(item.id)) {
       setError(`Buy ${item.name} before equipping it.`);
+      showToast?.(`Buy ${item.name} before equipping it.`);
       return;
     }
 

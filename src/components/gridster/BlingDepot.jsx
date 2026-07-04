@@ -382,7 +382,8 @@ function BlingDepot({ onAuthOpen, showToast }) {
           const busy = busyItemId === item.id;
           const previewClassName = ["bling-depot-preview-fill", item.previewClass].filter(Boolean).join(" ");
           const previewStyle = item.previewClass ? undefined : getItemPreviewStyle(item);
-          const isMessengerCosmetic = item.itemType === "messenger_theme" || item.itemType === "emoji_pack";
+          const hasPreview = item.itemType === "messenger_theme" || item.itemType === "emoji_pack";
+          const isPreviewOnly = item.itemType === "emoji_pack";
 
           return (
             <article className="bling-depot-item-card glass-card" key={item.id}>
@@ -412,19 +413,19 @@ function BlingDepot({ onAuthOpen, showToast }) {
               </div>
 
               <div className="bling-depot-item-actions">
-                {isMessengerCosmetic ? (
+                {hasPreview ? (
                   <button type="button" onClick={() => setPreviewItem(item)}>
                     Preview
                   </button>
                 ) : null}
 
-                {!isMessengerCosmetic && !owned ? (
+                {!isPreviewOnly && !owned ? (
                   <button type="button" disabled={busy || loading || (user && !shopData.items.length)} onClick={() => handleBuy(item)}>
                     {busy ? "Buying..." : "Buy with Bling Bits"}
                   </button>
                 ) : null}
 
-                {!isMessengerCosmetic && owned && item.equipSlot ? (
+                {!isPreviewOnly && owned && item.equipSlot ? (
                   <button
                     type="button"
                     className={equipped ? "is-equipped" : ""}
@@ -435,7 +436,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
                   </button>
                 ) : null}
 
-                {!isMessengerCosmetic && owned && !item.equipSlot ? (
+                {!isPreviewOnly && owned && !item.equipSlot ? (
                   <button type="button" disabled>
                     Owned
                   </button>

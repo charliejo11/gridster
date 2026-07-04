@@ -4445,6 +4445,79 @@ button {
   line-height: 1.42;
 }
 
+.inbox-preview-panel.messenger-theme-chalk-talk {
+  background: #1c2b22;
+}
+
+.inbox-preview-panel.messenger-theme-chalk-talk .dm-message {
+  background: transparent;
+  border: 2px dashed rgba(127, 216, 255, 0.75);
+}
+
+.inbox-preview-panel.messenger-theme-chalk-talk .dm-message.sent {
+  border-color: rgba(255, 214, 107, 0.8);
+}
+
+.inbox-preview-panel.messenger-theme-goth-scribbles {
+  background: linear-gradient(180deg, #120c16, #050308);
+}
+
+.inbox-preview-panel.messenger-theme-goth-scribbles .dm-message {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(192, 192, 210, 0.45);
+}
+
+.inbox-preview-panel.messenger-theme-goth-scribbles .dm-message p {
+  color: #d6d6e8;
+}
+
+.inbox-preview-panel.messenger-theme-goth-scribbles .dm-message.sent {
+  background: rgba(120, 0, 60, 0.22);
+  border-color: rgba(216, 183, 255, 0.5);
+}
+
+.inbox-preview-panel.messenger-theme-neon-night {
+  background:
+    repeating-linear-gradient(0deg, rgba(124, 44, 255, 0.14) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(22, 140, 255, 0.14) 0 1px, transparent 1px 24px),
+    #04050c;
+}
+
+.inbox-preview-panel.messenger-theme-neon-night .dm-message {
+  background: rgba(124, 44, 255, 0.16);
+  border: 1px solid rgba(124, 44, 255, 0.6);
+  box-shadow: 0 0 16px rgba(124, 44, 255, 0.34);
+}
+
+.inbox-preview-panel.messenger-theme-neon-night .dm-message.sent {
+  background: rgba(22, 140, 255, 0.18);
+  border-color: rgba(22, 140, 255, 0.65);
+  box-shadow: 0 0 16px rgba(22, 140, 255, 0.38);
+}
+
+.inbox-preview-panel.messenger-theme-pink-notebook {
+  background:
+    repeating-linear-gradient(180deg, transparent 0 27px, rgba(255, 79, 216, 0.18) 28px),
+    #fff0f7;
+}
+
+.inbox-preview-panel.messenger-theme-pink-notebook .dm-message {
+  background: rgba(255, 255, 255, 0.78);
+  border: 2px dotted rgba(255, 79, 216, 0.55);
+}
+
+.inbox-preview-panel.messenger-theme-pink-notebook .dm-message p {
+  color: #7c2c5c;
+}
+
+.inbox-preview-panel.messenger-theme-pink-notebook .dm-message.sent {
+  background: linear-gradient(135deg, #ff9ecf, #ff4fd8);
+}
+
+.inbox-preview-panel.messenger-theme-pink-notebook .dm-message.sent p {
+  color: #ffffff;
+}
+
 .message-quick-actions {
   display: flex;
   flex-wrap: wrap;

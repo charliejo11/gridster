@@ -1005,7 +1005,7 @@ export const BLING_DEPOT_ITEMS = [
     price: 400,
     description: "A chalkboard-style messenger skin with doodled speech bubbles.",
     itemType: "messenger_theme",
-    equipSlot: null,
+    equipSlot: "equipped_messenger_theme",
     previewClass: "messenger-theme-chalk-talk",
     icon: "🖍️",
   },
@@ -1017,7 +1017,7 @@ export const BLING_DEPOT_ITEMS = [
     price: 450,
     description: "Moody scribbled linework on dark parchment for your chat window.",
     itemType: "messenger_theme",
-    equipSlot: null,
+    equipSlot: "equipped_messenger_theme",
     previewClass: "messenger-theme-goth-scribbles",
     icon: "🖤",
   },
@@ -1029,7 +1029,7 @@ export const BLING_DEPOT_ITEMS = [
     price: 500,
     description: "Neon cyberpunk chat bubbles that glow like the grid at midnight.",
     itemType: "messenger_theme",
-    equipSlot: null,
+    equipSlot: "equipped_messenger_theme",
     previewClass: "messenger-theme-neon-night",
     icon: "🌃",
   },
@@ -1041,7 +1041,7 @@ export const BLING_DEPOT_ITEMS = [
     price: 400,
     description: "Scribbled pink notebook paper with chaotic doodle energy.",
     itemType: "messenger_theme",
-    equipSlot: null,
+    equipSlot: "equipped_messenger_theme",
     previewClass: "messenger-theme-pink-notebook",
     icon: "📓",
   },
@@ -1189,6 +1189,13 @@ export const BLING_ITEM_TYPE_ICONS = {
   emoji_pack: "🙂",
 };
 
+export const BLING_EMOJI_PACK_CONTENTS = {
+  "emoji-pack-drama": ["😭", "🙄", "💅", "😤", "🎭", "😩"],
+  "emoji-pack-goth": ["🦇", "🖤", "🕸️", "💀", "🌙", "🥀"],
+  "emoji-pack-club": ["🎉", "🍸", "💃", "🕺", "🔥", "🎶"],
+  "emoji-pack-bling": ["💎", "👑", "💰", "✨", "🤑", "🐆"],
+};
+
 export const BLING_PREVIEW_CLASS_STYLES = {
   "bling-bg-midnight-lux": "linear-gradient(135deg, #050816, #201033, #7c2cff)",
   "bling-bg-pink-neon": "linear-gradient(135deg, #190019, #ff3fb4, #00c2ff)",
@@ -1275,6 +1282,10 @@ export function getBlingEquipSlot(itemType) {
     return "buddy";
   }
 
+  if (itemType === "messenger_theme") {
+    return "theme";
+  }
+
   return null;
 }
 
@@ -1306,6 +1317,7 @@ export function getBlingDepotItemPresentation(item) {
     imageUrl: item.image_url || "",
     season: item.season || "",
     limited: Boolean(item.limited),
+    emojis: BLING_EMOJI_PACK_CONTENTS[item.preview_class] || [],
   };
 }
 

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
+import { getEquippedCosmeticsForUser } from "../lib/blingDepot";
 import {
   getGridsterDestination,
   getGridsterProfile,
@@ -822,6 +824,36 @@ function MessagesPageContent({ onOpenProfile, showToast }) {
   const [selectedName, setSelectedName] = useState(gridsterMessageConversations[0]?.[1] ?? "");
   const [threads, setThreads] = useState(() => ({ ...gridsterMessageThreads }));
   const [draft, setDraft] = useState("");
+  const [equippedThemeClass, setEquippedThemeClass] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        const currentUser = data?.user;
+
+        if (!currentUser) {
+          return null;
+        }
+
+        return getEquippedCosmeticsForUser(currentUser.id);
+      })
+      .then((equipped) => {
+        if (!active || !equipped) {
+          return;
+        }
+
+        const theme = equipped.find((cosmetic) => cosmetic.item_type === "messenger_theme");
+        setEquippedThemeClass(theme?.bling_items?.preview_class || "");
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const selectedConversation = gridsterMessageConversations.find(([, name]) => name === selectedName);
   const selectedInitial = selectedConversation?.[0] ?? "?";
@@ -879,7 +911,7 @@ function MessagesPageContent({ onOpenProfile, showToast }) {
           </div>
         </aside>
 
-        <section className="inbox-preview-panel">
+        <section className={`inbox-preview-panel ${equippedThemeClass}`}>
           <div className="inbox-preview-header">
             <div className="preview-identity">
               <span className="preview-avatar">{selectedInitial}</span>

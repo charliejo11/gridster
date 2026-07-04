@@ -85,6 +85,7 @@ import BlingDepot from "./gridster/BlingDepot";
 import TeleportDiscoveryFeed from "./gridster/TeleportDiscoveryFeed";
 import TonightInSL from "./gridster/TonightInSL";
 import BookingBoard from "./gridster/BookingBoard";
+import TeleportStatusChip from "./gridster/TeleportStatusChip";
 import "./GridsterHome.css";
 
 const GRIDSTER_PAGE_PATHS = {
@@ -317,11 +318,11 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         <TrendingNow showToast={showToast} />
         <WelcomeCard onExplore={() => setActivePage("Explore")} />
         <ExplorePreview showToast={showToast} />
-        <TeleportCenter />
+        <TeleportCenter showToast={showToast} />
         <LunarEclipsePost showToast={showToast} />
         <VoguePixelsPost showToast={showToast} />
         <CreatorsCollectivePost showToast={showToast} />
-        <UpcomingGridNights />
+        <UpcomingGridNights showToast={showToast} />
         <FeaturedPhotoSpots />
       </>
     );
@@ -349,8 +350,8 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   if (activePage === "Events") {
     return (
       <PageShell title="Events" subtitle="Find live DJs, club nights, shopping events, beach parties, and community gatherings.">
-        <EventsPageContent />
-        <LiveNowEvents />
+        <EventsPageContent showToast={showToast} />
+        <LiveNowEvents showToast={showToast} />
         <VenueTools showToast={showToast} />
       </PageShell>
     );
@@ -546,6 +547,11 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
               </div>
               <button onClick={() => showToast?.("Event details coming soon.")}>View Event</button>
               <button {...getTeleportButtonProps(title.split(" — ")[0])}>Teleport</button>
+              <TeleportStatusChip
+                slurl={getGridsterDestination(title.split(" — ")[0])?.slurl}
+                destinationName={title.split(" — ")[0]}
+                showToast={showToast}
+              />
             </article>
           ))}
         </CardGrid>
@@ -590,6 +596,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
                 <FollowButton storageKey={name} />
                 <button onClick={() => showToast?.("DJ set page coming soon.")}>View Set</button>
                 <button {...getTeleportButtonProps(venue)}>Teleport</button>
+                <TeleportStatusChip slurl={getGridsterDestination(venue)?.slurl} destinationName={venue} showToast={showToast} />
               </div>
             </article>
           ))}
@@ -684,7 +691,12 @@ function ResultActionButton({ action, title, onOpenProfile, showToast }) {
   }
 
   if (action === "Teleport") {
-    return <button {...getTeleportButtonProps(title)}>{action}</button>;
+    return (
+      <>
+        <button {...getTeleportButtonProps(title)}>{action}</button>
+        <TeleportStatusChip slurl={getGridsterDestination(title)?.slurl} destinationName={title} showToast={showToast} />
+      </>
+    );
   }
 
   if (action.toLowerCase().startsWith("save")) {
@@ -720,6 +732,9 @@ function ExplorePageContent({ galleryItems, showToast }) {
                 <small>{rating}</small>
               </div>
               <button {...(action === "Teleport" ? getTeleportButtonProps(title) : {})}>{action}</button>
+              {action === "Teleport" ? (
+                <TeleportStatusChip slurl={getGridsterDestination(title)?.slurl} destinationName={title} showToast={showToast} />
+              ) : null}
             </article>
           ))}
         </div>
@@ -730,7 +745,7 @@ function ExplorePageContent({ galleryItems, showToast }) {
   );
 }
 
-function EventsPageContent() {
+function EventsPageContent({ showToast }) {
   return (
     <section className="nav-event-grid">
       {gridsterEventsPageEvents.map(([title, time, rating, venue], index) => (
@@ -743,6 +758,7 @@ function EventsPageContent() {
             <small>{venue}</small>
           </div>
           <button {...getTeleportButtonProps(venue)}>Teleport</button>
+          <TeleportStatusChip slurl={getGridsterDestination(venue)?.slurl} destinationName={venue} showToast={showToast} />
         </article>
       ))}
     </section>
@@ -964,7 +980,12 @@ function ProfilePreviewPage({ profile, showToast }) {
           <button onClick={() => showToast?.(`Message preview opened for ${profile.displayName}.`)}>Message</button>
           <SaveButton label="Save" savedLabel="Saved" storageKey={`profile:${profile.displayName}`} />
           <button onClick={() => showToast?.(`Profile link copied for ${profile.displayName}.`)}>Share</button>
-          {profile.slurl ? <button {...getTeleportButtonProps(profile.displayName, profile.slurl)}>Teleport</button> : null}
+          {profile.slurl ? (
+            <>
+              <button {...getTeleportButtonProps(profile.displayName, profile.slurl)}>Teleport</button>
+              <TeleportStatusChip slurl={profile.slurl} destinationName={profile.displayName} showToast={showToast} />
+            </>
+          ) : null}
         </div>
       </section>
 
@@ -1012,6 +1033,11 @@ function AddSLURLPage({ showToast }) {
             <h3>SLURL PREVIEW</h3>
             <p>Show residents the destination name, rating, tags, and a clean teleport action before they jump.</p>
             <button {...getTeleportButtonProps("Moonlit Cathedral")}>Test Teleport</button>
+            <TeleportStatusChip
+              slurl={getGridsterDestination("Moonlit Cathedral")?.slurl}
+              destinationName="Moonlit Cathedral"
+              showToast={showToast}
+            />
           </aside>
         </div>
 
@@ -1026,7 +1052,7 @@ function AddSLURLPage({ showToast }) {
         </p>
       </div>
 
-      <TeleportCenter />
+      <TeleportCenter showToast={showToast} />
     </section>
   );
 }
@@ -1090,6 +1116,9 @@ function SavedItemsPage({ showToast }) {
               >
                 {action}
               </button>
+              {action === "Teleport" ? (
+                <TeleportStatusChip slurl={getGridsterDestination(title)?.slurl} destinationName={title} showToast={showToast} />
+              ) : null}
               <button
                 className="saved-remove-button"
                 aria-label={`Remove ${title} from saved items`}
@@ -1622,7 +1651,7 @@ function ExplorePreview({ showToast }) {
   );
 }
 
-function TeleportCenter() {
+function TeleportCenter({ showToast }) {
   return (
     <section className="teleport-center-card glass-card">
       <div className="teleport-center-header">
@@ -1646,6 +1675,7 @@ function TeleportCenter() {
             </div>
             <span className={`teleport-status ${statusClass}`}>{status}</span>
             <button {...getTeleportButtonProps(title)}>Teleport</button>
+            <TeleportStatusChip slurl={getGridsterDestination(title)?.slurl} destinationName={title} showToast={showToast} />
           </article>
         ))}
       </div>
@@ -1707,6 +1737,11 @@ function LunarEclipsePost({ showToast }) {
               <small>Elysium Isle</small>
             </div>
             <button {...getTeleportButtonProps("Club Elysium")}>Teleport</button>
+            <TeleportStatusChip
+              slurl={getGridsterDestination("Club Elysium")?.slurl}
+              destinationName="Club Elysium"
+              showToast={showToast}
+            />
           </div>
         </div>
       </div>
@@ -2030,7 +2065,7 @@ function CommunityHubs({ showToast }) {
   );
 }
 
-function UpcomingGridNights() {
+function UpcomingGridNights({ showToast }) {
 
 
   return (
@@ -2055,6 +2090,7 @@ function UpcomingGridNights() {
               <small>{time}</small>
             </div>
             <button {...getTeleportButtonProps(title)}>Teleport</button>
+            <TeleportStatusChip slurl={getGridsterDestination(title)?.slurl} destinationName={title} showToast={showToast} />
           </div>
         ))}
       </div>
@@ -2091,7 +2127,7 @@ function FeaturedPhotoSpots() {
   );
 }
 
-function LiveNowEvents() {
+function LiveNowEvents({ showToast }) {
   return (
     <section className="post-card glass-card feed-card page-live-card">
       <div className="feed-card-header">
@@ -2110,7 +2146,14 @@ function LiveNowEvents() {
               <strong>{name}</strong>
               <small>{label}</small>
             </div>
-            {action === "Join" ? <JoinButton storageKey={name} /> : <button {...getTeleportButtonProps(name)}>{action}</button>}
+            {action === "Join" ? (
+              <JoinButton storageKey={name} />
+            ) : (
+              <>
+                <button {...getTeleportButtonProps(name)}>{action}</button>
+                <TeleportStatusChip slurl={getGridsterDestination(name)?.slurl} destinationName={name} showToast={showToast} />
+              </>
+            )}
           </div>
         ))}
       </div>

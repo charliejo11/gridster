@@ -13193,3 +13193,65 @@ button.join-toggle.is-joined {
     align-items: flex-start;
   }
 }
+
+/* =========================================================
+   Sitewide Teleport Status Chip
+   ========================================================= */
+
+.teleport-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+}
+
+.teleport-status-pill {
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.teleport-status-pill.status-unverified {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(235, 230, 255, 0.7);
+}
+
+.teleport-status-pill.status-working {
+  background: rgba(79, 255, 168, 0.18);
+  color: #b4ffd6;
+}
+
+.teleport-status-pill.status-broken {
+  background: rgba(255, 79, 118, 0.18);
+  color: #ffb4c4;
+}
+
+.teleport-status-pill.status-needs_update {
+  background: rgba(255, 214, 79, 0.18);
+  color: #ffe9a8;
+}
+
+.teleport-report-flag {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  width: 22px;
+  height: 22px;
+  line-height: 1;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(235, 230, 255, 0.8);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.teleport-report-flag:hover:not(:disabled) {
+  background: rgba(255, 79, 118, 0.18);
+  color: #ffb4c4;
+}
+
+.teleport-report-flag:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

@@ -8,6 +8,7 @@ import {
 import { usePersistedGridsterFlag } from "../../lib/gridsterStorage";
 import ActionButton from "./ActionButton";
 import StatusDot from "./StatusDot";
+import TeleportStatusChip from "./TeleportStatusChip";
 import Widget from "./Widget";
 
 function buildTeleportUrl(destination) {
@@ -78,13 +79,13 @@ function RightSidebar({
     <aside className="right-panel">
       <Widget title="Trending Events" onAction={() => showToast?.("Full events list coming soon.")}>
         {events.map(([title, time], index) => (
-          <MiniEvent key={title} title={title} time={time} index={index} />
+          <MiniEvent key={title} title={title} time={time} index={index} showToast={showToast} />
         ))}
       </Widget>
 
       <Widget title="Featured Sims / Stores" onAction={() => showToast?.("Full sims and stores list coming soon.")}>
         {places.map(([title, desc], index) => (
-          <PlaceCard key={title} title={title} desc={desc} index={index} onOpenProfile={onOpenProfile} />
+          <PlaceCard key={title} title={title} desc={desc} index={index} onOpenProfile={onOpenProfile} showToast={showToast} />
         ))}
       </Widget>
 
@@ -166,14 +167,14 @@ function RightSidebar({
 
       <Widget title="SLURL Teleport" onAction={() => showToast?.("Full teleport directory coming soon.")}>
         {gridsterSlurlTeleports.map(([title, desc, index]) => (
-          <PlaceCard key={title} title={title} desc={desc} index={index} onOpenProfile={onOpenProfile} />
+          <PlaceCard key={title} title={title} desc={desc} index={index} onOpenProfile={onOpenProfile} showToast={showToast} />
         ))}
       </Widget>
     </aside>
   );
 }
 
-function MiniEvent({ title, time, index }) {
+function MiniEvent({ title, time, index, showToast }) {
   return (
     <div className="mini-event">
       <div className={`mini-thumb thumb-${index}`}></div>
@@ -181,12 +182,17 @@ function MiniEvent({ title, time, index }) {
         <strong>{title}</strong>
         <small>{time}</small>
         <ActionButton {...getTeleportButtonProps(title)}>Teleport</ActionButton>
+        <TeleportStatusChip
+          slurl={buildTeleportUrl(getGridsterDestination(title))}
+          destinationName={title}
+          showToast={showToast}
+        />
       </div>
     </div>
   );
 }
 
-function PlaceCard({ title, desc, index, onOpenProfile }) {
+function PlaceCard({ title, desc, index, onOpenProfile, showToast }) {
   const profileAvailable = hasGridsterProfile(title);
 
   return (
@@ -203,6 +209,11 @@ function PlaceCard({ title, desc, index, onOpenProfile }) {
         <small>{desc}</small>
       </div>
       <ActionButton {...getTeleportButtonProps(title)}>Teleport</ActionButton>
+      <TeleportStatusChip
+        slurl={buildTeleportUrl(getGridsterDestination(title))}
+        destinationName={title}
+        showToast={showToast}
+      />
     </div>
   );
 }

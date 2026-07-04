@@ -234,6 +234,8 @@ export const gridsterLeftSidebarNavItems = [
   ["✦", "Home", "Home"],
   ["✧", "Groups", "Groups"],
   ["◇", "Grid Nights", "GridNights"],
+  ["⌘", "Places", "TeleportDiscovery"],
+  ["☾", "Tonight in SL", "TonightInSL"],
   ["⌖", "Saved Landmarks & Posts", "SavedItems"],
   ["▣", "Photo Challenge", "PhotoChallenge"],
   ["♢", "Marketplace Finds", "Marketplace"],

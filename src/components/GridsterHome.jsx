@@ -82,11 +82,15 @@ import SectionHeader from "./gridster/SectionHeader";
 import AuthPage from "./gridster/AuthPage";
 import ProfileSetup from "./gridster/ProfileSetup";
 import BlingDepot from "./gridster/BlingDepot";
+import TeleportDiscoveryFeed from "./gridster/TeleportDiscoveryFeed";
+import TonightInSL from "./gridster/TonightInSL";
 import "./GridsterHome.css";
 
 const GRIDSTER_PAGE_PATHS = {
   BlingBoost: "/bling-depot",
   Messages: "/messenger",
+  TeleportDiscovery: "/places",
+  TonightInSL: "/tonight",
 };
 const GRIDSTER_PATH_PAGES = Object.fromEntries(
   Object.entries(GRIDSTER_PAGE_PATHS).map(([page, path]) => [path, page])
@@ -110,7 +114,7 @@ function getTeleportButtonProps(destinationName, slurlOverride) {
 }
 
 function GridsterHome() {
-  const routePage = getGridsterPageFromPath();
+  const [routePage] = useState(() => getGridsterPageFromPath());
   const [activePage, setActivePage] = usePersistedGridsterValue("activePage", routePage ?? "Home");
   const [showLanding, setShowLanding] = usePersistedGridsterValue("showLanding", routePage ? false : true);
   const [hasAppliedRoute, setHasAppliedRoute] = useState(false);
@@ -401,6 +405,28 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         subtitle="Spend Bling Bits on profile glowies, backgrounds, stickers, badges, and boosts."
       >
         <BlingDepot onAuthOpen={() => onAuthOpen?.("login")} showToast={showToast} />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "TeleportDiscovery") {
+    return (
+      <PageShell
+        title="Teleport Discovery"
+        subtitle="Real places worth a teleport — clubs, beaches, RP sims, stores, and more, verified by the community."
+      >
+        <TeleportDiscoveryFeed onAuthOpen={() => onAuthOpen?.("login")} showToast={showToast} />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "TonightInSL") {
+    return (
+      <PageShell
+        title="Tonight in Second Life"
+        subtitle="Live DJs, contests, grand openings, and everything happening on the grid right now."
+      >
+        <TonightInSL onAuthOpen={() => onAuthOpen?.("login")} showToast={showToast} />
       </PageShell>
     );
   }

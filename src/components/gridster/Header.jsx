@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
-import { BLING_BALANCE_EVENT, getBlingBalanceSummary } from "../../lib/blingDepot";
+import { BLING_BALANCE_EVENT, getBlingBalanceSummary, notifyBlingBalanceChanged } from "../../lib/blingDepot";
+import { claimDailyLoginBonus, claimProfileCompleteBonus, claimSlVerifiedBonus } from "../../lib/gridsterBonuses";
+
+const BONUS_TOAST_MESSAGES = {
+  daily_login: "+50 Bling Bits — daily login bonus!",
+  profile_complete: "+200 Bling Bits — profile completed!",
+  sl_verified: "+250 Bling Bits — SL avatar verified!",
+};
 
 function Header({
   activePage,
@@ -34,9 +41,39 @@ function Header({
         .catch(() => {});
     };
 
+    const claimEligibleBonuses = (nextUser) => {
+      if (!nextUser) {
+        return;
+      }
+
+      Promise.allSettled([
+        claimDailyLoginBonus(),
+        claimProfileCompleteBonus(),
+        claimSlVerifiedBonus(),
+      ]).then((results) => {
+        if (!active) {
+          return;
+        }
+
+        let anyGranted = false;
+
+        results.forEach((result) => {
+          if (result.status === "fulfilled" && result.value?.granted) {
+            anyGranted = true;
+            showToast?.(BONUS_TOAST_MESSAGES[result.value.bonus_type] || "Bling Bits bonus earned!");
+          }
+        });
+
+        if (anyGranted) {
+          notifyBlingBalanceChanged();
+        }
+      });
+    };
+
     supabase.auth.getUser().then(({ data }) => {
       if (active) {
         setCurrentUser(data?.user ?? null);
+        claimEligibleBonuses(data?.user ?? null);
       }
     }).catch(() => {});
 
@@ -45,6 +82,7 @@ function Header({
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUser(session?.user ?? null);
       refreshBalance();
+      claimEligibleBonuses(session?.user ?? null);
     });
 
     window.addEventListener(BLING_BALANCE_EVENT, refreshBalance);

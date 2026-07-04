@@ -11,6 +11,7 @@ const GRIDSTER_PLUS_ARTWORK = "/gridster-logo.png";
 function LeftSidebar({
   activePage,
   setActivePage,
+  showToast,
   children,
 }) {
   const [showPlusModal, setShowPlusModal] = useState(false);
@@ -56,7 +57,7 @@ function LeftSidebar({
           <span className="tools-label">Creator Tools</span>
           <div className="tools-buttons">
             {gridsterLeftSidebarProfile.tools.map((tool) => (
-              <button key={tool}>{tool}</button>
+              <button key={tool} onClick={() => showToast?.(`${tool} coming soon.`)}>{tool}</button>
             ))}
           </div>
         </div>

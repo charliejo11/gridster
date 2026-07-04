@@ -19,6 +19,7 @@ function Header({
   notifications,
 }) {
   const [blingSummary, setBlingSummary] = useState({ balance: null, isAdmin: false });
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -33,9 +34,16 @@ function Header({
         .catch(() => {});
     };
 
+    supabase.auth.getUser().then(({ data }) => {
+      if (active) {
+        setCurrentUser(data?.user ?? null);
+      }
+    }).catch(() => {});
+
     refreshBalance();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
       refreshBalance();
     });
 
@@ -47,6 +55,17 @@ function Header({
       window.removeEventListener(BLING_BALANCE_EVENT, refreshBalance);
     };
   }, []);
+
+  const handleAuthButtonClick = () => {
+    if (currentUser) {
+      supabase.auth.signOut().then(() => {
+        showToast?.("Logged out.");
+      });
+      return;
+    }
+
+    onAuthOpen?.();
+  };
 
   const handleNavClick = (event, item) => {
     event.preventDefault();
@@ -136,9 +155,9 @@ function Header({
         </button>
         <button
           className="header-auth-button"
-          onClick={onAuthOpen}
+          onClick={handleAuthButtonClick}
         >
-          Log In
+          {currentUser ? "Log Out" : "Log In"}
         </button>
         <div className="theme-menu">
           <button

@@ -159,7 +159,7 @@ function LandingPage({ onEnter, onNavigate }) {
               <span className={`landing-path-icon landing-path-${index}`}>{icon}</span>
               <h4>{title}</h4>
               <p>{desc}</p>
-              <button>Select</button>
+              <button type="button" onClick={() => onNavigate?.("Auth", "signup")}>Select</button>
             </article>
           ))}
         </div>

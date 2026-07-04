@@ -2,6 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { getEquippedCosmeticsForUser } from "../lib/blingDepot";
 import {
+  usePersistedGridsterFlag,
+  usePersistedGridsterValue,
+} from "../lib/gridsterStorage";
+import {
   getGridsterDestination,
   getGridsterProfile,
   gridsterComposerActions,
@@ -80,17 +84,6 @@ import ProfileSetup from "./gridster/ProfileSetup";
 import BlingDepot from "./gridster/BlingDepot";
 import "./GridsterHome.css";
 
-const GRIDSTER_STORAGE_KEY = "gridster-preferences-v1";
-const DEFAULT_GRIDSTER_STORAGE = {
-  activePage: "Home",
-  showLanding: true,
-  theme: "dark-neon",
-  likedPosts: {},
-  savedPosts: {},
-  notForMePosts: {},
-  followedCreators: {},
-  joinedGroups: {},
-};
 const GRIDSTER_PAGE_PATHS = {
   BlingBoost: "/bling-depot",
   Messages: "/messenger",
@@ -105,87 +98,6 @@ function getGridsterPageFromPath() {
   }
 
   return GRIDSTER_PATH_PAGES[window.location.pathname] ?? null;
-}
-
-function readGridsterStorage() {
-  if (typeof window === "undefined") {
-    return DEFAULT_GRIDSTER_STORAGE;
-  }
-
-  try {
-    const saved = window.localStorage.getItem(GRIDSTER_STORAGE_KEY);
-    const parsedValue = saved ? JSON.parse(saved) : {};
-    const parsed = parsedValue && typeof parsedValue === "object" ? parsedValue : {};
-
-    return {
-      ...DEFAULT_GRIDSTER_STORAGE,
-      ...parsed,
-      likedPosts: { ...DEFAULT_GRIDSTER_STORAGE.likedPosts, ...(parsed.likedPosts ?? {}) },
-      savedPosts: { ...DEFAULT_GRIDSTER_STORAGE.savedPosts, ...(parsed.savedPosts ?? {}) },
-      notForMePosts: { ...DEFAULT_GRIDSTER_STORAGE.notForMePosts, ...(parsed.notForMePosts ?? {}) },
-      followedCreators: { ...DEFAULT_GRIDSTER_STORAGE.followedCreators, ...(parsed.followedCreators ?? {}) },
-      joinedGroups: { ...DEFAULT_GRIDSTER_STORAGE.joinedGroups, ...(parsed.joinedGroups ?? {}) },
-    };
-  } catch {
-    return DEFAULT_GRIDSTER_STORAGE;
-  }
-}
-
-function writeGridsterStorage(nextStorage) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  try {
-    window.localStorage.setItem(GRIDSTER_STORAGE_KEY, JSON.stringify(nextStorage));
-  } catch {
-    // Keep the prototype usable if localStorage is unavailable.
-  }
-}
-
-function saveGridsterValue(key, value) {
-  writeGridsterStorage({
-    ...readGridsterStorage(),
-    [key]: value,
-  });
-}
-
-function saveGridsterFlag(collection, id, value) {
-  const currentStorage = readGridsterStorage();
-  const currentCollection = currentStorage[collection] ?? {};
-  const nextCollection = { ...currentCollection };
-
-  if (value) {
-    nextCollection[id] = true;
-  } else {
-    delete nextCollection[id];
-  }
-
-  writeGridsterStorage({
-    ...currentStorage,
-    [collection]: nextCollection,
-  });
-}
-
-function usePersistedGridsterValue(key, defaultValue) {
-  const [value, setValue] = useState(() => readGridsterStorage()[key] ?? defaultValue);
-
-  useEffect(() => {
-    saveGridsterValue(key, value);
-  }, [key, value]);
-
-  return [value, setValue];
-}
-
-function usePersistedGridsterFlag(collection, id, defaultValue = false) {
-  const storageId = String(id ?? "default");
-  const [value, setValue] = useState(() => Boolean(readGridsterStorage()[collection]?.[storageId] ?? defaultValue));
-
-  useEffect(() => {
-    saveGridsterFlag(collection, storageId, value);
-  }, [collection, storageId, value]);
-
-  return [value, setValue];
 }
 
 function getTeleportButtonProps(destinationName, slurlOverride) {
@@ -351,8 +263,8 @@ function GridsterHome() {
 
       <DashboardLayout
         leftSidebar={(
-          <LeftSidebar activePage={activePage} setActivePage={setActivePage}>
-            <ProfileFlairCard />
+          <LeftSidebar activePage={activePage} setActivePage={setActivePage} showToast={showToast}>
+            <ProfileFlairCard showToast={showToast} setActivePage={setActivePage} />
           </LeftSidebar>
         )}
         rightSidebar={(
@@ -379,8 +291,8 @@ function GridsterHome() {
         />
       </DashboardLayout>
 
-      <GalleryStrip galleryItems={gridsterGalleryItems} />
-      <GridsterFooter />
+      <GalleryStrip galleryItems={gridsterGalleryItems} showToast={showToast} />
+      <GridsterFooter showToast={showToast} setActivePage={setActivePage} />
       {toast ? (
         <div className="gridster-toast glass-card" role="status" aria-live="polite" key={toast.id}>
           <span>{toast.message}</span>
@@ -395,10 +307,10 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   if (activePage === "Home") {
     return (
       <>
-        <CreatePostComposer />
-        <TrendingNow />
+        <CreatePostComposer showToast={showToast} />
+        <TrendingNow showToast={showToast} />
         <WelcomeCard onExplore={() => setActivePage("Explore")} />
-        <ExplorePreview />
+        <ExplorePreview showToast={showToast} />
         <TeleportCenter />
         <LunarEclipsePost showToast={showToast} />
         <VoguePixelsPost showToast={showToast} />
@@ -415,7 +327,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Explore"
         subtitle="Discover where residents are posting, shopping, dancing, roleplaying, and teleporting right now."
       >
-        <ExplorePageContent galleryItems={galleryItems} />
+        <ExplorePageContent galleryItems={galleryItems} showToast={showToast} />
       </PageShell>
     );
   }
@@ -423,7 +335,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   if (activePage === "Search") {
     return (
       <PageShell title="Search" subtitle="Find residents, stores, events, groups, photo spots, SLURLs, and communities.">
-        <SearchResultsPage onOpenProfile={onOpenProfile} />
+        <SearchResultsPage onOpenProfile={onOpenProfile} showToast={showToast} />
       </PageShell>
     );
   }
@@ -433,7 +345,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
       <PageShell title="Events" subtitle="Find live DJs, club nights, shopping events, beach parties, and community gatherings.">
         <EventsPageContent />
         <LiveNowEvents />
-        <VenueTools />
+        <VenueTools showToast={showToast} />
       </PageShell>
     );
   }
@@ -444,7 +356,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Create Event"
         subtitle="Build an event card with time, host, DJ, rating, SLURL, and discovery tags."
       >
-        <CreateEventPage />
+        <CreateEventPage showToast={showToast} />
       </PageShell>
     );
   }
@@ -455,7 +367,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Create Store Post"
         subtitle="Promote new releases, blogger calls, sales, marketplace finds, and in-world shopping events."
       >
-        <CreateStorePostPage />
+        <CreateStorePostPage showToast={showToast} />
       </PageShell>
     );
   }
@@ -466,7 +378,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Create Blogger Post"
         subtitle="Share your look, credits, photos, locations, brands, poses, and SLURLs in one polished post."
       >
-        <CreateBloggerPostPage />
+        <CreateBloggerPostPage showToast={showToast} />
       </PageShell>
     );
   }
@@ -477,7 +389,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Create Community Hub"
         subtitle="Build a home for your roleplay sim, club, family, fandom, venue crew, or themed community."
       >
-        <CreateCommunityHubPage />
+        <CreateCommunityHubPage showToast={showToast} />
       </PageShell>
     );
   }
@@ -499,7 +411,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Feed Preferences"
         subtitle="Tune your Gridster feed so you see more of what you love and less of what is not for you."
       >
-        <FeedPreferencesPage />
+        <FeedPreferencesPage showToast={showToast} />
       </PageShell>
     );
   }
@@ -510,7 +422,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Add SLURL"
         subtitle="Save clear teleport links, rate destinations honestly, and help residents find places across the grid."
       >
-        <AddSLURLPage />
+        <AddSLURLPage showToast={showToast} />
       </PageShell>
     );
   }
@@ -521,7 +433,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Saved Landmarks & Posts"
         subtitle="Your saved SLURLs, events, stores, photo spots, and favorite grid discoveries."
       >
-        <SavedItemsPage />
+        <SavedItemsPage showToast={showToast} />
       </PageShell>
     );
   }
@@ -532,7 +444,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Photo Challenge"
         subtitle="Join weekly photo themes, show off your world, earn Bling Bits, and get featured across the grid."
       >
-        <PhotoChallengePage />
+        <PhotoChallengePage showToast={showToast} />
       </PageShell>
     );
   }
@@ -543,7 +455,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Spotlight Awards"
         subtitle="Celebrate the residents, creators, DJs, bloggers, venues, stores, and communities lighting up the grid."
       >
-        <SpotlightAwardsPage />
+        <SpotlightAwardsPage showToast={showToast} />
       </PageShell>
     );
   }
@@ -554,7 +466,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Verification"
         subtitle="Help residents know which creators, stores, venues, DJs, bloggers, and communities are authentic across the grid."
       >
-        <VerificationCenterPage />
+        <VerificationCenterPage showToast={showToast} />
       </PageShell>
     );
   }
@@ -563,8 +475,8 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
     return (
       <PageShell title="Groups" subtitle="Join clubs, creator circles, RP hubs, blogger networks, and community crews.">
         <GroupsPageContent onOpenProfile={onOpenProfile} />
-        <CommunityHubs />
-        <CommunityStandards />
+        <CommunityHubs showToast={showToast} />
+        <CommunityStandards showToast={showToast} />
         <PopularGroupsCards />
       </PageShell>
     );
@@ -664,11 +576,11 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
     return (
       <PageShell title="Profile" subtitle="Create, edit, and preview your Gridster resident identity.">
         <ProfileSetup onAuthOpen={() => onAuthOpen?.("login")} showToast={showToast} />
-        <CreatorDashboard />
-        <BloggerNetwork />
-        <StoreTools />
-        <BlingBits />
-        <ProfileFlairCard variant="wide" />
+        <CreatorDashboard showToast={showToast} />
+        <BloggerNetwork showToast={showToast} />
+        <StoreTools showToast={showToast} />
+        <BlingBits showToast={showToast} />
+        <ProfileFlairCard variant="wide" showToast={showToast} setActivePage={setActivePage} />
       </PageShell>
     );
   }
@@ -683,7 +595,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Settings"
         subtitle="Manage profile, discovery, ratings, privacy, safety, and Bling Bits."
       >
-        <SettingsPage setActivePage={setActivePage} />
+        <SettingsPage setActivePage={setActivePage} showToast={showToast} />
       </PageShell>
     );
   }
@@ -691,7 +603,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   return null;
 }
 
-function SearchResultsPage({ onOpenProfile }) {
+function SearchResultsPage({ onOpenProfile, showToast }) {
   return (
     <section className="search-results-page">
       <div className="search-preview-card glass-card">
@@ -702,7 +614,7 @@ function SearchResultsPage({ onOpenProfile }) {
 
         <div className="search-filter-pills">
           {gridsterSearchFilters.map((filter) => (
-            <button key={filter}>{filter}</button>
+            <button key={filter} onClick={() => showToast?.(`Filtering by ${filter} coming soon.`)}>{filter}</button>
           ))}
         </div>
       </div>
@@ -715,7 +627,7 @@ function SearchResultsPage({ onOpenProfile }) {
               <h3>{title}</h3>
               <p>{meta}</p>
             </div>
-            <ResultActionButton action={action} title={title} onOpenProfile={onOpenProfile} />
+            <ResultActionButton action={action} title={title} onOpenProfile={onOpenProfile} showToast={showToast} />
           </article>
         ))}
       </CardGrid>
@@ -723,7 +635,7 @@ function SearchResultsPage({ onOpenProfile }) {
   );
 }
 
-function ResultActionButton({ action, title, onOpenProfile }) {
+function ResultActionButton({ action, title, onOpenProfile, showToast }) {
   if (["View", "View Profile", "Shop"].includes(action) && hasGridsterProfile(title)) {
     return <button onClick={() => onOpenProfile?.(title)}>{action}</button>;
   }
@@ -740,10 +652,10 @@ function ResultActionButton({ action, title, onOpenProfile }) {
     return <SaveButton label={action} storageKey={`search-result:${title}`} />;
   }
 
-  return <button>{action}</button>;
+  return <button onClick={() => showToast?.(`${action} for ${title} coming soon.`)}>{action}</button>;
 }
 
-function ExplorePageContent({ galleryItems }) {
+function ExplorePageContent({ galleryItems, showToast }) {
   return (
     <>
       <section className="nav-card-grid explore-category-grid">
@@ -752,7 +664,7 @@ function ExplorePageContent({ galleryItems }) {
             <span className="nav-card-icon">{icon}</span>
             <h3>{title}</h3>
             <p>{desc}</p>
-            <button>Browse</button>
+            <button onClick={() => showToast?.(`Browsing ${title} coming soon.`)}>Browse</button>
           </article>
         ))}
       </section>
@@ -774,7 +686,7 @@ function ExplorePageContent({ galleryItems }) {
         </div>
       </section>
 
-      <GalleryPreview galleryItems={galleryItems} />
+      <GalleryPreview galleryItems={galleryItems} showToast={showToast} />
     </>
   );
 }
@@ -934,7 +846,7 @@ function MessagesPageContent({ onOpenProfile, showToast }) {
 
           <div className="message-quick-actions">
             {gridsterMessageQuickActions.map((action) => (
-              <button type="button" key={action}>{action}</button>
+              <button type="button" key={action} onClick={() => showToast?.(`${action} coming soon.`)}>{action}</button>
             ))}
           </div>
 
@@ -1042,7 +954,7 @@ function ProfilePreviewSection({ title, items }) {
   );
 }
 
-function AddSLURLPage() {
+function AddSLURLPage({ showToast }) {
   return (
     <section className="add-slurl-page">
       <div className="slurl-form-card glass-card">
@@ -1066,8 +978,8 @@ function AddSLURLPage() {
 
         <div className="slurl-actions">
           <SaveButton label="Save Landmark" storageKey="add-slurl-landmark" />
-          <button>Preview SLURL</button>
-          <button className="share-slurl-button">Share to Grid</button>
+          <button onClick={() => showToast?.("SLURL preview coming soon.")}>Preview SLURL</button>
+          <button className="share-slurl-button" onClick={() => showToast?.("Sharing to grid coming soon.")}>Share to Grid</button>
         </div>
 
         <p className="slurl-helper-note">
@@ -1080,7 +992,7 @@ function AddSLURLPage() {
   );
 }
 
-function FeedPreferencesPage() {
+function FeedPreferencesPage({ showToast }) {
   return (
     <section className="feed-preferences-page">
       <div className="feed-preferences-grid">
@@ -1090,7 +1002,7 @@ function FeedPreferencesPage() {
 
             <div className="feed-preference-pills">
               {options.map((option) => (
-                <button key={option}>{option}</button>
+                <button key={option} onClick={() => showToast?.(`${option} coming soon.`)}>{option}</button>
               ))}
             </div>
           </article>
@@ -1101,18 +1013,22 @@ function FeedPreferencesPage() {
         <p>
           Using Not For Me helps Gridster learn what to show less often without publicly downvoting anyone.
         </p>
-        <button>Save Preferences</button>
+        <button onClick={() => showToast?.("Feed preferences saved.")}>Save Preferences</button>
       </div>
     </section>
   );
 }
 
-function SavedItemsPage() {
+function SavedItemsPage({ showToast }) {
   return (
     <section className="saved-items-page">
       <div className="saved-filter-pills glass-card">
         {gridsterSavedFilters.map((filter) => (
-          <button className={filter === "All" ? "active" : ""} key={filter}>
+          <button
+            className={filter === "All" ? "active" : ""}
+            key={filter}
+            onClick={() => showToast?.(`Filtering by ${filter} coming soon.`)}
+          >
             {filter}
           </button>
         ))}
@@ -1129,8 +1045,17 @@ function SavedItemsPage() {
               <small>Saved {index + 1}d ago</small>
             </div>
             <div className="saved-item-actions">
-              <button {...(action === "Teleport" ? getTeleportButtonProps(title) : {})}>{action}</button>
-              <button className="saved-remove-button" aria-label={`Remove ${title} from saved items`}>
+              <button
+                {...(action === "Teleport" ? getTeleportButtonProps(title) : {})}
+                onClick={action === "Teleport" ? undefined : () => showToast?.(`${action} for ${title} coming soon.`)}
+              >
+                {action}
+              </button>
+              <button
+                className="saved-remove-button"
+                aria-label={`Remove ${title} from saved items`}
+                onClick={() => showToast?.(`${title} removed from saved items.`)}
+              >
                 ×
               </button>
             </div>
@@ -1141,7 +1066,7 @@ function SavedItemsPage() {
   );
 }
 
-function PhotoChallengePage() {
+function PhotoChallengePage({ showToast }) {
   return (
     <section className="photo-challenge-page">
       <section className="photo-challenge-hero glass-card">
@@ -1162,9 +1087,9 @@ function PhotoChallengePage() {
           </div>
 
           <div className="challenge-hero-actions">
-            <button>Join Challenge</button>
-            <button>Upload Entry</button>
-            <button>View Entries</button>
+            <button onClick={() => showToast?.("Joining the Photo Challenge coming soon.")}>Join Challenge</button>
+            <button onClick={() => showToast?.("Uploading an entry coming soon.")}>Upload Entry</button>
+            <button onClick={() => showToast?.("Viewing entries coming soon.")}>View Entries</button>
           </div>
         </div>
         <div className="challenge-hero-art">
@@ -1209,7 +1134,7 @@ function PhotoChallengePage() {
                 <p>by {creator}</p>
               </div>
               <div className="entry-card-actions">
-                <button>Vote</button>
+                <button onClick={() => showToast?.(`Vote recorded for ${title}.`)}>Vote</button>
                 <span>{likes} likes</span>
               </div>
             </article>
@@ -1220,7 +1145,7 @@ function PhotoChallengePage() {
   );
 }
 
-function SpotlightAwardsPage() {
+function SpotlightAwardsPage({ showToast }) {
   return (
     <section className="spotlight-awards-page">
       <section className="spotlight-hero-card glass-card">
@@ -1236,9 +1161,9 @@ function SpotlightAwardsPage() {
           </div>
 
           <div className="spotlight-hero-actions">
-            <button>Nominate Someone</button>
-            <button>View Winners</button>
-            <button>Vote Now</button>
+            <button onClick={() => showToast?.("Nominations coming soon.")}>Nominate Someone</button>
+            <button onClick={() => showToast?.("Past winners coming soon.")}>View Winners</button>
+            <button onClick={() => showToast?.("Voting coming soon.")}>Vote Now</button>
           </div>
         </div>
         <div className="spotlight-diamond-art">
@@ -1271,7 +1196,7 @@ function SpotlightAwardsPage() {
                   <p>{category}</p>
                   <span>{votes}</span>
                 </div>
-                <button>Vote</button>
+                <button onClick={() => showToast?.(`Vote recorded for ${name}.`)}>Vote</button>
               </article>
             ))}
           </div>
@@ -1293,7 +1218,7 @@ function SpotlightAwardsPage() {
   );
 }
 
-function VerificationCenterPage() {
+function VerificationCenterPage({ showToast }) {
   return (
     <section className="verification-center-page">
       <section className="verification-hero-card glass-card">
@@ -1303,9 +1228,9 @@ function VerificationCenterPage() {
           <p>Verification helps confirm identity, reduce impersonation, protect creators, and make discovery safer.</p>
 
           <div className="verification-hero-actions">
-            <button>Apply for Verification</button>
-            <button>Check Requirements</button>
-            <button>View Verified Directory</button>
+            <button onClick={() => showToast?.("Applying for creator verification coming soon.")}>Apply for Verification</button>
+            <button onClick={() => showToast?.("Verification requirements coming soon.")}>Check Requirements</button>
+            <button onClick={() => showToast?.("Verified directory coming soon.")}>View Verified Directory</button>
           </div>
         </div>
 
@@ -1357,14 +1282,14 @@ function VerificationCenterPage() {
           </div>
 
           <p>Suggested next step: Add official links and featured posts.</p>
-          <button>Review Profile Links</button>
+          <button onClick={() => showToast?.("Reviewing profile links coming soon.")}>Review Profile Links</button>
         </aside>
       </div>
     </section>
   );
 }
 
-function CreateCommunityHubPage() {
+function CreateCommunityHubPage({ showToast }) {
   return (
     <section className="create-community-page">
       <div className="community-hub-form-card glass-card">
@@ -1382,7 +1307,7 @@ function CreateCommunityHubPage() {
             <span>Gridster Community Page</span>
             <h3>COMMUNITY HUB PREVIEW</h3>
             <p>Frame your sim, crew, family, fandom, or group with a banner residents can recognize instantly.</p>
-            <button>Upload Banner</button>
+            <button onClick={() => showToast?.("Uploading a banner coming soon.")}>Upload Banner</button>
           </aside>
         </div>
 
@@ -1392,16 +1317,16 @@ function CreateCommunityHubPage() {
             {gridsterCreateCommunityHubSections.map((section) => (
               <article className="hub-section-row" key={section}>
                 <span>{section}</span>
-                <button>Add Section</button>
+                <button onClick={() => showToast?.(`Adding a ${section} section coming soon.`)}>Add Section</button>
               </article>
             ))}
           </div>
         </section>
 
         <div className="community-hub-actions">
-          <button>Save Draft</button>
-          <button>Preview Hub</button>
-          <button className="publish-hub-button">Publish Hub</button>
+          <button onClick={() => showToast?.("Draft saved.")}>Save Draft</button>
+          <button onClick={() => showToast?.("Hub preview coming soon.")}>Preview Hub</button>
+          <button className="publish-hub-button" onClick={() => showToast?.("Publishing a community hub coming soon.")}>Publish Hub</button>
         </div>
 
         <p className="community-hub-helper-note">
@@ -1412,7 +1337,7 @@ function CreateCommunityHubPage() {
   );
 }
 
-function CreateBloggerPostPage() {
+function CreateBloggerPostPage({ showToast }) {
   return (
     <section className="create-blogger-page">
       <div className="blogger-form-card glass-card">
@@ -1430,7 +1355,7 @@ function CreateBloggerPostPage() {
             <span>Gridster Blogger Post</span>
             <h3>BLOG PHOTO PREVIEW</h3>
             <p>Upload an editorial look, location shoot, fashion detail, or creator feature image.</p>
-            <button>Upload Photo</button>
+            <button onClick={() => showToast?.("Uploading a photo coming soon.")}>Upload Photo</button>
           </aside>
         </div>
 
@@ -1440,16 +1365,16 @@ function CreateBloggerPostPage() {
             {gridsterBloggerCreditRows.map((row) => (
               <article className="credit-row" key={row}>
                 <span>{row}</span>
-                <button>Add Credit</button>
+                <button onClick={() => showToast?.(`Adding a ${row} credit coming soon.`)}>Add Credit</button>
               </article>
             ))}
           </div>
         </section>
 
         <div className="blogger-form-actions">
-          <button>Save Draft</button>
-          <button>Preview Post</button>
-          <button className="publish-blogger-button">Publish Blogger Post</button>
+          <button onClick={() => showToast?.("Draft saved.")}>Save Draft</button>
+          <button onClick={() => showToast?.("Post preview coming soon.")}>Preview Post</button>
+          <button className="publish-blogger-button" onClick={() => showToast?.("Publishing a blogger post coming soon.")}>Publish Blogger Post</button>
         </div>
 
         <p className="blogger-helper-note">
@@ -1460,7 +1385,7 @@ function CreateBloggerPostPage() {
   );
 }
 
-function CreateStorePostPage() {
+function CreateStorePostPage({ showToast }) {
   return (
     <section className="create-store-page">
       <div className="store-form-card glass-card">
@@ -1478,14 +1403,14 @@ function CreateStorePostPage() {
             <span>Gridster Store Post</span>
             <h3>PRODUCT PREVIEW</h3>
             <p>Show a release image, vendor ad, blogger pack graphic, or event booth promo.</p>
-            <button>Upload Product Image</button>
+            <button onClick={() => showToast?.("Uploading a product image coming soon.")}>Upload Product Image</button>
           </aside>
         </div>
 
         <div className="store-form-actions">
-          <button>Save Draft</button>
-          <button>Preview Post</button>
-          <button className="publish-store-button">Publish Store Post</button>
+          <button onClick={() => showToast?.("Draft saved.")}>Save Draft</button>
+          <button onClick={() => showToast?.("Post preview coming soon.")}>Preview Post</button>
+          <button className="publish-store-button" onClick={() => showToast?.("Publishing a store post coming soon.")}>Publish Store Post</button>
         </div>
 
         <p className="store-helper-note">
@@ -1496,7 +1421,7 @@ function CreateStorePostPage() {
   );
 }
 
-function CreateEventPage() {
+function CreateEventPage({ showToast }) {
   return (
     <section className="create-event-page">
       <div className="event-form-card glass-card">
@@ -1514,14 +1439,14 @@ function CreateEventPage() {
             <span>Gridster Event Preview</span>
             <h3>YOUR EVENT POSTER</h3>
             <p>Drop in a club flyer, DJ poster, sale graphic, or community event image.</p>
-            <button>Upload Poster</button>
+            <button onClick={() => showToast?.("Uploading a poster coming soon.")}>Upload Poster</button>
           </aside>
         </div>
 
         <div className="event-form-actions">
-          <button>Save Draft</button>
-          <button>Preview Event</button>
-          <button className="publish-event-button">Publish Event</button>
+          <button onClick={() => showToast?.("Draft saved.")}>Save Draft</button>
+          <button onClick={() => showToast?.("Event preview coming soon.")}>Preview Event</button>
+          <button className="publish-event-button" onClick={() => showToast?.("Publishing an event coming soon.")}>Publish Event</button>
         </div>
 
         <p className="event-helper-note">
@@ -1532,7 +1457,7 @@ function CreateEventPage() {
   );
 }
 
-function SettingsPage({ setActivePage }) {
+function SettingsPage({ setActivePage, showToast }) {
   return (
     <div className="settings-grid">
       {gridsterSettingsCards.map(({ icon, title, desc, options }) => (
@@ -1554,7 +1479,13 @@ function SettingsPage({ setActivePage }) {
             ))}
           </ul>
 
-          <button onClick={() => title === "Profile Settings" ? setActivePage?.("Profile") : undefined}>
+          <button
+            onClick={() =>
+              title === "Profile Settings"
+                ? setActivePage?.("Profile")
+                : showToast?.(`${title} coming soon.`)
+            }
+          >
             {title === "Profile Settings" ? "Edit Profile" : "Manage"}
           </button>
         </article>
@@ -1563,7 +1494,7 @@ function SettingsPage({ setActivePage }) {
   );
 }
 
-function CreatePostComposer() {
+function CreatePostComposer({ showToast }) {
   return (
     <section className="create-post glass-card">
       <div className="composer-top">
@@ -1574,7 +1505,7 @@ function CreatePostComposer() {
 
       <div className="composer-actions">
         {gridsterComposerActions.map((action) => (
-          <button key={action}>{action}</button>
+          <button key={action} onClick={() => showToast?.(`${action} coming soon.`)}>{action}</button>
         ))}
       </div>
 
@@ -1582,7 +1513,13 @@ function CreatePostComposer() {
         <span className="templates-label">Quick Post Templates</span>
         <div className="template-chips">
           {gridsterComposerTemplates.map((template) => (
-            <button className="template-chip" key={template}>{template}</button>
+            <button
+              className="template-chip"
+              key={template}
+              onClick={() => showToast?.(`${template} template coming soon.`)}
+            >
+              {template}
+            </button>
           ))}
         </div>
         <p className="composer-helper">Share a moment, promote an event, drop a SLURL, or show off your latest look.</p>
@@ -1591,13 +1528,19 @@ function CreatePostComposer() {
   );
 }
 
-function TrendingNow() {
+function TrendingNow({ showToast }) {
   return (
     <section className="trending-card glass-card">
       <h3>Trending Now</h3>
       <div className="trending-pills">
         {gridsterTrendingTopics.map(([tag, count]) => (
-          <button className="trend-pill" key={tag}>{tag} <span>{count}</span></button>
+          <button
+            className="trend-pill"
+            key={tag}
+            onClick={() => showToast?.(`Browsing ${tag} coming soon.`)}
+          >
+            {tag} <span>{count}</span>
+          </button>
         ))}
       </div>
     </section>
@@ -1619,7 +1562,7 @@ function WelcomeCard({ onExplore }) {
   );
 }
 
-function ExplorePreview() {
+function ExplorePreview({ showToast }) {
   return (
     <section className="explore-card glass-card">
       <div className="explore-header">
@@ -1632,7 +1575,7 @@ function ExplorePreview() {
             <span className="explore-icon">{icon}</span>
             <h4>{title}</h4>
             <p>{desc}</p>
-            <button>Browse</button>
+            <button onClick={() => showToast?.(`Browsing ${title} coming soon.`)}>Browse</button>
           </div>
         ))}
       </div>
@@ -1793,7 +1736,7 @@ function CreatorsCollectivePost({ showToast }) {
   );
 }
 
-function CommunityStandards() {
+function CommunityStandards({ showToast }) {
   return (
     <section className="community-card glass-card">
       <div className="community-header">
@@ -1802,7 +1745,7 @@ function CommunityStandards() {
           <h2>Gridster Community Standards</h2>
           <p>Keep the grid fun, creative, and respectful.</p>
         </div>
-        <button>Read Guidelines</button>
+        <button onClick={() => showToast?.("Community guidelines coming soon.")}>Read Guidelines</button>
       </div>
 
       <div className="community-rules">
@@ -1827,7 +1770,7 @@ function CommunityStandards() {
   );
 }
 
-function BlingBits() {
+function BlingBits({ showToast }) {
   return (
     <section className="bling-card glass-card">
       <div className="bling-header">
@@ -1847,7 +1790,7 @@ function BlingBits() {
             <span>Bling Bonus</span>
           </div>
         </div>
-        <button>View Rewards</button>
+        <button onClick={() => showToast?.("Bling Bits rewards history coming soon.")}>View Rewards</button>
       </div>
 
       <div className="reward-tiles">
@@ -1886,7 +1829,7 @@ function BlingBits() {
   );
 }
 
-function CreatorDashboard() {
+function CreatorDashboard({ showToast }) {
   return (
     <section className="creator-dashboard-card glass-card">
       <div className="creator-dashboard-header">
@@ -1895,7 +1838,7 @@ function CreatorDashboard() {
           <h2>Creator Dashboard</h2>
           <p>Track how your posts, events, photos, and SLURLs are performing across the grid.</p>
         </div>
-        <button>View Analytics</button>
+        <button onClick={() => showToast?.("Creator analytics coming soon.")}>View Analytics</button>
       </div>
 
       <div className="creator-stat-grid">
@@ -1924,7 +1867,7 @@ function CreatorDashboard() {
   );
 }
 
-function VenueTools() {
+function VenueTools({ showToast }) {
   return (
     <section className="venue-tools-card glass-card">
       <div className="venue-tools-header">
@@ -1933,7 +1876,7 @@ function VenueTools() {
           <h2>Venue Tools</h2>
           <p>Promote events, manage lineups, share SLURLs, and bring residents straight to your venue.</p>
         </div>
-        <button>Create Venue Event</button>
+        <button onClick={() => showToast?.("Creating a venue event coming soon.")}>Create Venue Event</button>
       </div>
 
       <div className="venue-tool-grid">
@@ -1955,7 +1898,7 @@ function VenueTools() {
   );
 }
 
-function StoreTools() {
+function StoreTools({ showToast }) {
   return (
     <section className="store-tools-card glass-card">
       <div className="store-tools-header">
@@ -1964,7 +1907,7 @@ function StoreTools() {
           <h2>Store Tools</h2>
           <p>Promote new releases, blogger packs, sales, marketplace finds, and in-world shopping events.</p>
         </div>
-        <button>Create Store Post</button>
+        <button onClick={() => showToast?.("Creating a store post coming soon.")}>Create Store Post</button>
       </div>
 
       <div className="store-feature-grid">
@@ -1986,7 +1929,7 @@ function StoreTools() {
   );
 }
 
-function BloggerNetwork() {
+function BloggerNetwork({ showToast }) {
   return (
     <section className="blogger-network-card glass-card">
       <div className="blogger-network-header">
@@ -1995,7 +1938,7 @@ function BloggerNetwork() {
           <h2>Blogger Network</h2>
           <p>Connect with brands, discover blogger calls, track credits, and share your latest looks.</p>
         </div>
-        <button>Join Blogger Network</button>
+        <button onClick={() => showToast?.("Joining the Blogger Network coming soon.")}>Join Blogger Network</button>
       </div>
 
       <div className="blogger-feature-grid">
@@ -2017,7 +1960,7 @@ function BloggerNetwork() {
   );
 }
 
-function CommunityHubs() {
+function CommunityHubs({ showToast }) {
   return (
     <section className="community-hub-card glass-card">
       <div className="community-hub-header">
@@ -2026,7 +1969,7 @@ function CommunityHubs() {
           <h2>Community Hubs</h2>
           <p>Build spaces for roleplay sims, social groups, clubs, families, fandoms, and themed communities.</p>
         </div>
-        <button>Create Community Hub</button>
+        <button onClick={() => showToast?.("Creating a community hub coming soon.")}>Create Community Hub</button>
       </div>
 
       <div className="community-hub-grid">
@@ -2183,7 +2126,7 @@ function ProfileSummary() {
   );
 }
 
-function ProfileFlairCard({ variant = "sidebar" }) {
+function ProfileFlairCard({ variant = "sidebar", showToast, setActivePage }) {
   const className = variant === "wide" ? "profile-flair-card profile-flair-card-wide glass-card" : "profile-flair-card glass-card";
 
   return (
@@ -2196,22 +2139,28 @@ function ProfileFlairCard({ variant = "sidebar" }) {
 
       <div className="flair-badges">
         {gridsterProfileFlairBadges.map((badge) => (
-          <button className="flair-badge" key={badge}>{badge}</button>
+          <button
+            className="flair-badge"
+            key={badge}
+            onClick={() => showToast?.(`${badge} is unlocked with Bling Bits in Bling Depot.`)}
+          >
+            {badge}
+          </button>
         ))}
       </div>
 
       <p className="flair-note">Unlock more flair with Bling Bits.</p>
-      <button className="flair-action">Customize Flair</button>
+      <button className="flair-action" onClick={() => setActivePage?.("BlingBoost")}>Customize Flair</button>
     </section>
   );
 }
 
-function GalleryPreview({ galleryItems }) {
+function GalleryPreview({ galleryItems, showToast }) {
   return (
     <section className="gallery-preview-card glass-card">
       <div className="gallery-header">
         <h3>Gridster Gallery</h3>
-        <a>Preview</a>
+        <a onClick={() => showToast?.("Full gallery preview coming soon.")}>Preview</a>
       </div>
       <div className="gallery-preview-grid">
         {galleryItems.slice(0, 4).map((item) => (
@@ -2229,12 +2178,12 @@ function GalleryPreview({ galleryItems }) {
   );
 }
 
-function GalleryStrip({ galleryItems }) {
+function GalleryStrip({ galleryItems, showToast }) {
   return (
     <section className="gallery-strip glass-card">
       <div className="gallery-header">
         <h3>Gridster Gallery</h3>
-        <a>View All Gallery</a>
+        <a onClick={() => showToast?.("Full gallery view coming soon.")}>View All Gallery</a>
       </div>
 
       <div className="gallery-row">
@@ -2516,7 +2465,7 @@ function JoinButton({ storageKey = "group" }) {
   );
 }
 
-function GridsterFooter() {
+function GridsterFooter({ showToast, setActivePage }) {
   return (
     <footer className="gridster-footer glass-card">
       <div className="footer-brand">
@@ -2529,11 +2478,11 @@ function GridsterFooter() {
       </div>
 
       <nav className="footer-links" aria-label="Footer navigation">
-        <a>About</a>
-        <a>Safety</a>
-        <a>Community Guidelines</a>
-        <a>Premium</a>
-        <a>Support</a>
+        <a onClick={() => showToast?.("About Gridster coming soon.")}>About</a>
+        <a onClick={() => showToast?.("Safety Center coming soon.")}>Safety</a>
+        <a onClick={() => showToast?.("Community Guidelines coming soon.")}>Community Guidelines</a>
+        <a onClick={() => setActivePage?.("BlingBoost")}>Premium</a>
+        <a onClick={() => showToast?.("Support coming soon.")}>Support</a>
       </nav>
 
       <div className="footer-signal">

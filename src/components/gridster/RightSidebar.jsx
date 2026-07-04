@@ -5,6 +5,7 @@ import {
   gridsterSlurlTeleports,
   hasGridsterProfile,
 } from "../../data/gridsterMockData";
+import { usePersistedGridsterFlag } from "../../lib/gridsterStorage";
 import ActionButton from "./ActionButton";
 import StatusDot from "./StatusDot";
 import Widget from "./Widget";
@@ -75,19 +76,19 @@ function RightSidebar({
 
   return (
     <aside className="right-panel">
-      <Widget title="Trending Events">
+      <Widget title="Trending Events" onAction={() => showToast?.("Full events list coming soon.")}>
         {events.map(([title, time], index) => (
           <MiniEvent key={title} title={title} time={time} index={index} />
         ))}
       </Widget>
 
-      <Widget title="Featured Sims / Stores">
+      <Widget title="Featured Sims / Stores" onAction={() => showToast?.("Full sims and stores list coming soon.")}>
         {places.map(([title, desc], index) => (
           <PlaceCard key={title} title={title} desc={desc} index={index} onOpenProfile={onOpenProfile} />
         ))}
       </Widget>
 
-      <Widget title="Popular Groups">
+      <Widget title="Popular Groups" onAction={() => showToast?.("Full groups list coming soon.")}>
         {groups.map((group) => (
           <div className="group-row" key={group}>
             <span>✦</span>
@@ -95,12 +96,12 @@ function RightSidebar({
               <strong>{group}</strong>
               <small>2.4K members</small>
             </div>
-            <JoinButton />
+            <JoinButton storageKey={group} />
           </div>
         ))}
       </Widget>
 
-      <Widget title="Suggested Creators">
+      <Widget title="Suggested Creators" onAction={() => showToast?.("Full creator directory coming soon.")}>
         {creators.map((person) => (
           <div className="creator-row" key={person}>
             <button
@@ -114,12 +115,12 @@ function RightSidebar({
                 <small>Blogger • Fashion</small>
               </div>
             </button>
-            <FollowButton />
+            <FollowButton storageKey={person} />
           </div>
         ))}
       </Widget>
 
-      <Widget title="Friends Online">
+      <Widget title="Friends Online" onAction={() => showToast?.("Full friends list coming soon.")}>
         {gridsterFriendsOnline.map(({ name, status }) => (
           <div className="friend-online-row" key={name}>
             <div className="friend-online-person">
@@ -144,7 +145,7 @@ function RightSidebar({
         ))}
       </Widget>
 
-      <Widget title="Live Now">
+      <Widget title="Live Now" onAction={() => showToast?.("Full live now list coming soon.")}>
         {liveNow.map(([name, label]) => (
           <div className="live-now-row" key={name}>
             <div className="live-indicator" />
@@ -152,18 +153,18 @@ function RightSidebar({
               <strong>{name}</strong>
               <small>{label}</small>
             </div>
-            <JoinButton />
+            <JoinButton storageKey={name} />
           </div>
         ))}
       </Widget>
 
-      <Widget title="Messages & Alerts">
+      <Widget title="Messages & Alerts" onAction={() => showToast?.("Full alerts list coming soon.")}>
         {gridsterSidebarAlerts.map(([initial, name, note, time]) => (
           <AlertRow key={`${name}-${time}`} initial={initial} name={name} note={note} time={time} />
         ))}
       </Widget>
 
-      <Widget title="SLURL Teleport">
+      <Widget title="SLURL Teleport" onAction={() => showToast?.("Full teleport directory coming soon.")}>
         {gridsterSlurlTeleports.map(([title, desc, index]) => (
           <PlaceCard key={title} title={title} desc={desc} index={index} onOpenProfile={onOpenProfile} />
         ))}
@@ -219,18 +220,30 @@ function AlertRow({ initial, name, note, time }) {
   );
 }
 
-function FollowButton() {
+function FollowButton({ storageKey = "creator" }) {
+  const [following, setFollowing] = usePersistedGridsterFlag("followedCreators", storageKey);
+
   return (
-    <ActionButton className="follow-toggle">
-      Follow
+    <ActionButton
+      className={following ? "follow-toggle is-following" : "follow-toggle"}
+      aria-pressed={following}
+      onClick={() => setFollowing((current) => !current)}
+    >
+      {following ? "Following" : "Follow"}
     </ActionButton>
   );
 }
 
-function JoinButton() {
+function JoinButton({ storageKey = "group" }) {
+  const [joined, setJoined] = usePersistedGridsterFlag("joinedGroups", storageKey);
+
   return (
-    <ActionButton className="join-toggle">
-      Join
+    <ActionButton
+      className={joined ? "join-toggle is-joined" : "join-toggle"}
+      aria-pressed={joined}
+      onClick={() => setJoined((current) => !current)}
+    >
+      {joined ? "Joined" : "Join"}
     </ActionButton>
   );
 }

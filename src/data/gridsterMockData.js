@@ -376,21 +376,6 @@ export const gridsterPhotoChallengeRules = [
     "No stolen images or fake creator credits",
   ];
 
-export const gridsterPhotoChallengeEntries = [
-    ["Rooftop Glow", "CharlieJo", "248"],
-    ["Cyber Alley Kiss", "NovaVixen", "221"],
-    ["Midnight Stage", "DJ Starfall", "187"],
-    ["Electric Rain", "EchoMoon", "199"],
-    ["Neon Wings", "RavenHex", "174"],
-    ["City Pulse", "Pixel Pixie", "162"],
-  ];
-
-export const gridsterPhotoChallengeLeaders = [
-    ["CharlieJo", "248 votes"],
-    ["NovaVixen", "221 votes"],
-    ["EchoMoon", "199 votes"],
-  ];
-
 export const gridsterSpotlightAwardCategories = [
     "Best Blogger",
     "Best DJ",

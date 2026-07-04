@@ -1,6 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { getEquippedCosmeticsForUser } from "../lib/blingDepot";
+import { getBlingBalanceSummary, getEquippedCosmeticsForUser } from "../lib/blingDepot";
+import { fetchGridsterProfile } from "../lib/gridsterProfiles";
+import {
+  createPhotoChallenge,
+  closePhotoChallengeAndAwardWinner,
+  createPhotoEntry,
+  deletePhotoEntry,
+  fetchActivePhotoChallenge,
+  fetchBadgeRewardOptions,
+  fetchMyVotedEntryIds,
+  fetchPhotoEntries,
+  votePhotoEntry,
+} from "../lib/gridsterPhotoChallenges";
 import {
   usePersistedGridsterFlag,
   usePersistedGridsterValue,
@@ -47,8 +59,6 @@ import {
   gridsterAddSlurlFields,
   gridsterFeedPreferenceCards,
   gridsterPhotoChallengeRules,
-  gridsterPhotoChallengeEntries,
-  gridsterPhotoChallengeLeaders,
   gridsterSpotlightAwardCategories,
   gridsterSpotlightAwardNominees,
   gridsterSpotlightAwardRules,
@@ -1134,36 +1144,390 @@ function SavedItemsPage({ showToast }) {
   );
 }
 
+const EMPTY_PHOTO_ENTRY_FORM = { photo_url: "", caption: "", creator_name: "" };
+const EMPTY_PHOTO_CHALLENGE_FORM = {
+  title: "",
+  description: "",
+  reward_bling_bits: 500,
+  reward_badge_item_id: "",
+  deadline_label: "",
+};
+
 function PhotoChallengePage({ showToast }) {
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [challenge, setChallenge] = useState(null);
+  const [entries, setEntries] = useState([]);
+  const [votedEntryIds, setVotedEntryIds] = useState(new Set());
+  const [badgeOptions, setBadgeOptions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [showEntryForm, setShowEntryForm] = useState(false);
+  const [entryForm, setEntryForm] = useState(EMPTY_PHOTO_ENTRY_FORM);
+  const [submittingEntry, setSubmittingEntry] = useState(false);
+  const [showChallengeForm, setShowChallengeForm] = useState(false);
+  const [challengeForm, setChallengeForm] = useState(EMPTY_PHOTO_CHALLENGE_FORM);
+  const [submittingChallenge, setSubmittingChallenge] = useState(false);
+  const [closingChallenge, setClosingChallenge] = useState(false);
+
+  const refreshChallengeAndEntries = async () => {
+    const nextChallenge = await fetchActivePhotoChallenge();
+    setChallenge(nextChallenge);
+
+    if (nextChallenge) {
+      const nextEntries = await fetchPhotoEntries(nextChallenge.id);
+      setEntries(nextEntries || []);
+    } else {
+      setEntries([]);
+    }
+
+    return nextChallenge;
+  };
+
+  useEffect(() => {
+    let active = true;
+
+    async function load(nextUser) {
+      if (!active) {
+        return;
+      }
+
+      setUser(nextUser);
+      setLoading(true);
+
+      try {
+        await refreshChallengeAndEntries();
+
+        if (nextUser) {
+          const [votedIds, blingSummary, profile] = await Promise.all([
+            fetchMyVotedEntryIds(nextUser.id),
+            getBlingBalanceSummary(),
+            fetchGridsterProfile(nextUser.id),
+          ]);
+
+          if (active) {
+            setVotedEntryIds(votedIds);
+            setIsAdmin(Boolean(blingSummary?.isAdmin));
+            setEntryForm((current) => ({
+              ...current,
+              creator_name: current.creator_name || profile?.display_name || profile?.sl_username || "",
+            }));
+
+            if (blingSummary?.isAdmin) {
+              const badges = await fetchBadgeRewardOptions();
+              if (active) {
+                setBadgeOptions(badges || []);
+              }
+            }
+          }
+        } else if (active) {
+          setVotedEntryIds(new Set());
+          setIsAdmin(false);
+          setBadgeOptions([]);
+        }
+      } catch (loadError) {
+        if (active) {
+          setError(loadError.message || "Could not load the Photo Challenge.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    supabase.auth
+      .getUser()
+      .then(({ data }) => load(data?.user ?? null))
+      .catch((authError) => {
+        if (!active) {
+          return;
+        }
+
+        setError(authError.message || "Could not check your login session.");
+        setLoading(false);
+      });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      load(session?.user ?? null);
+    });
+
+    return () => {
+      active = false;
+      listener?.subscription?.unsubscribe();
+    };
+  }, []);
+
+  const leaders = useMemo(() => {
+    return [...entries].sort((a, b) => b.vote_count - a.vote_count).slice(0, 3);
+  }, [entries]);
+
+  const scrollToEntries = () => {
+    document.getElementById("featured-entries-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleOpenEntryForm = () => {
+    if (!user) {
+      showToast?.("Log in to enter the Photo Challenge.");
+      return;
+    }
+
+    setShowEntryForm(true);
+  };
+
+  const updateEntryField = (field, value) => {
+    setEntryForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleSubmitEntry = async (event) => {
+    event.preventDefault();
+
+    if (!user || !challenge) {
+      return;
+    }
+
+    setSubmittingEntry(true);
+    setMessage("");
+    setError("");
+
+    try {
+      await createPhotoEntry(user.id, challenge.id, entryForm);
+      await refreshChallengeAndEntries();
+      setEntryForm((current) => ({ ...EMPTY_PHOTO_ENTRY_FORM, creator_name: current.creator_name }));
+      setShowEntryForm(false);
+      setMessage("Entry submitted.");
+      showToast?.("Entry submitted.");
+    } catch (submitError) {
+      setError(submitError.message || "Could not submit this entry.");
+    } finally {
+      setSubmittingEntry(false);
+    }
+  };
+
+  const handleDeleteEntry = async (entry) => {
+    setBusyId(entry.id);
+
+    try {
+      await deletePhotoEntry(entry.id, user.id);
+      await refreshChallengeAndEntries();
+      showToast?.("Entry removed.");
+    } catch (deleteError) {
+      showToast?.(deleteError.message || "Could not remove this entry.");
+    } finally {
+      setBusyId("");
+    }
+  };
+
+  const handleVote = async (entry) => {
+    if (!user) {
+      showToast?.("Log in to vote in the Photo Challenge.");
+      return;
+    }
+
+    setBusyId(entry.id);
+
+    try {
+      const result = await votePhotoEntry(entry.id);
+      await refreshChallengeAndEntries();
+      setVotedEntryIds((current) => new Set(current).add(entry.id));
+      showToast?.(result?.already_voted ? "You already voted for this entry." : "Vote recorded.");
+    } catch (voteError) {
+      showToast?.(voteError.message || "Could not record your vote.");
+    } finally {
+      setBusyId("");
+    }
+  };
+
+  const updateChallengeField = (field, value) => {
+    setChallengeForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleSubmitChallenge = async (event) => {
+    event.preventDefault();
+    setSubmittingChallenge(true);
+
+    try {
+      await createPhotoChallenge(challengeForm);
+      await refreshChallengeAndEntries();
+      setChallengeForm(EMPTY_PHOTO_CHALLENGE_FORM);
+      setShowChallengeForm(false);
+      showToast?.("New Photo Challenge created.");
+    } catch (createError) {
+      showToast?.(createError.message || "Could not create this challenge.");
+    } finally {
+      setSubmittingChallenge(false);
+    }
+  };
+
+  const handleCloseChallenge = async () => {
+    if (!challenge) {
+      return;
+    }
+
+    setClosingChallenge(true);
+
+    try {
+      const result = await closePhotoChallengeAndAwardWinner(challenge.id);
+      await refreshChallengeAndEntries();
+
+      if (result?.winner_user_id) {
+        showToast?.(`Challenge closed. Winner awarded ${result.awarded_bling_bits} Bling Bits.`);
+      } else {
+        showToast?.("Challenge closed. No entries were submitted.");
+      }
+    } catch (closeError) {
+      showToast?.(closeError.message || "Could not close this challenge.");
+    } finally {
+      setClosingChallenge(false);
+    }
+  };
+
   return (
     <section className="photo-challenge-page">
       <section className="photo-challenge-hero glass-card">
         <div className="challenge-hero-copy">
           <span>Weekly Theme</span>
-          <h3>Neon Nights</h3>
-          <p>Capture a nightlife, cyber, club, or glowing city scene anywhere in Second Life.</p>
+          <h3>{loading ? "Loading..." : challenge?.title || "No Active Challenge"}</h3>
+          <p>{challenge?.description || "Check back soon for the next weekly Photo Challenge theme."}</p>
 
-          <div className="challenge-meta-grid">
-            <div>
-              <strong>Reward</strong>
-              <span>Winner earns 500 Bling Bits + Featured Gallery placement.</span>
+          {challenge ? (
+            <div className="challenge-meta-grid">
+              <div>
+                <strong>Reward</strong>
+                <span>Winner earns {challenge.reward_bling_bits} Bling Bits{challenge.reward_badge_item_id ? " + a badge" : ""}.</span>
+              </div>
+              <div>
+                <strong>Deadline</strong>
+                <span>{challenge.deadline_label || "TBA"}</span>
+              </div>
             </div>
-            <div>
-              <strong>Deadline</strong>
-              <span>Sunday • 11:59 PM SLT</span>
-            </div>
-          </div>
+          ) : null}
 
           <div className="challenge-hero-actions">
-            <button onClick={() => showToast?.("Joining the Photo Challenge coming soon.")}>Join Challenge</button>
-            <button onClick={() => showToast?.("Uploading an entry coming soon.")}>Upload Entry</button>
-            <button onClick={() => showToast?.("Viewing entries coming soon.")}>View Entries</button>
+            <button onClick={handleOpenEntryForm}>Join Challenge</button>
+            <button onClick={handleOpenEntryForm}>Upload Entry</button>
+            <button onClick={scrollToEntries}>View Entries</button>
           </div>
         </div>
         <div className="challenge-hero-art">
-          <span>Neon Nights</span>
+          <span>{challenge?.title || "Photo Challenge"}</span>
         </div>
       </section>
+
+      {error ? <p className="challenge-message challenge-error" role="alert">{error}</p> : null}
+      {message ? <p className="challenge-message challenge-success">{message}</p> : null}
+
+      {showEntryForm ? (
+        <form className="place-post-form glass-card" onSubmit={handleSubmitEntry}>
+          <label>
+            <span>Photo URL</span>
+            <input
+              type="text"
+              value={entryForm.photo_url}
+              onChange={(event) => updateEntryField("photo_url", event.target.value)}
+              placeholder="https://..."
+              required
+            />
+          </label>
+
+          <label>
+            <span>Caption</span>
+            <input
+              type="text"
+              value={entryForm.caption}
+              onChange={(event) => updateEntryField("caption", event.target.value)}
+            />
+          </label>
+
+          <div className="place-post-form-actions">
+            <button type="button" onClick={() => setShowEntryForm(false)}>Cancel</button>
+            <button type="submit" disabled={submittingEntry}>
+              {submittingEntry ? "Submitting..." : "Submit Entry"}
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {isAdmin ? (
+        <section className="challenge-admin-panel glass-card">
+          <SectionHeader className="challenge-section-heading" eyebrow="Admin" title="Manage This Challenge" />
+
+          <div className="challenge-admin-actions">
+            <button type="button" onClick={() => setShowChallengeForm((current) => !current)}>
+              {showChallengeForm ? "Cancel New Challenge" : "Create New Challenge"}
+            </button>
+            {challenge ? (
+              <button type="button" disabled={closingChallenge} onClick={handleCloseChallenge}>
+                {closingChallenge ? "Closing..." : "Close Challenge & Award Winner"}
+              </button>
+            ) : null}
+          </div>
+
+          {showChallengeForm ? (
+            <form className="place-post-form" onSubmit={handleSubmitChallenge}>
+              <label>
+                <span>Theme Title</span>
+                <input
+                  type="text"
+                  value={challengeForm.title}
+                  onChange={(event) => updateChallengeField("title", event.target.value)}
+                  required
+                />
+              </label>
+
+              <label>
+                <span>Description</span>
+                <input
+                  type="text"
+                  value={challengeForm.description}
+                  onChange={(event) => updateChallengeField("description", event.target.value)}
+                />
+              </label>
+
+              <label>
+                <span>Reward (Bling Bits)</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={challengeForm.reward_bling_bits}
+                  onChange={(event) => updateChallengeField("reward_bling_bits", event.target.value)}
+                />
+              </label>
+
+              <label>
+                <span>Reward Badge (optional)</span>
+                <select
+                  value={challengeForm.reward_badge_item_id}
+                  onChange={(event) => updateChallengeField("reward_badge_item_id", event.target.value)}
+                >
+                  <option value="">No badge</option>
+                  {badgeOptions.map((badge) => (
+                    <option key={badge.id} value={badge.id}>{badge.name}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <span>Deadline</span>
+                <input
+                  type="text"
+                  value={challengeForm.deadline_label}
+                  onChange={(event) => updateChallengeField("deadline_label", event.target.value)}
+                  placeholder="Sunday • 11:59 PM SLT"
+                />
+              </label>
+
+              <div className="place-post-form-actions">
+                <button type="submit" disabled={submittingChallenge}>
+                  {submittingChallenge ? "Creating..." : "Create Challenge"}
+                </button>
+              </div>
+            </form>
+          ) : null}
+        </section>
+      ) : null}
 
       <div className="photo-challenge-content">
         <section className="challenge-rules-card glass-card">
@@ -1181,32 +1545,47 @@ function PhotoChallengePage({ showToast }) {
         <section className="challenge-leaderboard-card glass-card">
           <SectionHeader className="challenge-section-heading" eyebrow="Top This Week" title="Leaderboard" />
           <div className="challenge-leader-list">
-            {gridsterPhotoChallengeLeaders.map(([name, votes], index) => (
-              <article key={name}>
-                <strong>{index + 1}. {name}</strong>
-                <span>{votes}</span>
+            {leaders.length === 0 ? <p>No entries yet.</p> : null}
+            {leaders.map((entry, index) => (
+              <article key={entry.id}>
+                <strong>{index + 1}. {entry.creator_name || "Unknown"}</strong>
+                <span>{entry.vote_count} votes</span>
               </article>
             ))}
           </div>
         </section>
       </div>
 
-      <section className="featured-entries-section">
+      <section className="featured-entries-section" id="featured-entries-section">
         <SectionHeader className="challenge-section-heading" eyebrow="Community Gallery" title="Featured Entries" />
         <div className="featured-entry-grid">
-          {gridsterPhotoChallengeEntries.map(([title, creator, likes], index) => (
-            <article className="featured-entry-card glass-card" key={title}>
-              <div className={`entry-image entry-${index}`}></div>
-              <div className="entry-card-copy">
-                <h3>{title}</h3>
-                <p>by {creator}</p>
-              </div>
-              <div className="entry-card-actions">
-                <button onClick={() => showToast?.(`Vote recorded for ${title}.`)}>Vote</button>
-                <span>{likes} likes</span>
-              </div>
-            </article>
-          ))}
+          {entries.length === 0 ? <p>No entries submitted yet. Be the first!</p> : null}
+          {entries.map((entry, index) => {
+            const busy = busyId === entry.id;
+            const voted = votedEntryIds.has(entry.id);
+            const isOwner = user?.id === entry.user_id;
+
+            return (
+              <article className="featured-entry-card glass-card" key={entry.id}>
+                <div className={`entry-image entry-${index % 6}`}>
+                  {entry.photo_url ? <img src={entry.photo_url} alt="" /> : null}
+                </div>
+                <div className="entry-card-copy">
+                  <h3>{entry.caption || "Untitled"}</h3>
+                  <p>by {entry.creator_name || "Unknown"}</p>
+                </div>
+                <div className="entry-card-actions">
+                  <button disabled={busy || voted} onClick={() => handleVote(entry)}>
+                    {voted ? "Voted" : "Vote"}
+                  </button>
+                  <span>{entry.vote_count} votes</span>
+                  {isOwner ? (
+                    <button disabled={busy} onClick={() => handleDeleteEntry(entry)}>Delete</button>
+                  ) : null}
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
     </section>

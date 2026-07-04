@@ -448,6 +448,20 @@ function SavedProfileCard({ profile, equippedCosmetics = [], blingProfile: suppl
         </div>
       ) : null}
 
+      {blingProfile.buddy ? (
+        <div
+          className={`profile-bling-buddy ${blingProfile.buddy.previewClass || blingProfile.buddy.preview_class || ""}`}
+          title={blingProfile.buddy.name}
+          aria-label={`Equipped Bling Buddy: ${blingProfile.buddy.name}`}
+        >
+          {blingProfile.buddy.imageUrl ? (
+            <img src={blingProfile.buddy.imageUrl} alt="" />
+          ) : (
+            <span>{blingProfile.buddy.icon}</span>
+          )}
+        </div>
+      ) : null}
+
       <div className="profile-setup-links">
         {socialLinks.map(([label, url]) => (
           <a href={url} target="_blank" rel="noreferrer" key={label}>

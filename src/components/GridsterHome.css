@@ -6774,10 +6774,70 @@ button {
 .item-type-badge .bling-depot-preview-fill,
 .item-type-sticker_pack .bling-depot-preview-fill,
 .item-type-emote .bling-depot-preview-fill,
-.item-type-boost .bling-depot-preview-fill {
+.item-type-boost .bling-depot-preview-fill,
+.item-type-bling_buddy .bling-depot-preview-fill {
   width: 92px;
   min-height: 92px;
   border-radius: 28px;
+}
+
+@keyframes bling-buddy-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.bling-depot-preview-fill.bling-buddy-goth-bat,
+.bling-depot-preview-fill.bling-buddy-beach-bunny,
+.bling-depot-preview-fill.bling-buddy-pixel-fox,
+.bling-depot-preview-fill.bling-buddy-chaos-raccoon,
+.bling-depot-preview-fill.bling-buddy-glam-cat,
+.bling-depot-preview-fill.bling-buddy-demon-pup,
+.bling-depot-preview-fill.bling-buddy-drama-llama,
+.bling-depot-preview-fill.bling-buddy-neon-axolotl,
+.bling-depot-preview-fill.bling-buddy-punk-panda,
+.bling-depot-preview-fill.bling-buddy-moon-moth,
+.bling-depot-preview-fill.bling-buddy-disco-duck,
+.bling-depot-preview-fill.bling-buddy-crystal-dragon {
+  animation: bling-buddy-float 2.4s ease-in-out infinite;
+}
+
+.bling-depot-preview-fill.bling-buddy-goth-bat { background: linear-gradient(135deg, #1a0a26, #3d1f5c); }
+.bling-depot-preview-fill.bling-buddy-beach-bunny { background: linear-gradient(135deg, #ffdde1, #ff9a8b); }
+.bling-depot-preview-fill.bling-buddy-pixel-fox { background: linear-gradient(135deg, #ff7b00, #3d1f00); }
+.bling-depot-preview-fill.bling-buddy-chaos-raccoon { background: linear-gradient(135deg, #2b2b2b, #6b6b6b); }
+.bling-depot-preview-fill.bling-buddy-glam-cat { background: linear-gradient(135deg, #ff2fbd, #7c2cff); }
+.bling-depot-preview-fill.bling-buddy-demon-pup { background: linear-gradient(135deg, #4a0000, #1a0000); }
+.bling-depot-preview-fill.bling-buddy-drama-llama { background: linear-gradient(135deg, #ff9ecf, #7c2cff); }
+.bling-depot-preview-fill.bling-buddy-neon-axolotl { background: linear-gradient(135deg, #ff6ec7, #1de9d4); }
+.bling-depot-preview-fill.bling-buddy-punk-panda { background: linear-gradient(135deg, #0d0d0d, #ff2fbd); }
+.bling-depot-preview-fill.bling-buddy-moon-moth { background: linear-gradient(135deg, #0b1030, #7c8cff); }
+.bling-depot-preview-fill.bling-buddy-disco-duck { background: linear-gradient(135deg, #ffd166, #ff2fbd, #1de9d4); }
+.bling-depot-preview-fill.bling-buddy-crystal-dragon { background: linear-gradient(135deg, #7c2cff, #00e5ff); }
+
+.profile-bling-buddy {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  font-size: 24px;
+  box-shadow: 0 0 18px rgba(215, 44, 255, 0.4);
+  animation: bling-buddy-float 2.4s ease-in-out infinite;
+}
+
+.profile-bling-buddy img {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  object-fit: cover;
 }
 
 .bling-depot-item-copy {

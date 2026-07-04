@@ -853,6 +853,150 @@ export const BLING_DEPOT_ITEMS = [
     previewStyle: "boost",
     icon: "🏪",
   },
+  {
+    id: "goth-bat-buddy",
+    name: "Goth Bat Buddy",
+    category: "Bling Buddies",
+    rarity: "Epic",
+    price: 650,
+    description: "A tiny dramatic bat with eyeliner, chains, and emotional moonlight energy.",
+    itemType: "bling_buddy",
+    equipSlot: "equipped_bling_buddy",
+    previewClass: "bling-buddy-goth-bat",
+    icon: "🦇",
+  },
+  {
+    id: "beach-bunny-buddy",
+    name: "Beach Bunny Buddy",
+    category: "Bling Buddies",
+    rarity: "Epic",
+    price: 600,
+    description: "A sunny little bunny with shades, sass, and vacation energy.",
+    itemType: "bling_buddy",
+    equipSlot: "equipped_bling_buddy",
+    previewClass: "bling-buddy-beach-bunny",
+    icon: "🐰",
+  },
+  {
+    id: "pixel-fox-buddy",
+    name: "Pixel Fox Buddy",
+    category: "Bling Buddies",
+    rarity: "Epic",
+    price: 700,
+    description: "A neon fox with headphones and clever little notification goblin vibes.",
+    itemType: "bling_buddy",
+    equipSlot: "equipped_bling_buddy",
+    previewClass: "bling-buddy-pixel-fox",
+    icon: "🦊",
+  },
+  {
+    id: "chaos-raccoon-buddy",
+    name: "Chaos Raccoon Buddy",
+    category: "Bling Buddies",
+    rarity: "Epic",
+    price: 675,
+    description: "A hoodie-wearing raccoon with glitter trash energy. Respectfully unhinged.",
+    itemType: "bling_buddy",
+    equipSlot: "equipped_bling_buddy",
+    previewClass: "bling-buddy-chaos-raccoon",
+    icon: "🦝",
+  },
+  {
+    id: "glam-cat-buddy",
+    name: "Glam Cat Buddy",
+    category: "Bling Buddies",
+    rarity: "Epic",
+    price: 700,
+    description: "A fluffy cat with heart glasses, platform boots, and judgmental sparkle.",
+    itemType: "bling_buddy",
+    equipSlot: "equipped_bling_buddy",
+    previewClass: "bling-buddy-glam-cat",
+    icon: "🐱",
+  },
+  {
+    id: "tiny-demon-pup",
+    name: "Tiny Demon Pup",
+    category: "Bling Buddies",
+    rarity: "Epic",
+    price: 750,
+    description: "A loyal little chaos puppy with horns, wings, and questionable advice.",
+    itemType: "bling_buddy",
+    equipSlot: "equipped_bling_buddy",
+    previewClass: "bling-buddy-demon-pup",
+    icon: "👿",
+  },
+  {
+    id: "drama-llama-buddy",
+    name: "Drama Llama Buddy",
+    category: "Bling Buddies",
+    rarity: "Epic",
+    price: 675,
+    description: "A llama with main character energy and zero chill. Everything is a whole situation.",
+    itemType: "bling_buddy",
+    equipSlot: "equipped_bling_buddy",
+    previewClass: "bling-buddy-drama-llama",
+    icon: "🦙",
+  },
+  {
+    id: "neon-axolotl-buddy",
+    name: "Neon Axolotl Buddy",
+    category: "Bling Buddies",
+    rarity: "Epic",
+    price: 700,
+    description: "A glowing axolotl that vibes quietly and judges your life choices with a smile.",
+    itemType: "bling_buddy",
+    equipSlot: "equipped_bling_buddy",
+    previewClass: "bling-buddy-neon-axolotl",
+    icon: "🦎",
+  },
+  {
+    id: "punk-panda-buddy",
+    name: "Punk Panda Buddy",
+    category: "Bling Buddies",
+    rarity: "Epic",
+    price: 650,
+    description: "A mohawked panda with anarchist bamboo energy and a soft heart underneath.",
+    itemType: "bling_buddy",
+    equipSlot: "equipped_bling_buddy",
+    previewClass: "bling-buddy-punk-panda",
+    icon: "🐼",
+  },
+  {
+    id: "moon-moth-buddy",
+    name: "Moon Moth Buddy",
+    category: "Bling Buddies",
+    rarity: "Epic",
+    price: 725,
+    description: "A dreamy moth that flutters around your profile chasing moonlight and vibes.",
+    itemType: "bling_buddy",
+    equipSlot: "equipped_bling_buddy",
+    previewClass: "bling-buddy-moon-moth",
+    icon: "🦋",
+  },
+  {
+    id: "disco-duck-buddy",
+    name: "Disco Duck Buddy",
+    category: "Bling Buddies",
+    rarity: "Epic",
+    price: 675,
+    description: "A duck that never stopped dancing since 1978. Quacks in 4/4 time.",
+    itemType: "bling_buddy",
+    equipSlot: "equipped_bling_buddy",
+    previewClass: "bling-buddy-disco-duck",
+    icon: "🦆",
+  },
+  {
+    id: "crystal-dragon-buddy",
+    name: "Crystal Dragon Buddy",
+    category: "Bling Buddies",
+    rarity: "Legendary",
+    price: 1050,
+    description: "A tiny gem-scaled dragon hoarding sparkle instead of gold. Rare and proud.",
+    itemType: "bling_buddy",
+    equipSlot: "equipped_bling_buddy",
+    previewClass: "bling-buddy-crystal-dragon",
+    icon: "🐉",
+  },
 ];
 
 export function asBlingItemIds(value) {
@@ -927,6 +1071,7 @@ export const BLING_ITEM_TYPE_CATEGORIES = {
   emote: "Chat Stickers",
   sticker_pack: "Chat Stickers",
   boost: "Event Boosts",
+  bling_buddy: "Bling Buddies",
 };
 
 export const BLING_ITEM_TYPE_ICONS = {
@@ -937,6 +1082,7 @@ export const BLING_ITEM_TYPE_ICONS = {
   emote: "+",
   sticker_pack: "+",
   boost: "↑",
+  bling_buddy: "🐾",
 };
 
 export const BLING_PREVIEW_CLASS_STYLES = {
@@ -1021,6 +1167,10 @@ export function getBlingEquipSlot(itemType) {
     return "badge";
   }
 
+  if (itemType === "bling_buddy") {
+    return "buddy";
+  }
+
   return null;
 }
 
@@ -1073,6 +1223,7 @@ export function getBlingProfileStyles(profile, equippedCosmetics = []) {
     ? normalizedEquipped.filter((item) => item.itemType === "badge")
     : getBlingDepotItems(profile?.equipped_badges))
     .filter((item) => item.itemType === "badge");
+  const buddyItem = normalizedEquipped.find((item) => item.itemType === "bling_buddy");
 
   const frameStyle = parseBlingPreviewStyle(frameItem?.previewStyle);
   const glowStyle = parseBlingPreviewStyle(glowItem?.previewStyle);
@@ -1097,6 +1248,7 @@ export function getBlingProfileStyles(profile, equippedCosmetics = []) {
     cardStyle,
     bannerStyle: backgroundItem?.previewStyle ? { background: backgroundItem.previewStyle } : undefined,
     equippedBadges,
+    buddy: buddyItem || null,
     classNames: {
       background: backgroundItem?.previewClass || "",
       frame: frameItem?.previewClass || "",

@@ -141,6 +141,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
       badge: "Badges",
       sticker_pack: "Chat Stickers",
       boost: "Event Boosts",
+      bling_buddy: "Bling Buddies",
     };
 
     return shopItems.filter((item) => item.category === categoryMap[activeTab]);
@@ -282,6 +283,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
           { id: "badge", label: "Badges" },
           { id: "sticker_pack", label: "Stickers" },
           { id: "boost", label: "Boosts" },
+          { id: "bling_buddy", label: "Bling Buddies" },
         ].map((tab) => (
           <button
             key={tab.id}

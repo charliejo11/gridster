@@ -199,11 +199,13 @@ export const gridsterMessageConversations = [
   ["M", "Moonlit Hollow", "Community application update.", "1d"],
 ];
 
-export const gridsterMessagePreview = [
-  ["RavenHex", "That photo spot is insane.", "received"],
-  ["CharlieJo", "Right? The lighting is perfect for gothic shots.", "sent"],
-  ["RavenHex", "Send me the SLURL when you can.", "received"],
-];
+export const gridsterMessageThreads = {
+  RavenHex: [
+    ["RavenHex", "That photo spot is insane.", "received"],
+    ["CharlieJo", "Right? The lighting is perfect for gothic shots.", "sent"],
+    ["RavenHex", "Send me the SLURL when you can.", "received"],
+  ],
+};
 
 export const gridsterMessageQuickActions = ["Send SLURL", "Share Post", "Invite to Event"];
 

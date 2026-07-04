@@ -18,7 +18,7 @@ import {
   gridsterLiveNowEvents,
   gridsterMarketplaceFinds,
   gridsterMessageConversations,
-  gridsterMessagePreview,
+  gridsterMessageThreads,
   gridsterMessageQuickActions,
   gridsterNotifications,
   gridsterPopularGroups,
@@ -810,6 +810,32 @@ function GroupsPageContent({ onOpenProfile }) {
 }
 
 function MessagesPageContent({ onOpenProfile, showToast }) {
+  const [selectedName, setSelectedName] = useState(gridsterMessageConversations[0]?.[1] ?? "");
+  const [threads, setThreads] = useState(() => ({ ...gridsterMessageThreads }));
+  const [draft, setDraft] = useState("");
+
+  const selectedConversation = gridsterMessageConversations.find(([, name]) => name === selectedName);
+  const selectedInitial = selectedConversation?.[0] ?? "?";
+  const activeMessages = threads[selectedName]
+    ?? (selectedConversation ? [[selectedName, selectedConversation[2], "received"]] : []);
+
+  const handleSend = (event) => {
+    event.preventDefault();
+
+    const text = draft.trim();
+
+    if (!text || !selectedName) {
+      return;
+    }
+
+    setThreads((current) => ({
+      ...current,
+      [selectedName]: [...activeMessages, ["CharlieJo", text, "sent"]],
+    }));
+    setDraft("");
+    showToast?.("Message sent.");
+  };
+
   return (
     <section className="gridster-inbox-page">
       <div className="gridster-inbox-shell glass-card">
@@ -819,12 +845,20 @@ function MessagesPageContent({ onOpenProfile, showToast }) {
               <span>Direct Messages</span>
               <h3>Inbox</h3>
             </div>
-            <strong>6</strong>
+            <strong>{gridsterMessageConversations.length}</strong>
           </div>
 
           <div className="inbox-conversation-list">
             {gridsterMessageConversations.map(([initial, name, message, time], index) => (
-              <button className={`inbox-conversation-row ${index === 0 ? "active" : ""}`} key={name}>
+              <button
+                type="button"
+                className={`inbox-conversation-row ${name === selectedName ? "active" : ""}`}
+                key={name}
+                onClick={() => {
+                  setSelectedName(name);
+                  setDraft("");
+                }}
+              >
                 <span className={`conversation-avatar conversation-${index}`}>{initial}</span>
                 <span className="conversation-copy">
                   <strong>{name}</strong>
@@ -839,18 +873,18 @@ function MessagesPageContent({ onOpenProfile, showToast }) {
         <section className="inbox-preview-panel">
           <div className="inbox-preview-header">
             <div className="preview-identity">
-              <span className="preview-avatar">R</span>
+              <span className="preview-avatar">{selectedInitial}</span>
               <div>
-                <h3>RavenHex</h3>
+                <h3>{selectedName}</h3>
                 <span className="preview-status">Online</span>
               </div>
             </div>
-            <button onClick={() => onOpenProfile?.("RavenHex")}>View Profile</button>
+            <button type="button" onClick={() => onOpenProfile?.(selectedName)}>View Profile</button>
           </div>
 
           <div className="inbox-message-stack">
-            {gridsterMessagePreview.map(([name, text, direction]) => (
-              <article className={`dm-message ${direction === "sent" ? "sent" : ""}`} key={`${name}-${text}`}>
+            {activeMessages.map(([name, text, direction], index) => (
+              <article className={`dm-message ${direction === "sent" ? "sent" : ""}`} key={`${selectedName}-${index}`}>
                 <span>{name}</span>
                 <p>{text}</p>
               </article>
@@ -859,15 +893,19 @@ function MessagesPageContent({ onOpenProfile, showToast }) {
 
           <div className="message-quick-actions">
             {gridsterMessageQuickActions.map((action) => (
-              <button key={action}>{action}</button>
+              <button type="button" key={action}>{action}</button>
             ))}
           </div>
 
-          <div className="dm-input-row">
+          <form className="dm-input-row" onSubmit={handleSend}>
             <span>CJ</span>
-            <input placeholder="Write a message..." />
-            <button onClick={() => showToast?.("Message sent.")}>Send</button>
-          </div>
+            <input
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="Write a message..."
+            />
+            <button type="submit">Send</button>
+          </form>
         </section>
       </div>
     </section>

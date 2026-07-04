@@ -1045,6 +1045,58 @@ export const BLING_DEPOT_ITEMS = [
     previewClass: "messenger-theme-pink-notebook",
     icon: "📓",
   },
+  {
+    id: "drama-pack",
+    name: "Drama Pack",
+    category: "Emoji Packs",
+    rarity: "Rare",
+    price: 300,
+    description: "Reaction emojis for maximum main-character energy.",
+    itemType: "emoji_pack",
+    equipSlot: null,
+    previewClass: "emoji-pack-drama",
+    icon: "🎭",
+    emojis: ["😭", "🙄", "💅", "😤", "🎭", "😩"],
+  },
+  {
+    id: "goth-pack",
+    name: "Goth Pack",
+    category: "Emoji Packs",
+    rarity: "Rare",
+    price: 300,
+    description: "Dark little reactions for moody chats and dramatic exits.",
+    itemType: "emoji_pack",
+    equipSlot: null,
+    previewClass: "emoji-pack-goth",
+    icon: "🦇",
+    emojis: ["🦇", "🖤", "🕸️", "💀", "🌙", "🥀"],
+  },
+  {
+    id: "club-pack",
+    name: "Club Pack",
+    category: "Emoji Packs",
+    rarity: "Rare",
+    price: 300,
+    description: "Late-night dance floor energy for every chat thread.",
+    itemType: "emoji_pack",
+    equipSlot: null,
+    previewClass: "emoji-pack-club",
+    icon: "🎉",
+    emojis: ["🎉", "🍸", "💃", "🕺", "🔥", "🎶"],
+  },
+  {
+    id: "bling-pack",
+    name: "Bling Pack",
+    category: "Emoji Packs",
+    rarity: "Epic",
+    price: 350,
+    description: "Excessive sparkle for excessive people. As it should be.",
+    itemType: "emoji_pack",
+    equipSlot: null,
+    previewClass: "emoji-pack-bling",
+    icon: "💎",
+    emojis: ["💎", "👑", "💰", "✨", "🤑", "🐆"],
+  },
 ];
 
 export function asBlingItemIds(value) {
@@ -1121,6 +1173,7 @@ export const BLING_ITEM_TYPE_CATEGORIES = {
   boost: "Event Boosts",
   bling_buddy: "Bling Buddies",
   messenger_theme: "Messenger Themes",
+  emoji_pack: "Emoji Packs",
 };
 
 export const BLING_ITEM_TYPE_ICONS = {
@@ -1133,6 +1186,7 @@ export const BLING_ITEM_TYPE_ICONS = {
   boost: "↑",
   bling_buddy: "🐾",
   messenger_theme: "💬",
+  emoji_pack: "🙂",
 };
 
 export const BLING_PREVIEW_CLASS_STYLES = {

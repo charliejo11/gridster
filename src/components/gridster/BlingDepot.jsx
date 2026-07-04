@@ -11,6 +11,7 @@ import {
 } from "../../lib/blingDepot";
 import { supabase } from "../../lib/supabaseClient";
 import MessengerThemePreviewModal from "./MessengerThemePreviewModal";
+import EmojiPackPreviewModal from "./EmojiPackPreviewModal";
 
 const STARTING_BLING_BITS = 1250;
 const BLING_DEPOT_ARTWORK = "/images/bling%20card.png.png";
@@ -53,7 +54,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
   const [busyItemId, setBusyItemId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [previewTheme, setPreviewTheme] = useState(null);
+  const [previewItem, setPreviewItem] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -136,6 +137,12 @@ function BlingDepot({ onAuthOpen, showToast }) {
       return shopItems.filter((item) => item.limited);
     }
 
+    if (activeTab === "messenger") {
+      return shopItems.filter(
+        (item) => item.itemType === "messenger_theme" || item.itemType === "emoji_pack"
+      );
+    }
+
     const categoryMap = {
       background: "Profile Backgrounds",
       frame: "Profile Frames",
@@ -144,7 +151,6 @@ function BlingDepot({ onAuthOpen, showToast }) {
       sticker_pack: "Chat Stickers",
       boost: "Event Boosts",
       bling_buddy: "Bling Buddies",
-      messenger_theme: "Messenger Themes",
     };
 
     return shopItems.filter((item) => item.category === categoryMap[activeTab]);
@@ -287,7 +293,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
           { id: "sticker_pack", label: "Stickers" },
           { id: "boost", label: "Boosts" },
           { id: "bling_buddy", label: "Bling Buddies" },
-          { id: "messenger_theme", label: "Messenger Themes" },
+          { id: "messenger", label: "Messenger" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -376,6 +382,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
           const busy = busyItemId === item.id;
           const previewClassName = ["bling-depot-preview-fill", item.previewClass].filter(Boolean).join(" ");
           const previewStyle = item.previewClass ? undefined : getItemPreviewStyle(item);
+          const isMessengerCosmetic = item.itemType === "messenger_theme" || item.itemType === "emoji_pack";
 
           return (
             <article className="bling-depot-item-card glass-card" key={item.id}>
@@ -405,19 +412,19 @@ function BlingDepot({ onAuthOpen, showToast }) {
               </div>
 
               <div className="bling-depot-item-actions">
-                {item.itemType === "messenger_theme" ? (
-                  <button type="button" onClick={() => setPreviewTheme(item)}>
+                {isMessengerCosmetic ? (
+                  <button type="button" onClick={() => setPreviewItem(item)}>
                     Preview
                   </button>
                 ) : null}
 
-                {item.itemType !== "messenger_theme" && !owned ? (
+                {!isMessengerCosmetic && !owned ? (
                   <button type="button" disabled={busy || loading || (user && !shopData.items.length)} onClick={() => handleBuy(item)}>
                     {busy ? "Buying..." : "Buy with Bling Bits"}
                   </button>
                 ) : null}
 
-                {item.itemType !== "messenger_theme" && owned && item.equipSlot ? (
+                {!isMessengerCosmetic && owned && item.equipSlot ? (
                   <button
                     type="button"
                     className={equipped ? "is-equipped" : ""}
@@ -428,7 +435,7 @@ function BlingDepot({ onAuthOpen, showToast }) {
                   </button>
                 ) : null}
 
-                {item.itemType !== "messenger_theme" && owned && !item.equipSlot ? (
+                {!isMessengerCosmetic && owned && !item.equipSlot ? (
                   <button type="button" disabled>
                     Owned
                   </button>
@@ -439,8 +446,12 @@ function BlingDepot({ onAuthOpen, showToast }) {
         })}
       </div>
 
-      {previewTheme ? (
-        <MessengerThemePreviewModal theme={previewTheme} onClose={() => setPreviewTheme(null)} />
+      {previewItem?.itemType === "messenger_theme" ? (
+        <MessengerThemePreviewModal theme={previewItem} onClose={() => setPreviewItem(null)} />
+      ) : null}
+
+      {previewItem?.itemType === "emoji_pack" ? (
+        <EmojiPackPreviewModal pack={previewItem} onClose={() => setPreviewItem(null)} />
       ) : null}
     </section>
   );

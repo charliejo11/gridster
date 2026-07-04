@@ -2963,6 +2963,7 @@ button {
 }
 
 .messenger-preview-window {
+  position: relative;
   overflow: hidden;
   border-radius: 18px;
   text-align: left;
@@ -3033,14 +3034,42 @@ button {
   cursor: pointer;
 }
 
+.emoji-pack-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.emoji-pack-preview-tile {
+  display: grid;
+  place-items: center;
+  min-height: 64px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 28px;
+}
+
+/* Chalk Talk: chalkboard background, gel-pen doodles, cartoon classroom */
 .messenger-preview-window.messenger-theme-chalk-talk {
-  background: #1c2b22;
+  background:
+    radial-gradient(circle at 15% 12%, rgba(255, 255, 255, 0.07), transparent 32%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0 2px, transparent 2px 40px),
+    #1c2b22;
   font-family: "Comic Sans MS", "Segoe Print", cursive;
+}
+
+.messenger-preview-window.messenger-theme-chalk-talk .messenger-preview-window-header::after {
+  content: "✏️ 📐 🖍️";
+  margin-left: auto;
+  font-size: 12px;
+  opacity: 0.75;
 }
 
 .messenger-preview-window.messenger-theme-chalk-talk .messenger-preview-bubble {
   background: transparent;
-  border: 1px dashed rgba(255, 255, 255, 0.55);
+  border: 2px dashed rgba(127, 216, 255, 0.75);
+  border-radius: 16px 5px 16px 5px;
 }
 
 .messenger-preview-window.messenger-theme-chalk-talk .messenger-preview-bubble p {
@@ -3048,44 +3077,95 @@ button {
 }
 
 .messenger-preview-window.messenger-theme-chalk-talk .messenger-preview-bubble.sent {
-  border-color: rgba(255, 214, 107, 0.7);
+  border-color: rgba(255, 214, 107, 0.8);
+  border-radius: 5px 16px 5px 16px;
 }
 
+/* Goth Scribbles: dark paper, silver ink, bats, lace corners */
 .messenger-preview-window.messenger-theme-goth-scribbles {
-  background: linear-gradient(180deg, #150910, #06030a);
+  background:
+    radial-gradient(circle at 6px 6px, rgba(210, 190, 230, 0.32) 1.5px, transparent 2px) 0 0/16px 16px,
+    linear-gradient(180deg, #120c16, #050308);
   font-family: "Segoe Script", "Brush Script MT", cursive;
 }
 
+.messenger-preview-window.messenger-theme-goth-scribbles::before,
+.messenger-preview-window.messenger-theme-goth-scribbles::after {
+  content: "🦇";
+  position: absolute;
+  font-size: 15px;
+  opacity: 0.65;
+  z-index: 1;
+}
+
+.messenger-preview-window.messenger-theme-goth-scribbles::before {
+  top: 6px;
+  left: 8px;
+}
+
+.messenger-preview-window.messenger-theme-goth-scribbles::after {
+  bottom: 6px;
+  right: 8px;
+  transform: scaleX(-1);
+}
+
+.messenger-preview-window.messenger-theme-goth-scribbles .messenger-preview-window-header {
+  border-bottom: 1px dashed rgba(192, 192, 210, 0.35);
+}
+
+.messenger-preview-window.messenger-theme-goth-scribbles .messenger-preview-window-header strong {
+  color: #d7d7e6;
+}
+
 .messenger-preview-window.messenger-theme-goth-scribbles .messenger-preview-bubble {
-  background: rgba(120, 0, 60, 0.28);
-  border: 1px solid rgba(216, 183, 255, 0.32);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(192, 192, 210, 0.45);
+}
+
+.messenger-preview-window.messenger-theme-goth-scribbles .messenger-preview-bubble p {
+  color: #d6d6e8;
 }
 
 .messenger-preview-window.messenger-theme-goth-scribbles .messenger-preview-bubble.sent {
-  background: linear-gradient(135deg, #5c0a2e, #2a0714);
+  background: rgba(120, 0, 60, 0.22);
+  border-color: rgba(216, 183, 255, 0.5);
 }
 
+/* Neon Night Chat: cyber grid, glowing purple/blue bubbles */
 .messenger-preview-window.messenger-theme-neon-night {
-  background: #04050c;
+  background:
+    repeating-linear-gradient(0deg, rgba(124, 44, 255, 0.14) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(22, 140, 255, 0.14) 0 1px, transparent 1px 24px),
+    #04050c;
   font-family: "Courier New", monospace;
 }
 
 .messenger-preview-window.messenger-theme-neon-night .messenger-preview-bubble {
-  background: rgba(0, 229, 255, 0.12);
-  border: 1px solid rgba(0, 229, 255, 0.5);
-  box-shadow: 0 0 16px rgba(0, 229, 255, 0.24);
+  background: rgba(124, 44, 255, 0.16);
+  border: 1px solid rgba(124, 44, 255, 0.6);
+  box-shadow: 0 0 16px rgba(124, 44, 255, 0.34);
 }
 
 .messenger-preview-window.messenger-theme-neon-night .messenger-preview-bubble.sent {
-  background: rgba(215, 44, 255, 0.18);
-  border-color: rgba(215, 44, 255, 0.6);
-  box-shadow: 0 0 16px rgba(215, 44, 255, 0.32);
+  background: rgba(22, 140, 255, 0.18);
+  border-color: rgba(22, 140, 255, 0.65);
+  box-shadow: 0 0 16px rgba(22, 140, 255, 0.38);
 }
 
+/* Pink Notebook Chaos: pink notebook paper, stickers, hearts, doodles */
 .messenger-preview-window.messenger-theme-pink-notebook {
   background:
     repeating-linear-gradient(180deg, transparent 0 27px, rgba(255, 79, 216, 0.18) 28px),
     #fff0f7;
+}
+
+.messenger-preview-window.messenger-theme-pink-notebook::before {
+  content: "💗 ⭐ 💌";
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 13px;
+  z-index: 1;
 }
 
 .messenger-preview-window.messenger-theme-pink-notebook .messenger-preview-window-header {
@@ -3098,8 +3178,8 @@ button {
 }
 
 .messenger-preview-window.messenger-theme-pink-notebook .messenger-preview-bubble {
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(255, 79, 216, 0.4);
+  background: rgba(255, 255, 255, 0.78);
+  border: 2px dotted rgba(255, 79, 216, 0.55);
 }
 
 .messenger-preview-window.messenger-theme-pink-notebook .messenger-preview-bubble p {
@@ -6969,7 +7049,8 @@ button {
 .item-type-emote .bling-depot-preview-fill,
 .item-type-boost .bling-depot-preview-fill,
 .item-type-bling_buddy .bling-depot-preview-fill,
-.item-type-messenger_theme .bling-depot-preview-fill {
+.item-type-messenger_theme .bling-depot-preview-fill,
+.item-type-emoji_pack .bling-depot-preview-fill {
   width: 92px;
   min-height: 92px;
   border-radius: 28px;
@@ -6979,6 +7060,11 @@ button {
 .bling-depot-preview-fill.messenger-theme-goth-scribbles { background: linear-gradient(135deg, #1a0a20, #2f0f1a); }
 .bling-depot-preview-fill.messenger-theme-neon-night { background: linear-gradient(135deg, #05060d, #7c2cff, #00e5ff); }
 .bling-depot-preview-fill.messenger-theme-pink-notebook { background: linear-gradient(135deg, #ffe3f0, #ff9ecf); }
+
+.bling-depot-preview-fill.emoji-pack-drama { background: linear-gradient(135deg, #ff9ecf, #7c2cff); }
+.bling-depot-preview-fill.emoji-pack-goth { background: linear-gradient(135deg, #1a0a20, #2f0f1a); }
+.bling-depot-preview-fill.emoji-pack-club { background: linear-gradient(135deg, #ff4fd8, #ffd166, #00e5ff); }
+.bling-depot-preview-fill.emoji-pack-bling { background: linear-gradient(135deg, #7c2cff, #ffd166); }
 
 @keyframes bling-buddy-float {
   0%, 100% {

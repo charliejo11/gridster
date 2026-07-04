@@ -182,14 +182,6 @@ export const gridsterEventsPageEvents = [
   ["Moonlit Market — Shopping Event", "Saturday • 12 PM SLT", "General", "Moonlit Market"],
 ];
 
-export const gridsterGroupsPageGroups = [
-  ["Club Elysium", "Nightlife, DJs, event regulars, and neon dance-floor people.", "4.2K members"],
-  ["The Creators Collective", "Builders, photographers, bloggers, decorators, and makers.", "3.8K members"],
-  ["Pixel Fashion Society", "Fashion finds, blogger calls, editorials, and creator drops.", "2.9K members"],
-  ["Sanctuary Rocks Crew", "Rock fans, metal nights, venue staff, DJs, and regulars.", "2.4K members"],
-  ["Moonlit Hollow RP", "Gothic roleplay, lore, events, applications, and dark fantasy.", "1.7K members"],
-];
-
 export const gridsterMessageConversations = [
   ["R", "RavenHex", "That photo spot is insane.", "2m"],
   ["S", "Sanctuary Rocks", "You’re invited to Metal Night.", "14m"],
@@ -295,13 +287,6 @@ export const gridsterLiveNowEvents = [
   ["Sanctuary Rocks", "DJ RavenHex • Metal room is live", "Join"],
   ["Neon District", "Cyber Rave • 184 residents nearby", "Teleport"],
   ["Ocean Breeze", "Beach set • Sunset social", "Join"],
-];
-
-export const gridsterPopularGroups = [
-  ["Club Elysium", "Nightlife, DJ sets, and featured party notices."],
-  ["The Creators Collective", "Builders, bloggers, photographers, and event makers."],
-  ["Pixel Fashion Society", "Style finds, creator drops, and editorial looks."],
-  ["Sanctuary Rocks Crew", "Rock fans, live events, and metal night regulars."],
 ];
 
 export const gridsterPostSampleComments = [
@@ -558,13 +543,6 @@ export const gridsterBloggerNetworkFeatures = [
     ["◇", "Credit Builder", "Add outfit credits, store names, poses, locations, and SLURLs."],
     ["◆", "Lookbook Posts", "Share fashion, beauty, tattoos, décor, and event styling."],
     ["⌁", "Brand Matches", "Discover creators and stores that fit your personal style."],
-  ];
-
-export const gridsterCommunityHubFeatures = [
-    ["☽", "RP Sim Pages", "Share lore, rules, characters, openings, and SLURLs."],
-    ["✦", "Group Boards", "Post updates, announcements, photos, and event notices."],
-    ["◆", "Member Spotlights", "Feature residents, staff, hosts, DJs, bloggers, and creators."],
-    ["◇", "Application Posts", "Recruit staff, performers, tenants, models, bloggers, and roleplayers."],
   ];
 
 export const gridsterPostReportOptions = [

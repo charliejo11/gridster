@@ -31,7 +31,6 @@ import {
   gridsterFeaturedPlaces,
   gridsterGalleryItems,
   gridsterGridNightEvents,
-  gridsterGroupsPageGroups,
   gridsterLiveNow,
   gridsterLiveNowEvents,
   gridsterMarketplaceFinds,
@@ -39,7 +38,6 @@ import {
   gridsterMessageThreads,
   gridsterMessageQuickActions,
   gridsterNotifications,
-  gridsterPopularGroups,
   gridsterPostSampleComments,
   gridsterProfileFlairBadges,
   gridsterSavedFilters,
@@ -75,7 +73,6 @@ import {
   gridsterVenueTools,
   gridsterStoreToolFeatures,
   gridsterBloggerNetworkFeatures,
-  gridsterCommunityHubFeatures,
   gridsterPostReportOptions,
   hasGridsterProfile,
 } from "../data/gridsterMockData";
@@ -95,6 +92,8 @@ import BlingDepot from "./gridster/BlingDepot";
 import TeleportDiscoveryFeed from "./gridster/TeleportDiscoveryFeed";
 import TonightInSL from "./gridster/TonightInSL";
 import BookingBoard from "./gridster/BookingBoard";
+import GroupsPage from "./gridster/GroupsPage";
+import GroupDetailPage from "./gridster/GroupDetailPage";
 import TeleportStatusChip from "./gridster/TeleportStatusChip";
 import "./GridsterHome.css";
 
@@ -143,6 +142,7 @@ function GridsterHome() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [selectedProfileName, setSelectedProfileName] = useState("CharlieJo");
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [theme, setTheme] = usePersistedGridsterValue("theme", "dark-neon");
   const toastTimerRef = useRef(null);
   const toastIdRef = useRef(0);
@@ -224,6 +224,13 @@ function GridsterHome() {
     setActivePage("ProfilePreview");
   };
 
+  const openGroup = (groupId) => {
+    setSelectedGroupId(groupId);
+    setShowNotifications(false);
+    setShowThemeMenu(false);
+    setActivePage("GroupDetail");
+  };
+
   const openAuth = (mode = "login") => {
     setAuthMode(mode === "signup" ? "signup" : "login");
     setActivePage("Auth");
@@ -301,8 +308,10 @@ function GridsterHome() {
           galleryItems={gridsterGalleryItems}
           authMode={authMode}
           selectedProfileName={selectedProfileName}
+          selectedGroupId={selectedGroupId}
           setActivePage={setActivePage}
           onOpenProfile={openProfile}
+          onOpenGroup={openGroup}
           onAuthOpen={openAuth}
           showToast={showToast}
         />
@@ -320,7 +329,7 @@ function GridsterHome() {
   );
 }
 
-function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, setActivePage, onOpenProfile, onAuthOpen, showToast }) {
+function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, selectedGroupId, setActivePage, onOpenProfile, onOpenGroup, onAuthOpen, showToast }) {
   if (activePage === "Home") {
     return (
       <>
@@ -524,10 +533,16 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   if (activePage === "Groups") {
     return (
       <PageShell title="Groups" subtitle="Join clubs, creator circles, RP hubs, blogger networks, and community crews.">
-        <GroupsPageContent onOpenProfile={onOpenProfile} />
-        <CommunityHubs showToast={showToast} />
+        <GroupsPage onOpenGroup={onOpenGroup} onAuthOpen={onAuthOpen} showToast={showToast} />
         <CommunityStandards showToast={showToast} />
-        <PopularGroupsCards />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "GroupDetail") {
+    return (
+      <PageShell title="Group" subtitle="Posts, events, announcements, photos, and members for this community.">
+        <GroupDetailPage groupId={selectedGroupId} onAuthOpen={onAuthOpen} showToast={showToast} />
       </PageShell>
     );
   }
@@ -769,28 +784,6 @@ function EventsPageContent({ showToast }) {
           </div>
           <button {...getTeleportButtonProps(venue)}>Teleport</button>
           <TeleportStatusChip slurl={getGridsterDestination(venue)?.slurl} destinationName={venue} showToast={showToast} />
-        </article>
-      ))}
-    </section>
-  );
-}
-
-function GroupsPageContent({ onOpenProfile }) {
-  return (
-    <section className="nav-card-grid groups-page-grid">
-      {gridsterGroupsPageGroups.map(([title, desc, members], index) => (
-        <article className="nav-feature-card group-page-card glass-card" key={title}>
-          <span className={`nav-card-icon thumb-${index % 4}`}>{title.charAt(0)}</span>
-          {hasGridsterProfile(title) ? (
-            <button className="profile-card-title-button" onClick={() => onOpenProfile?.(title)}>
-              {title}
-            </button>
-          ) : (
-            <h3>{title}</h3>
-          )}
-          <p>{desc}</p>
-          <small>{members}</small>
-          <JoinButton storageKey={title} />
         </article>
       ))}
     </section>
@@ -2413,37 +2406,6 @@ function BloggerNetwork({ showToast }) {
   );
 }
 
-function CommunityHubs({ showToast }) {
-  return (
-    <section className="community-hub-card glass-card">
-      <div className="community-hub-header">
-        <div>
-          <span>Resident Communities</span>
-          <h2>Community Hubs</h2>
-          <p>Build spaces for roleplay sims, social groups, clubs, families, fandoms, and themed communities.</p>
-        </div>
-        <button onClick={() => showToast?.("Creating a community hub coming soon.")}>Create Community Hub</button>
-      </div>
-
-      <div className="community-hub-grid">
-        {gridsterCommunityHubFeatures.map(([icon, title, desc]) => (
-          <article className="community-hub-tile" key={title}>
-            <span className="community-hub-icon">{icon}</span>
-            <h3>{title}</h3>
-            <p>{desc}</p>
-          </article>
-        ))}
-      </div>
-
-      <div className="featured-community-strip">
-        <span>Featured Community:</span>
-        <strong>Moonlit Hollow</strong>
-        <p>Gothic roleplay, events, stories, and dark fantasy.</p>
-      </div>
-    </section>
-  );
-}
-
 function UpcomingGridNights({ showToast }) {
 
 
@@ -2537,24 +2499,6 @@ function LiveNowEvents({ showToast }) {
         ))}
       </div>
     </section>
-  );
-}
-
-function PopularGroupsCards() {
-  return (
-    <div className="page-card-grid">
-      {gridsterPopularGroups.map(([title, desc], index) => (
-        <article className="group-summary-card glass-card" key={title}>
-          <div className={`group-badge thumb-${index}`}>{title.charAt(0)}</div>
-          <div>
-            <h3>{title}</h3>
-            <p>{desc}</p>
-            <small>{index + 2}.4K members</small>
-          </div>
-          <JoinButton storageKey={title} />
-        </article>
-      ))}
-    </div>
   );
 }
 

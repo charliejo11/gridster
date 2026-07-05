@@ -105,6 +105,7 @@ import CreatorPageDetail from "./gridster/CreatorPageDetail";
 import MyCreatorPagesPage from "./gridster/MyCreatorPagesPage";
 import GridsterComposerModal from "./gridster/GridsterComposerModal";
 import TeleportStatusChip from "./gridster/TeleportStatusChip";
+import SponsorsPage from "./gridster/SponsorsPage";
 import "./GridsterHome.css";
 
 const GRIDSTER_PAGE_PATHS = {
@@ -113,6 +114,7 @@ const GRIDSTER_PAGE_PATHS = {
   TeleportDiscovery: "/places",
   TonightInSL: "/tonight",
   BookingBoard: "/booking-board",
+  Sponsors: "/sponsors",
 };
 const GRIDSTER_PATH_PAGES = Object.fromEntries(
   Object.entries(GRIDSTER_PAGE_PATHS).map(([page, path]) => [path, page])
@@ -495,6 +497,17 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         subtitle="Clubs looking to hire DJs, hosts, dancers, and managers — and talent ready to work tonight."
       >
         <BookingBoard onAuthOpen={() => onAuthOpen?.("login")} showToast={showToast} />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "Sponsors") {
+    return (
+      <PageShell
+        title="Sponsor Gridster"
+        subtitle="Get your store, club, sim, event, or brand seen by Second Life residents."
+      >
+        <SponsorsPage showToast={showToast} />
       </PageShell>
     );
   }
@@ -3124,6 +3137,7 @@ function GridsterFooter({ showToast, setActivePage }) {
         <a onClick={() => showToast?.("Safety Center coming soon.")}>Safety</a>
         <a onClick={() => showToast?.("Community Guidelines coming soon.")}>Community Guidelines</a>
         <a onClick={() => setActivePage?.("BlingBoost")}>Premium</a>
+        <a onClick={() => setActivePage?.("Sponsors")}>Sponsors</a>
         <a onClick={() => showToast?.("Support coming soon.")}>Support</a>
       </nav>
 

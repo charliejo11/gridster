@@ -321,7 +321,12 @@ function TeleportDiscoveryFeed({ initialCategory, onAuthOpen, showToast }) {
       {loading ? <p className="places-message">Loading places...</p> : null}
 
       {!loading && visiblePlaces.length === 0 ? (
-        <p className="places-message">No places posted yet. Be the first to share where to teleport.</p>
+        <p className="places-message">
+          No places posted yet.{" "}
+          <button type="button" className="places-post-button" onClick={handleOpenForm}>
+            + Post a Place
+          </button>
+        </p>
       ) : null}
 
       <div className="places-grid">

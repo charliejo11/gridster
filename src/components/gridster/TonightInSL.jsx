@@ -333,7 +333,12 @@ function TonightInSL({ onAuthOpen, showToast }) {
       {loading ? <p className="tonight-message">Loading tonight's events...</p> : null}
 
       {!loading && visibleEvents.length === 0 ? (
-        <p className="tonight-message">No events posted yet. Be the first to share what's happening tonight.</p>
+        <p className="tonight-message">
+          No events posted yet.{" "}
+          <button type="button" className="tonight-post-button" onClick={handleOpenForm}>
+            + Post an Event
+          </button>
+        </p>
       ) : null}
 
       <div className="tonight-grid">

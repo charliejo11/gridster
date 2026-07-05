@@ -11,10 +11,11 @@ import {
 import {
   GRIDSTER_EVENT_TYPE_LABELS,
   GRIDSTER_MATURITY_RATING_LABELS,
+  GRIDSTER_PLACE_CATEGORY_LABELS,
   fetchFeaturedPhotoSpots,
   fetchGridsterEvents,
 } from "../lib/gridsterPlaces";
-import { GRIDSTER_POST_TYPE_LABELS, fetchRecentPosts } from "../lib/gridsterPosts";
+import { GRIDSTER_POST_TYPE_LABELS, fetchPostsByIds, fetchRecentPosts } from "../lib/gridsterPosts";
 import {
   createPhotoChallenge,
   closePhotoChallengeAndAwardWinner,
@@ -27,6 +28,8 @@ import {
   votePhotoEntry,
 } from "../lib/gridsterPhotoChallenges";
 import {
+  readGridsterStorage,
+  saveGridsterFlag,
   usePersistedGridsterFlag,
   usePersistedGridsterValue,
 } from "../lib/gridsterStorage";
@@ -51,8 +54,6 @@ import {
   gridsterNotifications,
   gridsterPostSampleComments,
   gridsterProfileFlairBadges,
-  gridsterSavedFilters,
-  gridsterSavedItems,
   gridsterSearchFilters,
   gridsterSearchResults,
   gridsterSidebarGroups,
@@ -457,7 +458,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   if (activePage === "Events") {
     return (
       <PageShell title="Events" subtitle="Find live DJs, club nights, shopping events, beach parties, and community gatherings.">
-        <EventsPageContent showToast={showToast} />
+        <EventsPageContent onOpenComposer={onOpenComposer} showToast={showToast} />
         <LiveNowEvents showToast={showToast} />
         <VenueTools showToast={showToast} />
       </PageShell>
@@ -540,7 +541,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Saved Landmarks & Posts"
         subtitle="Your saved SLURLs, events, stores, photo spots, and favorite grid discoveries."
       >
-        <SavedItemsPage showToast={showToast} />
+        <SavedItemsPage setActivePage={setActivePage} showToast={showToast} />
       </PageShell>
     );
   }
@@ -878,7 +879,7 @@ function ExplorePageContent({ galleryItems, showToast }) {
   );
 }
 
-function EventsPageContent({ showToast }) {
+function EventsPageContent({ onOpenComposer, showToast }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -917,7 +918,14 @@ function EventsPageContent({ showToast }) {
   }
 
   if (events.length === 0) {
-    return <p className="tonight-message">No events posted yet. Be the first to share what's happening.</p>;
+    return (
+      <p className="tonight-message">
+        No events posted yet.{" "}
+        <button type="button" className="tonight-post-button" onClick={() => onOpenComposer?.("event")}>
+          + Post an Event
+        </button>
+      </p>
+    );
   }
 
   return (
@@ -1220,51 +1228,218 @@ function FeedPreferencesPage({ showToast }) {
   );
 }
 
-function SavedItemsPage({ showToast }) {
+const SAVED_ITEM_FILTERS = ["All", "Places", "Events", "Posts"];
+
+function SavedItemsPage({ setActivePage, showToast }) {
+  const [user, setUser] = useState(null);
+  const [favoritePlaces, setFavoritePlaces] = useState([]);
+  const [savedEvents, setSavedEvents] = useState([]);
+  const [savedPosts, setSavedPosts] = useState([]);
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState("");
+
+  const refreshSaved = async (nextUser) => {
+    if (!nextUser) {
+      setFavoritePlaces([]);
+      setSavedEvents([]);
+      setSavedPosts([]);
+      return;
+    }
+
+    const storage = readGridsterStorage();
+    const savedEventIds = Object.keys(storage.savedEvents ?? {});
+    const savedPostIds = Object.keys(storage.savedPosts ?? {});
+
+    const [places, allEvents, posts] = await Promise.all([
+      fetchFavoritePlaces(nextUser.id),
+      savedEventIds.length ? fetchGridsterEvents() : Promise.resolve([]),
+      fetchPostsByIds(savedPostIds),
+    ]);
+
+    setFavoritePlaces(places || []);
+    setSavedEvents((allEvents || []).filter((eventItem) => savedEventIds.includes(String(eventItem.id))));
+    setSavedPosts(posts || []);
+  };
+
+  useEffect(() => {
+    let active = true;
+
+    supabase.auth
+      .getUser()
+      .then(async ({ data }) => {
+        const nextUser = data?.user ?? null;
+
+        if (!active) {
+          return;
+        }
+
+        setUser(nextUser);
+
+        try {
+          await refreshSaved(nextUser);
+        } finally {
+          if (active) {
+            setLoading(false);
+          }
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleRemovePlace = async (row) => {
+    if (!user) {
+      return;
+    }
+
+    setBusyId(row.id);
+
+    try {
+      await removeFavoritePlace(user.id, row.place_id);
+      await refreshSaved(user);
+      showToast?.("Removed from saved places.");
+    } catch (removeError) {
+      showToast?.(removeError.message || "Could not remove this place.");
+    } finally {
+      setBusyId("");
+    }
+  };
+
+  const handleRemoveEvent = async (eventItem) => {
+    saveGridsterFlag("savedEvents", eventItem.id, false);
+    await refreshSaved(user);
+    showToast?.("Removed from saved events.");
+  };
+
+  const handleRemovePost = async (post) => {
+    saveGridsterFlag("savedPosts", post.id, false);
+    await refreshSaved(user);
+    showToast?.("Removed from saved posts.");
+  };
+
+  if (loading) {
+    return <p className="tonight-message">Loading your saved items...</p>;
+  }
+
+  if (!user) {
+    return <p className="tonight-message">Log in to see your saved places, events, and posts.</p>;
+  }
+
+  const totalCount = favoritePlaces.length + savedEvents.length + savedPosts.length;
+  const showPlaces = activeFilter === "All" || activeFilter === "Places";
+  const showEvents = activeFilter === "All" || activeFilter === "Events";
+  const showPosts = activeFilter === "All" || activeFilter === "Posts";
+
   return (
     <section className="saved-items-page">
       <div className="saved-filter-pills glass-card">
-        {gridsterSavedFilters.map((filter) => (
+        {SAVED_ITEM_FILTERS.map((filter) => (
           <button
-            className={filter === "All" ? "active" : ""}
+            className={activeFilter === filter ? "active" : ""}
             key={filter}
-            onClick={() => showToast?.(`Filtering by ${filter} coming soon.`)}
+            onClick={() => setActiveFilter(filter)}
           >
             {filter}
           </button>
         ))}
       </div>
 
+      {totalCount === 0 ? (
+        <p className="tonight-message">
+          Nothing saved yet.{" "}
+          <button type="button" className="tonight-post-button" onClick={() => setActivePage?.("TeleportDiscovery")}>
+            Browse Places
+          </button>
+        </p>
+      ) : null}
+
       <CardGrid className="saved-items-grid">
-        {gridsterSavedItems.map(([title, details, label, action], index) => (
-          <article className="saved-item-card glass-card" key={title}>
-            <div className={`saved-item-thumb thumb-${index % 6}`}>{title.charAt(0)}</div>
-            <div className="saved-item-copy">
-              <span>{label}</span>
-              <h3>{title}</h3>
-              <p>{details}</p>
-              <small>Saved {index + 1}d ago</small>
-            </div>
-            <div className="saved-item-actions">
-              <button
-                {...(action === "Teleport" ? getTeleportButtonProps(title) : {})}
-                onClick={action === "Teleport" ? undefined : () => showToast?.(`${action} for ${title} coming soon.`)}
-              >
-                {action}
-              </button>
-              {action === "Teleport" ? (
-                <TeleportStatusChip slurl={getGridsterDestination(title)?.slurl} destinationName={title} showToast={showToast} />
-              ) : null}
-              <button
-                className="saved-remove-button"
-                aria-label={`Remove ${title} from saved items`}
-                onClick={() => showToast?.(`${title} removed from saved items.`)}
-              >
-                ×
-              </button>
-            </div>
-          </article>
-        ))}
+        {showPlaces
+          ? favoritePlaces.map((row, index) => {
+              const place = row.gridster_places;
+
+              if (!place) {
+                return null;
+              }
+
+              return (
+                <article className="saved-item-card glass-card" key={`place-${row.id}`}>
+                  <div className={`saved-item-thumb thumb-${index % 6}`}>{place.title.charAt(0)}</div>
+                  <div className="saved-item-copy">
+                    <span>Saved Place</span>
+                    <h3>{place.title}</h3>
+                    <p>{GRIDSTER_PLACE_CATEGORY_LABELS[place.category] || place.category} • {place.region_name}</p>
+                  </div>
+                  <div className="saved-item-actions">
+                    <button {...getTeleportButtonProps(place.title, place.slurl)}>Teleport</button>
+                    <TeleportStatusChip slurl={place.slurl} destinationName={place.title} showToast={showToast} />
+                    <button
+                      className="saved-remove-button"
+                      aria-label={`Remove ${place.title} from saved items`}
+                      disabled={busyId === row.id}
+                      onClick={() => handleRemovePlace(row)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </article>
+              );
+            })
+          : null}
+
+        {showEvents
+          ? savedEvents.map((eventItem, index) => (
+              <article className="saved-item-card glass-card" key={`event-${eventItem.id}`}>
+                <div className={`saved-item-thumb thumb-${index % 6}`}>{eventItem.title.charAt(0)}</div>
+                <div className="saved-item-copy">
+                  <span>Saved Event</span>
+                  <h3>{eventItem.title}</h3>
+                  <p>{GRIDSTER_EVENT_TYPE_LABELS[eventItem.event_type]} • {eventItem.when_label}</p>
+                </div>
+                <div className="saved-item-actions">
+                  <button {...getTeleportButtonProps(eventItem.title, eventItem.slurl)}>Teleport</button>
+                  <TeleportStatusChip slurl={eventItem.slurl} destinationName={eventItem.title} showToast={showToast} />
+                  <button
+                    className="saved-remove-button"
+                    aria-label={`Remove ${eventItem.title} from saved items`}
+                    onClick={() => handleRemoveEvent(eventItem)}
+                  >
+                    ×
+                  </button>
+                </div>
+              </article>
+            ))
+          : null}
+
+        {showPosts
+          ? savedPosts.map((post, index) => (
+              <article className="saved-item-card glass-card" key={`post-${post.id}`}>
+                <div className={`saved-item-thumb thumb-${index % 6}`}>{(post.author_name || "?").charAt(0)}</div>
+                <div className="saved-item-copy">
+                  <span>Saved Post</span>
+                  <h3>{post.author_name || "Gridster Resident"}</h3>
+                  <p>{post.content ? post.content.slice(0, 90) : GRIDSTER_POST_TYPE_LABELS[post.post_type]}</p>
+                </div>
+                <div className="saved-item-actions">
+                  <button
+                    className="saved-remove-button"
+                    aria-label="Remove this post from saved items"
+                    onClick={() => handleRemovePost(post)}
+                  >
+                    ×
+                  </button>
+                </div>
+              </article>
+            ))
+          : null}
       </CardGrid>
     </section>
   );

@@ -316,7 +316,12 @@ function GroupsPage({ onOpenGroup, onAuthOpen, showToast }) {
       {loading ? <p className="groups-directory-message">Loading groups...</p> : null}
 
       {!loading && visibleGroups.length === 0 ? (
-        <p className="groups-directory-message">No groups yet in this category. Be the first to start one.</p>
+        <p className="groups-directory-message">
+          No groups yet in this category.{" "}
+          <button type="button" className="groups-directory-create-button" onClick={handleOpenForm}>
+            + Start One
+          </button>
+        </p>
       ) : null}
 
       <div className="groups-directory-grid">

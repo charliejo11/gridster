@@ -242,17 +242,6 @@ export const gridsterSlurlTeleports = [
   ["Crystal Lagoon", "Moderate", 5],
 ];
 
-export const gridsterSavedFilters = ["All", "SLURLs", "Events", "Stores", "Photo Spots", "Posts"];
-
-export const gridsterSavedItems = [
-  ["Sanctuary Rocks", "Venue • Rock / Metal • Saved SLURL", "Saved SLURL", "Teleport"],
-  ["Moonlit Cathedral", "Photo Spot • Gothic • Moderate", "Photo Spot", "Teleport"],
-  ["Valentina Boutique", "Store • Fashion • New Releases", "Store Find", "Shop"],
-  ["Neon Nights Party", "Event • Tonight • 9 PM SLT", "Event", "View Event"],
-  ["Metal Night Stage", "Post • Saved from CharlieJo", "Saved Post", "View Post"],
-  ["Crystal Lagoon", "Beach Photo Spot • Moderate", "Photo Spot", "Teleport"],
-];
-
 export const gridsterTeleportCenterDestinations = [
   ["⌁", "icon-live", "Sanctuary Rocks", "Live music venue • Rock / Metal", "Live Now", "status-live"],
   ["◆", "icon-trending", "Neon District", "Cyber club • Nightlife", "Trending", "status-trending"],

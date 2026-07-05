@@ -53,6 +53,24 @@ export async function fetchRecentPosts(limit = 20) {
   return data;
 }
 
+export async function fetchPostsByIds(ids) {
+  if (!ids?.length) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from(GRIDSTER_POSTS_TABLE)
+    .select("*")
+    .in("id", ids)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
 export async function createGridsterPost(userId, form) {
   const post = normalizeGridsterPostForm(form);
   const { data, error } = await supabase

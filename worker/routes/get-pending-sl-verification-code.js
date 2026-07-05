@@ -1,4 +1,4 @@
-import { authorizeSender, createSupabaseAdminClient, jsonResponse } from "../_shared/gridster.js";
+import { authorizeSender, createSupabaseAdminClient, jsonResponse } from "../shared/gridster.js";
 
 const NO_STORE_HEADERS = { "Cache-Control": "no-store" };
 
@@ -14,7 +14,7 @@ async function expireStalePendingCodes(supabaseAdmin, now) {
   }
 }
 
-export async function onRequestGet({ request, env }) {
+export async function handleGetPendingSlVerificationCode(request, env) {
   const authorization = authorizeSender(request, env);
 
   if (!authorization.ok) {

@@ -1,8 +1,8 @@
-import { authorizeSender, createSupabaseAdminClient, jsonResponse } from "../_shared/gridster.js";
+import { authorizeSender, createSupabaseAdminClient, jsonResponse } from "../shared/gridster.js";
 
 const NO_STORE_HEADERS = { "Cache-Control": "no-store" };
 
-export async function onRequestPost({ request, env }) {
+export async function handleMarkSlVerificationSent(request, env) {
   const authorization = authorizeSender(request, env);
 
   if (!authorization.ok) {

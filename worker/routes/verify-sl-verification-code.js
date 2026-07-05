@@ -1,8 +1,8 @@
-import { createSupabaseAdminClient, jsonResponse } from "../_shared/gridster.js";
+import { createSupabaseAdminClient, jsonResponse } from "../shared/gridster.js";
 
 const CODE_PATTERN = /^GRID-[0-9]{4}$/;
 
-const CORS_HEADERS = {
+export const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Origin": "*",
@@ -20,11 +20,7 @@ async function markExpired(supabaseAdmin, id) {
     .in("status", ["pending", "sent"]);
 }
 
-export async function onRequestOptions() {
-  return new Response(null, { status: 204, headers: CORS_HEADERS });
-}
-
-export async function onRequestPost({ request, env }) {
+export async function handleVerifySlVerificationCode(request, env) {
   let payload = {};
 
   try {

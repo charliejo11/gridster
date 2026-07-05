@@ -1,10 +1,10 @@
-import { createSupabaseAdminClient, jsonResponse, randomFourDigitCode } from "../_shared/gridster.js";
+import { createSupabaseAdminClient, jsonResponse, randomFourDigitCode } from "../shared/gridster.js";
 
 const CODE_TTL_MINUTES = 15;
 const MAX_INSERT_ATTEMPTS = 5;
 const SL_USERNAME_PATTERN = /^[a-z0-9][a-z0-9.]{2,63}$/;
 
-const CORS_HEADERS = {
+export const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Origin": "*",
@@ -57,11 +57,7 @@ async function insertVerificationCode(supabaseAdmin, slUsername, userId) {
   throw lastError;
 }
 
-export async function onRequestOptions() {
-  return new Response(null, { status: 204, headers: CORS_HEADERS });
-}
-
-export async function onRequestPost({ request, env }) {
+export async function handleCreateSlVerificationCode(request, env) {
   let payload = {};
 
   try {

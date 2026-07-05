@@ -235,6 +235,7 @@ export const gridsterLeftSidebarNavItems = [
   ["♫", "DJ Sets", "DJSets"],
   ["⚑", "Booking Board", "BookingBoard"],
   ["◍", "Residents", "ResidentDirectory"],
+  ["✪", "Creator Pages", "CreatorPagesDirectory"],
   ["!", "Auth", "Auth"],
 ];
 

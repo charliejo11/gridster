@@ -53,7 +53,7 @@ function compactUrl(url) {
   return String(url || "").replace(/^https?:\/\//i, "").replace(/\/$/, "");
 }
 
-function ProfileSetup({ onAuthOpen, onOpenResidentProfile, onOpenBlingDepot, showToast }) {
+function ProfileSetup({ onAuthOpen, onOpenResidentProfile, onOpenBlingDepot, onOpenMyCreatorPages, showToast }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [equippedCosmetics, setEquippedCosmetics] = useState([]);
@@ -345,6 +345,7 @@ function ProfileSetup({ onAuthOpen, onOpenResidentProfile, onOpenBlingDepot, sho
           blingProfile={profileBling}
           initials={getProfileInitials(profile, user)}
           onViewPublicProfile={() => onOpenResidentProfile?.(user.id)}
+          onOpenMyCreatorPages={onOpenMyCreatorPages}
           onEdit={() => {
             setForm(profileToForm(profile, user));
             setEditing(true);
@@ -602,7 +603,7 @@ function ProfileSetup({ onAuthOpen, onOpenResidentProfile, onOpenBlingDepot, sho
   );
 }
 
-function SavedProfileCard({ profile, equippedCosmetics = [], blingProfile: suppliedBlingProfile, initials, onEdit, onViewPublicProfile }) {
+function SavedProfileCard({ profile, equippedCosmetics = [], blingProfile: suppliedBlingProfile, initials, onEdit, onViewPublicProfile, onOpenMyCreatorPages }) {
   const blingProfile = suppliedBlingProfile ?? getBlingProfileStyles(profile, equippedCosmetics);
   const displayClassName = [
     "profile-setup-display",
@@ -645,6 +646,9 @@ function SavedProfileCard({ profile, equippedCosmetics = [], blingProfile: suppl
           </button>
           <button type="button" className="profile-view-public-button" onClick={onViewPublicProfile}>
             View My Public Profile
+          </button>
+          <button type="button" className="profile-view-public-button" onClick={onOpenMyCreatorPages}>
+            My Creator Pages
           </button>
         </div>
       </div>

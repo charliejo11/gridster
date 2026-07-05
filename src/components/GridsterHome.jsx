@@ -96,6 +96,9 @@ import GroupsPage from "./gridster/GroupsPage";
 import GroupDetailPage from "./gridster/GroupDetailPage";
 import ResidentProfilePage from "./gridster/ResidentProfilePage";
 import ResidentDirectoryPage from "./gridster/ResidentDirectoryPage";
+import CreatorPagesDirectory from "./gridster/CreatorPagesDirectory";
+import CreatorPageDetail from "./gridster/CreatorPageDetail";
+import MyCreatorPagesPage from "./gridster/MyCreatorPagesPage";
 import TeleportStatusChip from "./gridster/TeleportStatusChip";
 import "./GridsterHome.css";
 
@@ -146,6 +149,7 @@ function GridsterHome() {
   const [selectedProfileName, setSelectedProfileName] = useState("CharlieJo");
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [selectedResidentUserId, setSelectedResidentUserId] = useState(null);
+  const [selectedCreatorPageId, setSelectedCreatorPageId] = useState(null);
   const [theme, setTheme] = usePersistedGridsterValue("theme", "dark-neon");
   const toastTimerRef = useRef(null);
   const toastIdRef = useRef(0);
@@ -241,6 +245,20 @@ function GridsterHome() {
     setActivePage("ResidentProfile");
   };
 
+  const openCreatorPage = (pageId) => {
+    setSelectedCreatorPageId(pageId);
+    setShowNotifications(false);
+    setShowThemeMenu(false);
+    setActivePage("CreatorPageDetail");
+  };
+
+  const openMyCreatorPages = () => {
+    setSelectedCreatorPageId(null);
+    setShowNotifications(false);
+    setShowThemeMenu(false);
+    setActivePage("MyCreatorPages");
+  };
+
   const openAuth = (mode = "login") => {
     setAuthMode(mode === "signup" ? "signup" : "login");
     setActivePage("Auth");
@@ -320,10 +338,13 @@ function GridsterHome() {
           selectedProfileName={selectedProfileName}
           selectedGroupId={selectedGroupId}
           selectedResidentUserId={selectedResidentUserId}
+          selectedCreatorPageId={selectedCreatorPageId}
           setActivePage={setActivePage}
           onOpenProfile={openProfile}
           onOpenGroup={openGroup}
           onOpenResidentProfile={openResidentProfile}
+          onOpenCreatorPage={openCreatorPage}
+          onOpenMyCreatorPages={openMyCreatorPages}
           onAuthOpen={openAuth}
           showToast={showToast}
         />
@@ -341,7 +362,7 @@ function GridsterHome() {
   );
 }
 
-function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, selectedGroupId, selectedResidentUserId, setActivePage, onOpenProfile, onOpenGroup, onOpenResidentProfile, onAuthOpen, showToast }) {
+function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, selectedGroupId, selectedResidentUserId, selectedCreatorPageId, setActivePage, onOpenProfile, onOpenGroup, onOpenResidentProfile, onOpenCreatorPage, onOpenMyCreatorPages, onAuthOpen, showToast }) {
   if (activePage === "Home") {
     return (
       <>
@@ -580,6 +601,39 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
     );
   }
 
+  if (activePage === "CreatorPagesDirectory") {
+    return (
+      <PageShell title="Creator Pages" subtitle="Real stores, DJs, bloggers, clubs, and venues owned by residents.">
+        <CreatorPagesDirectory onOpenCreatorPage={onOpenCreatorPage} showToast={showToast} />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "CreatorPageDetail") {
+    return (
+      <PageShell title="Creator Page" subtitle="A real, ownable page for a store, creator, club, or venue.">
+        <CreatorPageDetail
+          pageId={selectedCreatorPageId}
+          onEditPage={() => setActivePage("MyCreatorPages")}
+          showToast={showToast}
+        />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "MyCreatorPages") {
+    return (
+      <PageShell title="My Pages" subtitle="Create and manage your Creator Pages.">
+        <MyCreatorPagesPage
+          initialEditPageId={selectedCreatorPageId}
+          onOpenCreatorPage={onOpenCreatorPage}
+          onAuthOpen={() => onAuthOpen?.("login")}
+          showToast={showToast}
+        />
+      </PageShell>
+    );
+  }
+
   if (activePage === "Messages") {
     return (
       <PageShell
@@ -683,6 +737,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
           onAuthOpen={() => onAuthOpen?.("login")}
           onOpenResidentProfile={onOpenResidentProfile}
           onOpenBlingDepot={() => setActivePage("BlingBoost")}
+          onOpenMyCreatorPages={onOpenMyCreatorPages}
           showToast={showToast}
         />
         <CreatorDashboard showToast={showToast} />

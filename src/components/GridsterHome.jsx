@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { getBlingBalanceSummary, getEquippedCosmeticsForUser } from "../lib/blingDepot";
-import { fetchGridsterProfile } from "../lib/gridsterProfiles";
+import { addFavoritePlace, fetchFavoritePlaces, fetchGridsterProfile, removeFavoritePlace } from "../lib/gridsterProfiles";
+import { fetchFeaturedPhotoSpots } from "../lib/gridsterPlaces";
 import {
   createPhotoChallenge,
   closePhotoChallengeAndAwardWinner,
@@ -27,7 +28,6 @@ import {
   gridsterEventsPageEvents,
   gridsterExploreCategories,
   gridsterExploreDestinations,
-  gridsterFeaturedPhotoSpots,
   gridsterFeaturedPlaces,
   gridsterGalleryItems,
   gridsterGridNightEvents,
@@ -150,6 +150,7 @@ function GridsterHome() {
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [selectedResidentUserId, setSelectedResidentUserId] = useState(null);
   const [selectedCreatorPageId, setSelectedCreatorPageId] = useState(null);
+  const [initialTeleportCategory, setInitialTeleportCategory] = useState(null);
   const [theme, setTheme] = usePersistedGridsterValue("theme", "dark-neon");
   const toastTimerRef = useRef(null);
   const toastIdRef = useRef(0);
@@ -259,6 +260,18 @@ function GridsterHome() {
     setActivePage("MyCreatorPages");
   };
 
+  const openTeleportDiscovery = (category) => {
+    setInitialTeleportCategory(category || null);
+    setShowNotifications(false);
+    setShowThemeMenu(false);
+    setActivePage("TeleportDiscovery");
+  };
+
+  const handleSidebarNavigate = (page) => {
+    setInitialTeleportCategory(null);
+    setActivePage(page);
+  };
+
   const openAuth = (mode = "login") => {
     setAuthMode(mode === "signup" ? "signup" : "login");
     setActivePage("Auth");
@@ -315,7 +328,7 @@ function GridsterHome() {
 
       <DashboardLayout
         leftSidebar={(
-          <LeftSidebar activePage={activePage} setActivePage={setActivePage} showToast={showToast}>
+          <LeftSidebar activePage={activePage} setActivePage={handleSidebarNavigate} showToast={showToast}>
             <ProfileFlairCard showToast={showToast} setActivePage={setActivePage} />
           </LeftSidebar>
         )}
@@ -339,12 +352,14 @@ function GridsterHome() {
           selectedGroupId={selectedGroupId}
           selectedResidentUserId={selectedResidentUserId}
           selectedCreatorPageId={selectedCreatorPageId}
+          initialTeleportCategory={initialTeleportCategory}
           setActivePage={setActivePage}
           onOpenProfile={openProfile}
           onOpenGroup={openGroup}
           onOpenResidentProfile={openResidentProfile}
           onOpenCreatorPage={openCreatorPage}
           onOpenMyCreatorPages={openMyCreatorPages}
+          onOpenTeleportDiscovery={openTeleportDiscovery}
           onAuthOpen={openAuth}
           showToast={showToast}
         />
@@ -362,7 +377,7 @@ function GridsterHome() {
   );
 }
 
-function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, selectedGroupId, selectedResidentUserId, selectedCreatorPageId, setActivePage, onOpenProfile, onOpenGroup, onOpenResidentProfile, onOpenCreatorPage, onOpenMyCreatorPages, onAuthOpen, showToast }) {
+function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, selectedGroupId, selectedResidentUserId, selectedCreatorPageId, initialTeleportCategory, setActivePage, onOpenProfile, onOpenGroup, onOpenResidentProfile, onOpenCreatorPage, onOpenMyCreatorPages, onOpenTeleportDiscovery, onAuthOpen, showToast }) {
   if (activePage === "Home") {
     return (
       <>
@@ -375,7 +390,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         <VoguePixelsPost showToast={showToast} />
         <CreatorsCollectivePost showToast={showToast} />
         <UpcomingGridNights showToast={showToast} />
-        <FeaturedPhotoSpots />
+        <FeaturedPhotoSpots onAuthOpen={onAuthOpen} onViewAll={() => onOpenTeleportDiscovery?.("photo_spots")} showToast={showToast} />
       </>
     );
   }
@@ -470,7 +485,11 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Teleport Discovery"
         subtitle="Real places worth a teleport — clubs, beaches, RP sims, stores, and more, verified by the community."
       >
-        <TeleportDiscoveryFeed onAuthOpen={() => onAuthOpen?.("login")} showToast={showToast} />
+        <TeleportDiscoveryFeed
+          initialCategory={initialTeleportCategory}
+          onAuthOpen={() => onAuthOpen?.("login")}
+          showToast={showToast}
+        />
       </PageShell>
     );
   }
@@ -2532,7 +2551,99 @@ function UpcomingGridNights({ showToast }) {
   );
 }
 
-function FeaturedPhotoSpots() {
+function FeaturedPhotoSpots({ onAuthOpen, onViewAll, showToast }) {
+  const [user, setUser] = useState(null);
+  const [spots, setSpots] = useState([]);
+  const [favoritePlaceIds, setFavoritePlaceIds] = useState(new Set());
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function load(nextUser) {
+      if (!active) {
+        return;
+      }
+
+      setUser(nextUser);
+
+      try {
+        const [nextSpots, favorites] = await Promise.all([
+          fetchFeaturedPhotoSpots(),
+          nextUser ? fetchFavoritePlaces(nextUser.id) : Promise.resolve([]),
+        ]);
+
+        if (!active) {
+          return;
+        }
+
+        setSpots(nextSpots || []);
+        setFavoritePlaceIds(new Set((favorites || []).map((favorite) => favorite.place_id)));
+      } catch (loadError) {
+        if (active) {
+          showToast?.(loadError.message || "Could not load Featured Photo Spots.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    supabase.auth
+      .getUser()
+      .then(({ data }) => load(data?.user ?? null))
+      .catch(() => load(null));
+
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleToggleFavorite = async (spot) => {
+    if (!user) {
+      onAuthOpen?.("login");
+      return;
+    }
+
+    const isFavorited = favoritePlaceIds.has(spot.id);
+    setBusyId(spot.id);
+
+    try {
+      if (isFavorited) {
+        await removeFavoritePlace(user.id, spot.id);
+      } else {
+        await addFavoritePlace(user.id, spot.id);
+      }
+
+      setFavoritePlaceIds((current) => {
+        const next = new Set(current);
+
+        if (isFavorited) {
+          next.delete(spot.id);
+        } else {
+          next.add(spot.id);
+        }
+
+        return next;
+      });
+
+      setSpots((current) =>
+        current.map((current_spot) =>
+          current_spot.id === spot.id
+            ? { ...current_spot, favorite_count: current_spot.favorite_count + (isFavorited ? -1 : 1) }
+            : current_spot
+        )
+      );
+    } catch (toggleError) {
+      showToast?.(toggleError.message || "Could not update your favorite.");
+    } finally {
+      setBusyId("");
+    }
+  };
+
   return (
     <FeedPost
       className="feed-card"
@@ -2541,22 +2652,50 @@ function FeaturedPhotoSpots() {
           <div className="post-avatar">▣</div>
           <div>
             <strong>Featured Photo Spots</strong>
-            <span>Save-worthy landmarks • Curated</span>
+            <span>Most-favorited landmarks • Real destinations</span>
           </div>
         </div>
       )}
     >
+      {loading ? <p className="groups-directory-message">Loading photo spots...</p> : null}
+
+      {!loading && spots.length === 0 ? (
+        <p className="groups-directory-message">No photo spots yet — add one from Places to be featured here.</p>
+      ) : null}
+
       <div className="photo-spot-grid">
-        {gridsterFeaturedPhotoSpots.map(([title, thumb]) => (
-          <div className="photo-spot-card" key={title}>
-            <div className={`photo-spot-thumb ${thumb}`}></div>
+        {spots.map((spot) => (
+          <div className="photo-spot-card" key={spot.id}>
+            <div className="photo-spot-thumb">
+              <img src={spot.photo_url} alt="" />
+            </div>
             <div className="photo-spot-info">
-              <strong>{title}</strong>
-              <SaveButton label="Save Landmark" storageKey={`photo-spot:${title}`} />
+              <strong>{spot.title}</strong>
+              {spot.region_name ? <small>{spot.region_name}</small> : null}
+              <div className="photo-spot-actions">
+                <button type="button" data-destination={spot.title} data-slurl={spot.slurl}>
+                  Teleport
+                </button>
+                <TeleportStatusChip slurl={spot.slurl} destinationName={spot.title} showToast={showToast} />
+                <button
+                  type="button"
+                  className={favoritePlaceIds.has(spot.id) ? "photo-spot-favorite-button is-favorited" : "photo-spot-favorite-button"}
+                  disabled={busyId === spot.id}
+                  onClick={() => handleToggleFavorite(spot)}
+                >
+                  {favoritePlaceIds.has(spot.id) ? "♥" : "♡"} {spot.favorite_count}
+                </button>
+              </div>
             </div>
           </div>
         ))}
       </div>
+
+      {spots.length ? (
+        <button type="button" className="photo-spot-view-all-button" onClick={onViewAll}>
+          View All Photo Spots
+        </button>
+      ) : null}
     </FeedPost>
   );
 }

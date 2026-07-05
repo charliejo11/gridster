@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient";
+import { GRIDSTER_FAVORITE_PLACES_TABLE } from "./gridsterProfiles";
 
 export const GRIDSTER_PLACES_TABLE = "gridster_places";
 export const GRIDSTER_EVENTS_TABLE = "gridster_events";
@@ -166,6 +167,44 @@ export async function deleteGridsterPlace(placeId, userId) {
   if (error) {
     throw error;
   }
+}
+
+export async function fetchFeaturedPhotoSpots(limit = 6) {
+  const { data: places, error } = await supabase
+    .from(GRIDSTER_PLACES_TABLE)
+    .select("*")
+    .eq("category", "photo_spots")
+    .not("photo_url", "is", null)
+    .neq("photo_url", "")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  const placeIds = (places || []).map((place) => place.id);
+  let favoriteCounts = {};
+
+  if (placeIds.length) {
+    const { data: favorites, error: favoritesError } = await supabase
+      .from(GRIDSTER_FAVORITE_PLACES_TABLE)
+      .select("place_id")
+      .in("place_id", placeIds);
+
+    if (favoritesError) {
+      throw favoritesError;
+    }
+
+    favoriteCounts = (favorites || []).reduce((counts, favorite) => {
+      counts[favorite.place_id] = (counts[favorite.place_id] || 0) + 1;
+      return counts;
+    }, {});
+  }
+
+  return (places || [])
+    .map((place) => ({ ...place, favorite_count: favoriteCounts[place.id] || 0 }))
+    .sort((a, b) => b.favorite_count - a.favorite_count || new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, limit);
 }
 
 export async function reportBrokenTeleport(placeId) {

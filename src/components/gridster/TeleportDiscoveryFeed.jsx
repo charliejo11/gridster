@@ -32,8 +32,8 @@ const CATEGORY_TABS = [
   })),
 ];
 
-function TeleportDiscoveryFeed({ onAuthOpen, showToast }) {
-  const [activeTab, setActiveTab] = useState("all");
+function TeleportDiscoveryFeed({ initialCategory, onAuthOpen, showToast }) {
+  const [activeTab, setActiveTab] = useState(initialCategory || "all");
   const [user, setUser] = useState(null);
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);

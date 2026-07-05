@@ -29,6 +29,9 @@ export default {
       return handler(request, env);
     }
 
-    return env.ASSETS.fetch(request);
+    return new Response(JSON.stringify({ error: "Not found." }), {
+      status: 404,
+      headers: { "Content-Type": "application/json" },
+    });
   },
 };

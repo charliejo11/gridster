@@ -1,3 +1,5 @@
+import BlingBuddyArt from "./BlingBuddyArt";
+
 function rarityClassName(rarity) {
   return `rarity-${(rarity || "").toLowerCase().replace(/\s+/g, "-")}`;
 }
@@ -13,16 +15,18 @@ function BlingBuddyCard({ item, owned, equipped, busy, loading, canBuy, onBuy, o
     <article className="bling-buddy-collectible-card glass-card">
       <div className="bling-buddy-card-art-shell">
         <div className={auraClassName}></div>
+        <div className={`bling-buddy-card-ring ${rarityClassName(item.rarity)}`}></div>
 
         <div className="bling-buddy-card-sparkles" aria-hidden="true">
           <span>✦</span>
           <span>✧</span>
           <span>✦</span>
           <span>✧</span>
+          <span>✦</span>
         </div>
 
         <div className={`bling-buddy-card-art bling-depot-preview-fill ${item.previewClass || ""}`}>
-          {item.imageUrl ? <img src={item.imageUrl} alt="" /> : <span>{item.icon}</span>}
+          <BlingBuddyArt item={item} />
         </div>
 
         {item.rarity ? (
@@ -37,6 +41,8 @@ function BlingBuddyCard({ item, owned, equipped, busy, loading, canBuy, onBuy, o
         <p className="bling-buddy-card-subtitle">
           {[item.rarity, item.mood].filter(Boolean).join(" • ")}
         </p>
+
+        {item.vibe ? <p className="bling-buddy-card-vibe">{item.vibe}</p> : null}
 
         {item.accessories?.length ? (
           <p className="bling-buddy-card-accessories">{item.accessories.join(" • ")}</p>

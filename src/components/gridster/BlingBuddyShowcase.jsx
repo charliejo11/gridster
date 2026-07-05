@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { BLING_BUDDY_REACTION_EMOJI } from "./blingDepotItems";
 import { usePersistedGridsterValue } from "../../lib/gridsterStorage";
+import BlingBuddyArt from "./BlingBuddyArt";
 
 function slugifyAnimation(animation) {
   return (animation || "").toLowerCase().replace(/\s+/g, "-");
@@ -76,6 +77,7 @@ function BlingBuddyShowcase({ buddy, onOpenShop, showToast }) {
       <div className="bling-buddy-showcase-body">
         <div className="bling-buddy-showcase-art-shell">
           <div className={auraClassName}></div>
+          <div className={`bling-buddy-showcase-ring ${rarityClassName(buddy.rarity)}`}></div>
 
           <div className="bling-buddy-showcase-sparkles" aria-hidden="true">
             <span>✦</span>
@@ -88,7 +90,7 @@ function BlingBuddyShowcase({ buddy, onOpenShop, showToast }) {
           <div
             className={`bling-buddy-showcase-avatar bling-depot-preview-fill ${buddy.previewClass || ""} bling-buddy-anim-${slugifyAnimation(buddy.animation)}`}
           >
-            {buddy.imageUrl ? <img src={buddy.imageUrl} alt="" /> : <span>{buddy.icon}</span>}
+            <BlingBuddyArt item={buddy} />
           </div>
 
           {buddy.vibe ? <p className="bling-buddy-vibe">{buddy.vibe}</p> : null}

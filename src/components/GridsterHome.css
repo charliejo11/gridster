@@ -7178,7 +7178,13 @@ button {
 .bling-depot-preview-fill.bling-buddy-starlash,
 .bling-depot-preview-fill.bling-buddy-puff-riot,
 .bling-depot-preview-fill.bling-buddy-baby-blaze,
-.bling-depot-preview-fill.bling-buddy-crystal-bite {
+.bling-depot-preview-fill.bling-buddy-crystal-bite,
+.bling-depot-preview-fill.bling-buddy-velvet-moo,
+.bling-depot-preview-fill.bling-buddy-hexfang,
+.bling-depot-preview-fill.bling-buddy-noir-whisker,
+.bling-depot-preview-fill.bling-buddy-laceheart,
+.bling-depot-preview-fill.bling-buddy-moonveil,
+.bling-depot-preview-fill.bling-buddy-eclipse-puff {
   animation: bling-buddy-float 2.4s ease-in-out infinite;
 }
 
@@ -7206,6 +7212,12 @@ button {
 .bling-depot-preview-fill.bling-buddy-puff-riot { background: linear-gradient(135deg, #ff9ecf, #ba2fff); }
 .bling-depot-preview-fill.bling-buddy-baby-blaze { background: linear-gradient(135deg, #ff7a18, #7c2cff); }
 .bling-depot-preview-fill.bling-buddy-crystal-bite { background: linear-gradient(135deg, #b0f4ff, #ffffff); }
+.bling-depot-preview-fill.bling-buddy-velvet-moo { background: linear-gradient(135deg, #3d1f2a, #ba2f6d); }
+.bling-depot-preview-fill.bling-buddy-hexfang { background: linear-gradient(135deg, #1a0a26, #7c2cff); }
+.bling-depot-preview-fill.bling-buddy-noir-whisker { background: linear-gradient(135deg, #0d0d0d, #3d1f5c); }
+.bling-depot-preview-fill.bling-buddy-laceheart { background: linear-gradient(135deg, #2a0a1a, #ff2f8d); }
+.bling-depot-preview-fill.bling-buddy-moonveil { background: linear-gradient(135deg, #0b1030, #b7c7ff); }
+.bling-depot-preview-fill.bling-buddy-eclipse-puff { background: linear-gradient(135deg, #0d0d0d, #ffd166, #7c2cff); }
 
 .profile-bling-buddy {
   position: absolute;
@@ -7278,13 +7290,16 @@ button {
 .bling-buddy-showcase {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 24px;
+  gap: 20px;
+  padding: 28px;
   position: relative;
   overflow: hidden;
-  background: radial-gradient(circle at 20% 15%, rgba(215, 44, 255, 0.14), transparent 55%),
-    radial-gradient(circle at 80% 85%, rgba(0, 229, 255, 0.12), transparent 55%),
-    rgba(8, 6, 18, 0.6);
+  border-radius: 32px;
+  border: 1px solid rgba(255, 158, 207, 0.3);
+  background: radial-gradient(circle at 20% 15%, rgba(215, 44, 255, 0.18), transparent 55%),
+    radial-gradient(circle at 80% 85%, rgba(0, 229, 255, 0.15), transparent 55%),
+    linear-gradient(180deg, rgba(22, 12, 36, 0.85), rgba(6, 5, 14, 0.92));
+  box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.1), 0 0 40px rgba(215, 44, 255, 0.22), 0 20px 50px rgba(0, 0, 0, 0.45);
 }
 
 .bling-buddy-showcase h3 {
@@ -7348,6 +7363,25 @@ button {
 .bling-buddy-showcase-aura.rarity-iconic { background: radial-gradient(ellipse at center, rgba(255, 79, 216, 0.7), transparent 100%); }
 .bling-buddy-showcase-aura.rarity-unhinged-luxury { background: radial-gradient(ellipse at center, rgba(255, 209, 102, 0.7), rgba(186, 47, 255, 0.4) 60%, transparent 100%); }
 
+.bling-buddy-showcase-ring {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  width: 190px;
+  height: 52px;
+  border-radius: 50%;
+  transform: translateX(-50%) rotateX(64deg);
+  border: 2px solid rgba(215, 44, 255, 0.55);
+  box-shadow: 0 0 16px rgba(215, 44, 255, 0.45), inset 0 0 16px rgba(215, 44, 255, 0.35);
+  animation: bling-buddy-aura-pulse 2.6s ease-in-out infinite reverse;
+}
+
+.bling-buddy-showcase-ring.rarity-cute { border-color: rgba(255, 158, 207, 0.55); box-shadow: 0 0 16px rgba(255, 158, 207, 0.45), inset 0 0 16px rgba(255, 158, 207, 0.35); }
+.bling-buddy-showcase-ring.rarity-shiny { border-color: rgba(126, 208, 255, 0.55); box-shadow: 0 0 16px rgba(126, 208, 255, 0.45), inset 0 0 16px rgba(126, 208, 255, 0.35); }
+.bling-buddy-showcase-ring.rarity-extra { border-color: rgba(186, 47, 255, 0.55); box-shadow: 0 0 16px rgba(186, 47, 255, 0.45), inset 0 0 16px rgba(186, 47, 255, 0.35); }
+.bling-buddy-showcase-ring.rarity-iconic { border-color: rgba(255, 79, 216, 0.6); box-shadow: 0 0 18px rgba(255, 79, 216, 0.5), inset 0 0 18px rgba(255, 79, 216, 0.4); }
+.bling-buddy-showcase-ring.rarity-unhinged-luxury { border-color: rgba(255, 209, 102, 0.6); box-shadow: 0 0 18px rgba(255, 209, 102, 0.5), inset 0 0 18px rgba(186, 47, 255, 0.4); }
+
 .bling-buddy-showcase-sparkles {
   position: absolute;
   inset: 0;
@@ -7373,19 +7407,25 @@ button {
   z-index: 1;
   display: grid;
   place-items: center;
-  width: 190px;
-  height: 190px;
-  border-radius: 32px;
-  font-size: 96px;
-  border: 2px solid rgba(255, 255, 255, 0.22);
-  filter: drop-shadow(0 0 22px rgba(215, 44, 255, 0.55));
+  width: 260px;
+  height: 260px;
+  padding: 14px;
+  border-radius: 36px;
+  font-size: 120px;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  filter: drop-shadow(0 0 30px rgba(215, 44, 255, 0.65));
 }
 
 .bling-buddy-showcase-avatar img {
   width: 100%;
   height: 100%;
-  border-radius: 30px;
-  object-fit: cover;
+  object-fit: contain;
+}
+
+.bling-buddy-showcase-avatar span {
+  display: inline-block;
+  transform: scale(1.55);
+  line-height: 1;
 }
 
 .bling-buddy-showcase-art-shell .bling-buddy-vibe {
@@ -7546,31 +7586,35 @@ button {
 }
 
 .bling-buddy-grid {
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 26px;
 }
 
 .bling-buddy-collectible-card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  min-height: 340px;
-  padding: 16px;
-  border-radius: 26px;
-  border: 1px solid rgba(215, 44, 255, 0.22);
-  background: linear-gradient(180deg, rgba(20, 12, 34, 0.92), rgba(8, 6, 16, 0.96));
-  box-shadow: 0 0 18px rgba(215, 44, 255, 0.18), inset 0 0 30px rgba(0, 229, 255, 0.05);
+  gap: 12px;
+  min-height: 420px;
+  padding: 20px;
+  border-radius: 28px;
+  border: 1px solid rgba(215, 44, 255, 0.28);
+  background: linear-gradient(180deg, rgba(24, 14, 40, 0.94), rgba(6, 5, 14, 0.97));
+  box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.08), 0 0 24px rgba(215, 44, 255, 0.22), inset 0 0 36px rgba(0, 229, 255, 0.06);
   transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
 }
 
 .bling-buddy-collectible-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(0, 229, 255, 0.4);
-  box-shadow: 0 12px 32px rgba(215, 44, 255, 0.35), 0 0 30px rgba(0, 229, 255, 0.3);
+  transform: translateY(-8px) scale(1.015);
+  border-color: rgba(0, 229, 255, 0.5);
+  box-shadow: 0 16px 40px rgba(215, 44, 255, 0.4), 0 0 40px rgba(0, 229, 255, 0.35);
 }
 
 .bling-buddy-collectible-card:hover .bling-buddy-card-sparkles span {
   animation-duration: 0.9s;
+}
+
+.bling-buddy-collectible-card:hover .bling-buddy-card-art {
+  filter: drop-shadow(0 0 26px rgba(215, 44, 255, 0.75));
 }
 
 .bling-buddy-card-art-shell {
@@ -7578,30 +7622,50 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 190px;
-  border-radius: 20px;
-  padding-top: 8px;
-  background: radial-gradient(circle at 50% 30%, rgba(215, 44, 255, 0.16), transparent 65%);
+  justify-content: center;
+  min-height: 240px;
+  border-radius: 22px;
+  padding-top: 10px;
+  background: radial-gradient(circle at 50% 32%, rgba(215, 44, 255, 0.2), transparent 68%);
 }
 
 .bling-buddy-card-aura {
   position: absolute;
   left: 50%;
-  bottom: 14px;
-  width: 130px;
-  height: 34px;
+  bottom: 18px;
+  width: 170px;
+  height: 46px;
   border-radius: 50%;
-  filter: blur(5px);
+  filter: blur(7px);
   transform: translateX(-50%);
   animation: bling-buddy-aura-pulse 2.6s ease-in-out infinite;
-  background: radial-gradient(ellipse at center, rgba(215, 44, 255, 0.6), transparent 100%);
+  background: radial-gradient(ellipse at center, rgba(215, 44, 255, 0.65), transparent 100%);
 }
 
-.bling-buddy-card-aura.rarity-cute { background: radial-gradient(ellipse at center, rgba(255, 158, 207, 0.6), transparent 100%); }
-.bling-buddy-card-aura.rarity-shiny { background: radial-gradient(ellipse at center, rgba(126, 208, 255, 0.6), transparent 100%); }
-.bling-buddy-card-aura.rarity-extra { background: radial-gradient(ellipse at center, rgba(186, 47, 255, 0.6), transparent 100%); }
-.bling-buddy-card-aura.rarity-iconic { background: radial-gradient(ellipse at center, rgba(255, 79, 216, 0.65), transparent 100%); }
-.bling-buddy-card-aura.rarity-unhinged-luxury { background: radial-gradient(ellipse at center, rgba(255, 209, 102, 0.65), rgba(186, 47, 255, 0.35) 60%, transparent 100%); }
+.bling-buddy-card-aura.rarity-cute { background: radial-gradient(ellipse at center, rgba(255, 158, 207, 0.65), transparent 100%); }
+.bling-buddy-card-aura.rarity-shiny { background: radial-gradient(ellipse at center, rgba(126, 208, 255, 0.65), transparent 100%); }
+.bling-buddy-card-aura.rarity-extra { background: radial-gradient(ellipse at center, rgba(186, 47, 255, 0.65), transparent 100%); }
+.bling-buddy-card-aura.rarity-iconic { background: radial-gradient(ellipse at center, rgba(255, 79, 216, 0.7), transparent 100%); }
+.bling-buddy-card-aura.rarity-unhinged-luxury { background: radial-gradient(ellipse at center, rgba(255, 209, 102, 0.7), rgba(186, 47, 255, 0.4) 60%, transparent 100%); }
+
+.bling-buddy-card-ring {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  width: 150px;
+  height: 40px;
+  border-radius: 50%;
+  transform: translateX(-50%) rotateX(64deg);
+  border: 2px solid rgba(215, 44, 255, 0.55);
+  box-shadow: 0 0 14px rgba(215, 44, 255, 0.45), inset 0 0 14px rgba(215, 44, 255, 0.35);
+  animation: bling-buddy-aura-pulse 2.6s ease-in-out infinite reverse;
+}
+
+.bling-buddy-card-ring.rarity-cute { border-color: rgba(255, 158, 207, 0.55); box-shadow: 0 0 14px rgba(255, 158, 207, 0.45), inset 0 0 14px rgba(255, 158, 207, 0.35); }
+.bling-buddy-card-ring.rarity-shiny { border-color: rgba(126, 208, 255, 0.55); box-shadow: 0 0 14px rgba(126, 208, 255, 0.45), inset 0 0 14px rgba(126, 208, 255, 0.35); }
+.bling-buddy-card-ring.rarity-extra { border-color: rgba(186, 47, 255, 0.55); box-shadow: 0 0 14px rgba(186, 47, 255, 0.45), inset 0 0 14px rgba(186, 47, 255, 0.35); }
+.bling-buddy-card-ring.rarity-iconic { border-color: rgba(255, 79, 216, 0.6); box-shadow: 0 0 16px rgba(255, 79, 216, 0.5), inset 0 0 16px rgba(255, 79, 216, 0.4); }
+.bling-buddy-card-ring.rarity-unhinged-luxury { border-color: rgba(255, 209, 102, 0.6); box-shadow: 0 0 16px rgba(255, 209, 102, 0.5), inset 0 0 16px rgba(186, 47, 255, 0.4); }
 
 .bling-buddy-card-sparkles {
   position: absolute;
@@ -7612,63 +7676,82 @@ button {
 .bling-buddy-card-sparkles span {
   position: absolute;
   color: #fff2ff;
-  font-size: 13px;
+  font-size: 16px;
   animation: bling-buddy-sparkle-twinkle 2.2s ease-in-out infinite;
-  text-shadow: 0 0 6px rgba(255, 158, 207, 0.9);
+  text-shadow: 0 0 8px rgba(255, 158, 207, 0.9);
 }
 
-.bling-buddy-card-sparkles span:nth-child(1) { top: 6px; left: 10px; animation-delay: 0s; }
-.bling-buddy-card-sparkles span:nth-child(2) { top: 14px; right: 14px; animation-delay: 0.35s; }
-.bling-buddy-card-sparkles span:nth-child(3) { bottom: 42px; left: 4px; animation-delay: 0.7s; }
-.bling-buddy-card-sparkles span:nth-child(4) { bottom: 30px; right: 8px; animation-delay: 1.05s; }
+.bling-buddy-card-sparkles span:nth-child(1) { top: 4px; left: 12px; animation-delay: 0s; }
+.bling-buddy-card-sparkles span:nth-child(2) { top: 18px; right: 16px; animation-delay: 0.35s; }
+.bling-buddy-card-sparkles span:nth-child(3) { bottom: 58px; left: 2px; animation-delay: 0.7s; }
+.bling-buddy-card-sparkles span:nth-child(4) { bottom: 40px; right: 6px; animation-delay: 1.05s; }
+.bling-buddy-card-sparkles span:nth-child(5) { top: 46%; left: 44%; animation-delay: 1.4s; }
 
 .bling-buddy-card-art {
   position: relative;
   z-index: 1;
   display: grid;
   place-items: center;
-  width: 148px;
-  height: 148px;
+  width: 224px;
+  height: 224px;
   margin: 0 auto;
-  border-radius: 28px;
-  font-size: 72px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  filter: drop-shadow(0 0 16px rgba(215, 44, 255, 0.5));
+  padding: 10px;
+  border-radius: 32px;
+  font-size: 108px;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  filter: drop-shadow(0 0 20px rgba(215, 44, 255, 0.55));
   animation: bling-buddy-float 2.4s ease-in-out infinite;
+  transition: filter 0.25s ease;
 }
 
 .bling-buddy-card-art img {
   width: 100%;
   height: 100%;
-  border-radius: 26px;
+  border-radius: 30px;
   object-fit: cover;
+}
+
+.bling-buddy-card-art span {
+  display: inline-block;
+  transform: scale(1.55);
+  line-height: 1;
 }
 
 .bling-buddy-card-rarity {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 10px;
+  top: 12px;
+  right: 12px;
+  font-size: 11px;
+  padding: 5px 12px;
 }
 
 .bling-buddy-card-copy {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   text-align: center;
 }
 
 .bling-buddy-card-copy h3 {
   margin: 0;
   color: #ffffff;
-  font-size: 17px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .bling-buddy-card-subtitle {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: #e2b7ff;
+}
+
+.bling-buddy-card-vibe {
+  margin: 0;
+  font-size: 11px;
+  font-style: italic;
+  color: #b7aed6;
 }
 
 .bling-buddy-card-accessories {
@@ -7680,6 +7763,7 @@ button {
 .bling-buddy-card-animation {
   margin: 0;
   font-size: 11px;
+  font-weight: 700;
   color: #7ec8ff;
 }
 
@@ -7701,8 +7785,8 @@ button {
   position: relative;
   overflow: hidden;
   border-radius: 999px;
-  padding: 9px 14px;
-  font-size: 12px;
+  padding: 11px 14px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.04em;
   border: 1px solid rgba(215, 44, 255, 0.4);

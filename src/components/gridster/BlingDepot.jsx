@@ -6,6 +6,7 @@ import {
 } from "./blingDepotItems";
 import BlingBuddyFilters, { BLING_BUDDY_FILTER_ALL, filterBlingBuddies } from "./BlingBuddyFilters";
 import BlingBuddyCard from "./BlingBuddyCard";
+import BlingBuddyShowcase from "./BlingBuddyShowcase";
 import {
   buyBlingItem,
   equipBlingItem,
@@ -200,6 +201,10 @@ function BlingDepot({ onAuthOpen, showToast }) {
       ),
     [shopData.equipped]
   );
+  const equippedBuddy = useMemo(
+    () => shopItems.find((item) => item.itemType === "bling_buddy" && item.id === equippedByType.bling_buddy) || null,
+    [shopItems, equippedByType]
+  );
   const balance = shopData.balance?.balance ?? STARTING_BLING_BITS;
 
   const refreshShopData = async () => {
@@ -298,6 +303,10 @@ function BlingDepot({ onAuthOpen, showToast }) {
           <img src={BLING_DEPOT_ARTWORK} alt="Bling Depot neon profile card artwork" />
         </div>
       </article>
+
+      {user && equippedBuddy ? (
+        <BlingBuddyShowcase buddy={equippedBuddy} showToast={showToast} />
+      ) : null}
 
       <article className="bling-depot-toolbar glass-card">
         <div>

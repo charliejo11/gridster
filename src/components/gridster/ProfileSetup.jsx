@@ -17,6 +17,7 @@ import { fetchGridsterPlaces } from "../../lib/gridsterPlaces";
 import { getEquippedCosmeticsForUser } from "../../lib/blingDepot";
 import { getBlingProfileStyles } from "./blingDepotItems";
 import BlingBuddyShowcase from "./BlingBuddyShowcase";
+import BlingBuddyArt from "./BlingBuddyArt";
 import { supabase } from "../../lib/supabaseClient";
 
 const LINK_FIELDS = [
@@ -670,11 +671,7 @@ function SavedProfileCard({ profile, equippedCosmetics = [], blingProfile: suppl
           title={blingProfile.buddy.name}
           aria-label={`Equipped Bling Buddy: ${blingProfile.buddy.name}`}
         >
-          {blingProfile.buddy.imageUrl ? (
-            <img src={blingProfile.buddy.imageUrl} alt="" />
-          ) : (
-            <span>{blingProfile.buddy.icon}</span>
-          )}
+          <BlingBuddyArt item={blingProfile.buddy} />
         </div>
       ) : null}
 

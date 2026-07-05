@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getEquippedCosmeticsForUser } from "../../lib/blingDepot";
 import { getBlingProfileStyles } from "./blingDepotItems";
 import BlingBuddyShowcase from "./BlingBuddyShowcase";
+import BlingBuddyArt from "./BlingBuddyArt";
 import {
   GRIDSTER_AVAILABLE_FOR_LABELS,
   fetchFavoritePlaces,
@@ -156,11 +157,7 @@ function ResidentProfilePage({ userId, showToast }) {
             className={`profile-bling-buddy ${blingProfile.buddy.previewClass || blingProfile.buddy.preview_class || ""}`}
             title={blingProfile.buddy.name}
           >
-            {blingProfile.buddy.imageUrl ? (
-              <img src={blingProfile.buddy.imageUrl} alt="" />
-            ) : (
-              <span>{blingProfile.buddy.icon}</span>
-            )}
+            <BlingBuddyArt item={blingProfile.buddy} />
           </div>
         ) : null}
       </article>

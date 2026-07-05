@@ -1,10 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabaseClient";
 import {
   gridsterLeftSidebarActionItems,
   gridsterLeftSidebarNavItems,
   gridsterLeftSidebarProfile,
 } from "../../data/gridsterMockData";
+import {
+  GRIDSTER_PROFILE_UPDATED_EVENT,
+  computeGridsterProfileStrength,
+  fetchGridsterProfile,
+} from "../../lib/gridsterProfiles";
 import GridsterPlusModal from "./GridsterPlusModal";
+
+function initialsFromName(name) {
+  const trimmed = String(name || "").trim();
+
+  if (!trimmed) {
+    return "?";
+  }
+
+  return trimmed
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase())
+    .join("");
+}
 
 const GRIDSTER_PLUS_ARTWORK = "/gridster-logo.png";
 
@@ -31,6 +51,54 @@ function LeftSidebar({
   children,
 }) {
   const [showPlusModal, setShowPlusModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const refreshProfile = (nextUser) => {
+      if (!nextUser) {
+        setProfile(null);
+        return;
+      }
+
+      fetchGridsterProfile(nextUser.id)
+        .then((nextProfile) => {
+          if (active) {
+            setProfile(nextProfile);
+          }
+        })
+        .catch(() => {});
+    };
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (active) {
+        setCurrentUser(data?.user ?? null);
+        refreshProfile(data?.user ?? null);
+      }
+    }).catch(() => {});
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+      refreshProfile(session?.user ?? null);
+    });
+
+    const handleProfileUpdated = () => {
+      supabase.auth.getUser().then(({ data }) => refreshProfile(data?.user ?? null)).catch(() => {});
+    };
+
+    window.addEventListener(GRIDSTER_PROFILE_UPDATED_EVENT, handleProfileUpdated);
+
+    return () => {
+      active = false;
+      listener?.subscription?.unsubscribe();
+      window.removeEventListener(GRIDSTER_PROFILE_UPDATED_EVENT, handleProfileUpdated);
+    };
+  }, []);
+
+  const displayName = currentUser ? profile?.display_name || profile?.sl_username || "Set up your profile" : "Guest";
+  const profileStrength = currentUser ? computeGridsterProfileStrength(profile) : 0;
 
   const openBlingDepot = (event) => {
     event.preventDefault();
@@ -68,12 +136,12 @@ function LeftSidebar({
     <aside className="left-panel">
       <section className="profile-card glass-card">
         <div className="profile-cover"></div>
-        <div className="profile-avatar">{gridsterLeftSidebarProfile.initials}</div>
+        <div className="profile-avatar">{currentUser ? initialsFromName(displayName) : "?"}</div>
 
-        <h2>{gridsterLeftSidebarProfile.displayName}</h2>
-        <p className="profile-role">{gridsterLeftSidebarProfile.role}</p>
+        <h2>{displayName}</h2>
+        <p className="profile-role">{currentUser ? profile?.creator_type || "Resident" : "Not logged in"}</p>
         <p className="profile-bio">
-          {gridsterLeftSidebarProfile.bio}
+          {currentUser ? profile?.bio || "Add a bio to tell the grid about yourself." : "Log in to set up your Gridster profile."}
         </p>
 
         <div className="profile-stats">
@@ -88,10 +156,10 @@ function LeftSidebar({
         <div className="profile-strength">
           <div className="strength-label">
             <span>Profile Strength</span>
-            <span className="strength-percent">{gridsterLeftSidebarProfile.strength}</span>
+            <span className="strength-percent">{profileStrength}%</span>
           </div>
           <div className="strength-bar">
-            <div className="strength-fill" style={{ width: gridsterLeftSidebarProfile.strength }}></div>
+            <div className="strength-fill" style={{ width: `${profileStrength}%` }}></div>
           </div>
         </div>
 

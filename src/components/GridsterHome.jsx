@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { getBlingBalanceSummary, getEquippedCosmeticsForUser } from "../lib/blingDepot";
-import { addFavoritePlace, fetchFavoritePlaces, fetchGridsterProfile, removeFavoritePlace } from "../lib/gridsterProfiles";
+import {
+  addFavoritePlace,
+  computeGridsterProfileStrength,
+  fetchFavoritePlaces,
+  fetchGridsterProfile,
+  removeFavoritePlace,
+} from "../lib/gridsterProfiles";
 import { fetchFeaturedPhotoSpots } from "../lib/gridsterPlaces";
 import { GRIDSTER_POST_TYPE_LABELS, fetchRecentPosts } from "../lib/gridsterPosts";
 import {
@@ -550,7 +556,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Verification"
         subtitle="Help residents know which creators, stores, venues, DJs, bloggers, and communities are authentic across the grid."
       >
-        <VerificationCenterPage showToast={showToast} />
+        <VerificationCenterPage showToast={showToast} onAuthOpen={onAuthOpen} />
       </PageShell>
     );
   }
@@ -1633,9 +1639,9 @@ function SpotlightAwardsPage({ showToast }) {
       <section className="spotlight-hero-card glass-card">
         <div className="spotlight-hero-copy">
           <span>This Month’s Spotlight</span>
-          <h3>CharlieJo</h3>
-          <strong>Blogger • Photographer • Creator</strong>
-          <p>Recognized for fashion, nightlife, tattoos, events, and beautiful chaos across the grid.</p>
+          <h3>No Winner Yet</h3>
+          <strong>Nominations Open</strong>
+          <p>We haven’t crowned a winner yet — nominate your favorite creators below to kick off the first cycle.</p>
 
           <div className="spotlight-reward-pill">
             <span>Reward</span>
@@ -1700,7 +1706,57 @@ function SpotlightAwardsPage({ showToast }) {
   );
 }
 
-function VerificationCenterPage({ showToast }) {
+function VerificationCenterPage({ showToast, onAuthOpen }) {
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const refreshProfile = (nextUser) => {
+      if (!nextUser) {
+        setProfile(null);
+        return;
+      }
+
+      fetchGridsterProfile(nextUser.id)
+        .then((nextProfile) => {
+          if (active) {
+            setProfile(nextProfile);
+          }
+        })
+        .catch(() => {});
+    };
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (active) {
+        setUser(data?.user ?? null);
+        refreshProfile(data?.user ?? null);
+      }
+    }).catch(() => {});
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      refreshProfile(session?.user ?? null);
+    });
+
+    return () => {
+      active = false;
+      listener?.subscription?.unsubscribe();
+    };
+  }, []);
+
+  const displayName = user ? profile?.display_name || profile?.sl_username || "Set up your profile" : "Not logged in";
+  const profileStrength = user ? computeGridsterProfileStrength(profile) : 0;
+  const isEligible = user && Boolean(profile?.display_name?.trim() && profile?.sl_username?.trim() && profile?.bio?.trim());
+  const statusLabel = !user
+    ? "Log In to Check Status"
+    : profile?.sl_verified
+      ? "Verified"
+      : isEligible
+        ? "Eligible to Apply"
+        : "Complete Your Profile First";
+
   return (
     <section className="verification-center-page">
       <section className="verification-hero-card glass-card">
@@ -1750,21 +1806,29 @@ function VerificationCenterPage({ showToast }) {
         </section>
 
         <aside className="verification-status-card glass-card">
-          <SectionHeader className="verification-section-heading" eyebrow="Your Verification Status" title="CharlieJo" />
-          <strong>Eligible to Apply</strong>
+          <SectionHeader className="verification-section-heading" eyebrow="Your Verification Status" title={displayName} />
+          <strong>{statusLabel}</strong>
 
           <div className="verification-strength">
             <div>
               <span>Profile strength</span>
-              <b>82%</b>
+              <b>{profileStrength}%</b>
             </div>
             <div className="verification-strength-bar">
-              <span style={{ width: "82%" }}></span>
+              <span style={{ width: `${profileStrength}%` }}></span>
             </div>
           </div>
 
-          <p>Suggested next step: Add official links and featured posts.</p>
-          <button onClick={() => showToast?.("Reviewing profile links coming soon.")}>Review Profile Links</button>
+          <p>
+            {!user
+              ? "Log in to check your verification eligibility."
+              : "Suggested next step: Add official links and featured posts."}
+          </p>
+          {user ? (
+            <button onClick={() => showToast?.("Reviewing profile links coming soon.")}>Review Profile Links</button>
+          ) : (
+            <button onClick={() => onAuthOpen?.("login")}>Log In</button>
+          )}
         </aside>
       </div>
     </section>

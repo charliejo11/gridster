@@ -2,6 +2,21 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { BLING_BALANCE_EVENT, getBlingBalanceSummary, notifyBlingBalanceChanged } from "../../lib/blingDepot";
 import { claimDailyLoginBonus, claimProfileCompleteBonus, claimSlVerifiedBonus } from "../../lib/gridsterBonuses";
+import { GRIDSTER_PROFILE_UPDATED_EVENT, fetchGridsterProfile } from "../../lib/gridsterProfiles";
+
+function initialsFromName(name) {
+  const trimmed = String(name || "").trim();
+
+  if (!trimmed) {
+    return "?";
+  }
+
+  return trimmed
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase())
+    .join("");
+}
 
 const BONUS_TOAST_MESSAGES = {
   daily_login: "+50 Bling Bits — daily login bonus!",
@@ -27,6 +42,7 @@ function Header({
 }) {
   const [blingSummary, setBlingSummary] = useState({ balance: null, isAdmin: false });
   const [currentUser, setCurrentUser] = useState(null);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -36,6 +52,21 @@ function Header({
         .then((summary) => {
           if (active) {
             setBlingSummary(summary);
+          }
+        })
+        .catch(() => {});
+    };
+
+    const refreshProfile = (nextUser) => {
+      if (!nextUser) {
+        setProfile(null);
+        return;
+      }
+
+      fetchGridsterProfile(nextUser.id)
+        .then((nextProfile) => {
+          if (active) {
+            setProfile(nextProfile);
           }
         })
         .catch(() => {});
@@ -73,6 +104,7 @@ function Header({
     supabase.auth.getUser().then(({ data }) => {
       if (active) {
         setCurrentUser(data?.user ?? null);
+        refreshProfile(data?.user ?? null);
         claimEligibleBonuses(data?.user ?? null);
       }
     }).catch(() => {});
@@ -81,16 +113,23 @@ function Header({
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUser(session?.user ?? null);
+      refreshProfile(session?.user ?? null);
       refreshBalance();
       claimEligibleBonuses(session?.user ?? null);
     });
 
+    const handleProfileUpdated = () => {
+      supabase.auth.getUser().then(({ data }) => refreshProfile(data?.user ?? null)).catch(() => {});
+    };
+
     window.addEventListener(BLING_BALANCE_EVENT, refreshBalance);
+    window.addEventListener(GRIDSTER_PROFILE_UPDATED_EVENT, handleProfileUpdated);
 
     return () => {
       active = false;
       listener?.subscription?.unsubscribe();
       window.removeEventListener(BLING_BALANCE_EVENT, refreshBalance);
+      window.removeEventListener(GRIDSTER_PROFILE_UPDATED_EVENT, handleProfileUpdated);
     };
   }, []);
 
@@ -284,10 +323,10 @@ function Header({
               : `${blingSummary.balance.toLocaleString()} Bling Bits`}
         </button>
         <div className="mini-profile">
-          <div className="mini-pic">CJ</div>
+          <div className="mini-pic">{currentUser ? initialsFromName(profile?.display_name || profile?.sl_username) : "?"}</div>
           <div>
-            <strong>CharlieJo</strong>
-            <span>Online</span>
+            <strong>{currentUser ? profile?.display_name || profile?.sl_username || "Set up your profile" : "Guest"}</strong>
+            <span>{currentUser ? "Online" : "Not logged in"}</span>
           </div>
         </div>
       </div>

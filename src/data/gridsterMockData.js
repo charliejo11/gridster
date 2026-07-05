@@ -209,11 +209,6 @@ export const gridsterSidebarAlerts = [
 ];
 
 export const gridsterLeftSidebarProfile = {
-  initials: "CJ",
-  displayName: "CharlieJo",
-  role: "Second Life Blogger • Photographer • Creator",
-  bio: "Capturing fashion, nightlife, events, and beautiful chaos across the grid.",
-  strength: "82%",
   stats: [
     ["2.4K", "Followers"],
     ["320", "Following"],

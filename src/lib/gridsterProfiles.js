@@ -3,6 +3,13 @@ import { supabase } from "./supabaseClient";
 export const GRIDSTER_PROFILE_TABLE = "profiles";
 export const GRIDSTER_FAVORITE_PLACES_TABLE = "gridster_favorite_places";
 export const DEFAULT_BLING_BITS = 1250;
+export const GRIDSTER_PROFILE_UPDATED_EVENT = "gridster:profile-updated";
+
+function notifyGridsterProfileUpdated() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(GRIDSTER_PROFILE_UPDATED_EVENT));
+  }
+}
 
 export const GRIDSTER_AVAILABLE_FOR_TAGS = [
   "dj",
@@ -209,6 +216,8 @@ export async function saveGridsterProfile(userId, form) {
     throw error;
   }
 
+  notifyGridsterProfileUpdated();
+
   return data;
 }
 
@@ -225,6 +234,24 @@ export async function updateGridsterProfile(userId, updates) {
   }
 
   return data;
+}
+
+const PROFILE_STRENGTH_CHECKS = [
+  (profile) => Boolean(profile?.display_name?.trim()),
+  (profile) => Boolean(profile?.sl_username?.trim()),
+  (profile) => Boolean(profile?.bio?.trim()),
+  (profile) => Boolean(profile?.avatar_url?.trim()),
+  (profile) => Boolean(profile?.interests?.length),
+];
+
+export function computeGridsterProfileStrength(profile) {
+  if (!profile) {
+    return 0;
+  }
+
+  const metChecks = PROFILE_STRENGTH_CHECKS.filter((check) => check(profile)).length;
+
+  return Math.round((metChecks / PROFILE_STRENGTH_CHECKS.length) * 100);
 }
 
 export async function fetchResidentProfile(userId) {

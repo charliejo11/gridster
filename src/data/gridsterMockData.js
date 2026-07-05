@@ -174,14 +174,6 @@ export const gridsterExploreDestinations = [
   ["Valentina Boutique", "General • Fashion store • New releases", "Browse"],
 ];
 
-export const gridsterEventsPageEvents = [
-  ["Sanctuary Rocks — Metal Night", "Tonight • 8 PM SLT", "Moderate", "Sanctuary Rocks"],
-  ["Neon District — Cyber Rave", "Tonight • 10 PM SLT", "Adult", "Neon District"],
-  ["Ocean Breeze — Beach Party", "Tomorrow • 2 PM SLT", "General", "Ocean Breeze"],
-  ["Midnight Metal Mayhem", "Friday • 11 PM SLT", "Moderate", "Sanctuary Rocks"],
-  ["Moonlit Market — Shopping Event", "Saturday • 12 PM SLT", "General", "Moonlit Market"],
-];
-
 export const gridsterMessageConversations = [
   ["R", "RavenHex", "That photo spot is insane.", "2m"],
   ["S", "Sanctuary Rocks", "You’re invited to Metal Night.", "14m"],

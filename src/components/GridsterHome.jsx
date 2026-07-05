@@ -8,7 +8,12 @@ import {
   fetchGridsterProfile,
   removeFavoritePlace,
 } from "../lib/gridsterProfiles";
-import { fetchFeaturedPhotoSpots } from "../lib/gridsterPlaces";
+import {
+  GRIDSTER_EVENT_TYPE_LABELS,
+  GRIDSTER_MATURITY_RATING_LABELS,
+  fetchFeaturedPhotoSpots,
+  fetchGridsterEvents,
+} from "../lib/gridsterPlaces";
 import { GRIDSTER_POST_TYPE_LABELS, fetchRecentPosts } from "../lib/gridsterPosts";
 import {
   createPhotoChallenge,
@@ -32,7 +37,6 @@ import {
   gridsterComposerTemplates,
   gridsterDashboardEvents,
   gridsterDjSets,
-  gridsterEventsPageEvents,
   gridsterExploreCategories,
   gridsterExploreDestinations,
   gridsterFeaturedPlaces,
@@ -862,22 +866,90 @@ function ExplorePageContent({ galleryItems, showToast }) {
 }
 
 function EventsPageContent({ showToast }) {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    fetchGridsterEvents()
+      .then((nextEvents) => {
+        if (active) {
+          setEvents(nextEvents || []);
+        }
+      })
+      .catch((fetchError) => {
+        if (active) {
+          setError(fetchError.message || "Could not load events.");
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (loading) {
+    return <p className="tonight-message">Loading events...</p>;
+  }
+
+  if (error) {
+    return <p className="tonight-message tonight-error" role="alert">{error}</p>;
+  }
+
+  if (events.length === 0) {
+    return <p className="tonight-message">No events posted yet. Be the first to share what's happening.</p>;
+  }
+
   return (
-    <section className="nav-event-grid">
-      {gridsterEventsPageEvents.map(([title, time, rating, venue], index) => (
-        <article className="nav-event-card glass-card" key={title}>
-          <div className={`nav-event-thumb thumb-${index % 4}`}></div>
-          <div className="nav-event-copy">
-            <span>{rating}</span>
-            <h3>{title}</h3>
-            <p>{time}</p>
-            <small>{venue}</small>
+    <div className="tonight-grid">
+      {events.map((eventItem) => (
+        <article className="discovery-event-card glass-card" key={eventItem.id}>
+          <div className="event-card-photo">
+            {eventItem.photo_url ? (
+              <img src={eventItem.photo_url} alt="" />
+            ) : (
+              <span className="event-card-photo-fallback">
+                {GRIDSTER_EVENT_TYPE_LABELS[eventItem.event_type]?.charAt(0) ?? "?"}
+              </span>
+            )}
           </div>
-          <button {...getTeleportButtonProps(venue)}>Teleport</button>
-          <TeleportStatusChip slurl={getGridsterDestination(venue)?.slurl} destinationName={venue} showToast={showToast} />
+
+          <div className="event-card-body">
+            <div className="event-card-meta">
+              <span className="event-type-pill">{GRIDSTER_EVENT_TYPE_LABELS[eventItem.event_type]}</span>
+              <span className="event-when">{eventItem.when_label}</span>
+            </div>
+
+            <h3>{eventItem.title}</h3>
+
+            {eventItem.gridster_places ? (
+              <span className="event-place-link">📍 {eventItem.gridster_places.title}</span>
+            ) : null}
+
+            {eventItem.region_name ? <p className="event-region">{eventItem.region_name}</p> : null}
+            {eventItem.description ? <p className="event-description">{eventItem.description}</p> : null}
+
+            <span className="event-maturity-badge">
+              {GRIDSTER_MATURITY_RATING_LABELS[eventItem.maturity_rating]}
+            </span>
+          </div>
+
+          <div className="event-card-actions">
+            <button type="button" data-destination={eventItem.title} data-slurl={eventItem.slurl}>
+              Teleport
+            </button>
+            <TeleportStatusChip slurl={eventItem.slurl} destinationName={eventItem.title} showToast={showToast} />
+          </div>
         </article>
       ))}
-    </section>
+    </div>
   );
 }
 

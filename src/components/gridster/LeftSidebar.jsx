@@ -8,9 +8,25 @@ import GridsterPlusModal from "./GridsterPlusModal";
 
 const GRIDSTER_PLUS_ARTWORK = "/gridster-logo.png";
 
+const CREATOR_TOOL_TABS = {
+  "New Blog": "blog",
+  "Upload Photo": "photo",
+  "Add Event": "event",
+  "Save SLURL": "slurl",
+};
+
+const NAV_ACTION_COMPOSER_TABS = {
+  CreateEvent: "event",
+  CreateStorePost: "store",
+  CreateBloggerPost: "blog",
+  AddSLURL: "slurl",
+};
+
 function LeftSidebar({
   activePage,
   setActivePage,
+  onOpenComposer,
+  onOpenMyCreatorPages,
   showToast,
   children,
 }) {
@@ -20,6 +36,32 @@ function LeftSidebar({
     event.preventDefault();
     setActivePage("BlingBoost");
     window.history.pushState({}, "", "/bling-depot");
+  };
+
+  const handleToolClick = (tool) => {
+    const tab = CREATOR_TOOL_TABS[tool];
+
+    if (tab) {
+      onOpenComposer?.(tab);
+    } else {
+      showToast?.(`${tool} coming soon.`);
+    }
+  };
+
+  const handleNavActionClick = (page) => {
+    if (page === "CreateCommunityHub") {
+      onOpenMyCreatorPages?.();
+      return;
+    }
+
+    const tab = NAV_ACTION_COMPOSER_TABS[page];
+
+    if (tab) {
+      onOpenComposer?.(tab);
+      return;
+    }
+
+    setActivePage(page);
   };
 
   return (
@@ -57,7 +99,7 @@ function LeftSidebar({
           <span className="tools-label">Creator Tools</span>
           <div className="tools-buttons">
             {gridsterLeftSidebarProfile.tools.map((tool) => (
-              <button key={tool} onClick={() => showToast?.(`${tool} coming soon.`)}>{tool}</button>
+              <button key={tool} onClick={() => handleToolClick(tool)}>{tool}</button>
             ))}
           </div>
         </div>
@@ -81,7 +123,7 @@ function LeftSidebar({
           <button
             className={activePage === page ? `${className} active` : className}
             key={page}
-            onClick={() => setActivePage(page)}
+            onClick={() => handleNavActionClick(page)}
           >
             {label} {suffix ? <b>{suffix}</b> : null}
           </button>

@@ -340,14 +340,6 @@ export const gridsterProfileSections = [
     ["Creator Dashboard", "Profile views, SLURL clicks, event reach, and Bling Bits earned.", "View Analytics"],
   ];
 
-export const gridsterAddSlurlFields = [
-    ["Destination Name", "Moonlit Cathedral"],
-    ["SLURL", "secondlife://Moonlit Cathedral/88/120/32"],
-    ["Category", "Photo Spot / Event / Store / Venue / Community"],
-    ["Rating", "General / Moderate / Adult"],
-    ["Tags", "Gothic, Photos, Landmark, Moderate"],
-  ];
-
 export const gridsterFeedPreferenceCards = [
     ["Show Me More", ["Events", "Photo Spots", "Blogger Posts", "Store Releases", "Live DJs"]],
     ["Show Me Less", ["Repeated ads", "Overposted events", "Unrated adult content", "Empty SLURLs", "Low-credit posts"]],
@@ -423,55 +415,6 @@ export const gridsterBlingBoostPackages = [
     ["◈", "Event Rush", "Best for live events", "500 Bling Bits"],
   ];
 
-export const gridsterCreateCommunityHubFields = [
-    ["Community Name", "Moonlit Hollow"],
-    ["Community Type", "RP Sim / Club / Family / Fandom / Venue Crew / Social Group"],
-    ["Rating", "General / Moderate / Adult"],
-    ["Description", "Gothic roleplay, events, stories, and dark fantasy gatherings."],
-    ["Rules Link", "moonlithollow.grid/rules"],
-    ["Main SLURL", "secondlife://Moonlit Hollow/128/92/27"],
-    ["Application Link", "moonlithollow.grid/apply"],
-    ["Tags", "Gothic, RP, Events, Community"],
-  ];
-
-export const gridsterCreateCommunityHubSections = ["Announcements", "Events", "Member Spotlights", "Applications"];
-
-export const gridsterCreateBloggerPostFields = [
-    ["Post Title", "Neon Noir: Midnight Luxe"],
-    ["Style Category", "Fashion / Beauty / Tattoos / Decor / Nightlife / Beach / Gothic / Alternative"],
-    ["Featured Brands", "Valentina Boutique, NovaVixen, Pixel Ink"],
-    ["Outfit Credits", "Dress, boots, jewelry, mesh body appliers"],
-    ["Pose Credits", "Moon Pose Studio • Editorial Set 04"],
-    ["Location / Sim", "Moonlit Cathedral"],
-    ["SLURL", "secondlife://Moonlit Cathedral/88/120/32"],
-    ["Blog Link", "charliejo.grid/blog/neon-noir"],
-    ["Flickr Link", "flickr.com/photos/charliejo/neon-noir"],
-    ["Tags", "Fashion, Gothic, Nightlife, Tattoos"],
-  ];
-
-export const gridsterBloggerCreditRows = ["Body / Skin / Shape", "Outfit / Accessories", "Hair / Makeup / Tattoos", "Pose / Location"];
-
-export const gridsterCreateStorePostFields = [
-    ["Post Type", "New Release / Blogger Call / Sale / Marketplace Find / Event Booth"],
-    ["Store Name", "Valentina Boutique"],
-    ["Product / Collection Name", "Midnight Luxe Collection"],
-    ["Price or Promo", "L$299 • Weekend promo"],
-    ["Rating", "General / Moderate / Adult"],
-    ["Marketplace Link", "marketplace.secondlife.com/stores/valentina"],
-    ["In-World SLURL", "secondlife://Moonlit Market/142/88/24"],
-    ["Tags", "Fashion, Event Look, Luxury, Blogger Pack"],
-  ];
-
-export const gridsterCreateEventFields = [
-    ["Event Title", "Lunar Eclipse Live DJ Set"],
-    ["Venue / Sim Name", "Club Elysium"],
-    ["Date", "May 24, 2025"],
-    ["Time in SLT", "9:00 PM SLT"],
-    ["Event Rating", "General / Moderate / Adult"],
-    ["DJ / Host", "DJ Starfall • Host RavenHex"],
-    ["SLURL", "secondlife://Elysium Isle/128/128/24"],
-    ["Event Tags", "Nightlife, DJ, Dance, Neon"],
-  ];
 
 export const gridsterSettingsCards = [
     {

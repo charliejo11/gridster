@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabaseClient";
 import { getBlingBalanceSummary, getEquippedCosmeticsForUser } from "../lib/blingDepot";
 import { addFavoritePlace, fetchFavoritePlaces, fetchGridsterProfile, removeFavoritePlace } from "../lib/gridsterProfiles";
 import { fetchFeaturedPhotoSpots } from "../lib/gridsterPlaces";
+import { GRIDSTER_POST_TYPE_LABELS, fetchRecentPosts } from "../lib/gridsterPosts";
 import {
   createPhotoChallenge,
   closePhotoChallengeAndAwardWinner,
@@ -54,7 +55,6 @@ import {
   gridsterExplorePreviewTiles,
   gridsterProfileSections,
   gridsterProfileSummary,
-  gridsterAddSlurlFields,
   gridsterFeedPreferenceCards,
   gridsterPhotoChallengeRules,
   gridsterSpotlightAwardCategories,
@@ -62,12 +62,6 @@ import {
   gridsterSpotlightAwardRules,
   gridsterVerificationTypes,
   gridsterVerificationRequirements,
-  gridsterCreateCommunityHubFields,
-  gridsterCreateCommunityHubSections,
-  gridsterCreateBloggerPostFields,
-  gridsterBloggerCreditRows,
-  gridsterCreateStorePostFields,
-  gridsterCreateEventFields,
   gridsterSettingsCards,
   gridsterCreatorDashboardStats,
   gridsterVenueTools,
@@ -99,6 +93,7 @@ import ResidentDirectoryPage from "./gridster/ResidentDirectoryPage";
 import CreatorPagesDirectory from "./gridster/CreatorPagesDirectory";
 import CreatorPageDetail from "./gridster/CreatorPageDetail";
 import MyCreatorPagesPage from "./gridster/MyCreatorPagesPage";
+import GridsterComposerModal from "./gridster/GridsterComposerModal";
 import TeleportStatusChip from "./gridster/TeleportStatusChip";
 import "./GridsterHome.css";
 
@@ -151,6 +146,8 @@ function GridsterHome() {
   const [selectedResidentUserId, setSelectedResidentUserId] = useState(null);
   const [selectedCreatorPageId, setSelectedCreatorPageId] = useState(null);
   const [initialTeleportCategory, setInitialTeleportCategory] = useState(null);
+  const [composer, setComposer] = useState(null);
+  const [postsRefreshToken, setPostsRefreshToken] = useState(0);
   const [theme, setTheme] = usePersistedGridsterValue("theme", "dark-neon");
   const toastTimerRef = useRef(null);
   const toastIdRef = useRef(0);
@@ -272,6 +269,18 @@ function GridsterHome() {
     setActivePage(page);
   };
 
+  const openComposer = (tab, content = "") => {
+    setComposer({ tab, content });
+    setShowNotifications(false);
+    setShowThemeMenu(false);
+  };
+
+  const closeComposer = () => setComposer(null);
+
+  const handlePosted = () => {
+    setPostsRefreshToken((current) => current + 1);
+  };
+
   const openAuth = (mode = "login") => {
     setAuthMode(mode === "signup" ? "signup" : "login");
     setActivePage("Auth");
@@ -328,7 +337,13 @@ function GridsterHome() {
 
       <DashboardLayout
         leftSidebar={(
-          <LeftSidebar activePage={activePage} setActivePage={handleSidebarNavigate} showToast={showToast}>
+          <LeftSidebar
+            activePage={activePage}
+            setActivePage={handleSidebarNavigate}
+            onOpenComposer={openComposer}
+            onOpenMyCreatorPages={openMyCreatorPages}
+            showToast={showToast}
+          >
             <ProfileFlairCard showToast={showToast} setActivePage={setActivePage} />
           </LeftSidebar>
         )}
@@ -353,6 +368,7 @@ function GridsterHome() {
           selectedResidentUserId={selectedResidentUserId}
           selectedCreatorPageId={selectedCreatorPageId}
           initialTeleportCategory={initialTeleportCategory}
+          postsRefreshToken={postsRefreshToken}
           setActivePage={setActivePage}
           onOpenProfile={openProfile}
           onOpenGroup={openGroup}
@@ -360,6 +376,7 @@ function GridsterHome() {
           onOpenCreatorPage={openCreatorPage}
           onOpenMyCreatorPages={openMyCreatorPages}
           onOpenTeleportDiscovery={openTeleportDiscovery}
+          onOpenComposer={openComposer}
           onAuthOpen={openAuth}
           showToast={showToast}
         />
@@ -373,15 +390,26 @@ function GridsterHome() {
           <button onClick={() => setToast(null)} aria-label="Close notification">×</button>
         </div>
       ) : null}
+      {composer ? (
+        <GridsterComposerModal
+          initialTab={composer.tab}
+          initialContent={composer.content}
+          onAuthOpen={openAuth}
+          onClose={closeComposer}
+          onPosted={handlePosted}
+          showToast={showToast}
+        />
+      ) : null}
     </main>
   );
 }
 
-function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, selectedGroupId, selectedResidentUserId, selectedCreatorPageId, initialTeleportCategory, setActivePage, onOpenProfile, onOpenGroup, onOpenResidentProfile, onOpenCreatorPage, onOpenMyCreatorPages, onOpenTeleportDiscovery, onAuthOpen, showToast }) {
+function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, selectedGroupId, selectedResidentUserId, selectedCreatorPageId, initialTeleportCategory, postsRefreshToken, setActivePage, onOpenProfile, onOpenGroup, onOpenResidentProfile, onOpenCreatorPage, onOpenMyCreatorPages, onOpenTeleportDiscovery, onOpenComposer, onAuthOpen, showToast }) {
   if (activePage === "Home") {
     return (
       <>
-        <CreatePostComposer showToast={showToast} />
+        <CreatePostComposer onOpenComposer={onOpenComposer} showToast={showToast} />
+        <RecentPostsFeed refreshToken={postsRefreshToken} showToast={showToast} />
         <TrendingNow showToast={showToast} />
         <WelcomeCard onExplore={() => setActivePage("Explore")} />
         <ExplorePreview showToast={showToast} />
@@ -420,50 +448,6 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         <EventsPageContent showToast={showToast} />
         <LiveNowEvents showToast={showToast} />
         <VenueTools showToast={showToast} />
-      </PageShell>
-    );
-  }
-
-  if (activePage === "CreateEvent") {
-    return (
-      <PageShell
-        title="Create Event"
-        subtitle="Build an event card with time, host, DJ, rating, SLURL, and discovery tags."
-      >
-        <CreateEventPage showToast={showToast} />
-      </PageShell>
-    );
-  }
-
-  if (activePage === "CreateStorePost") {
-    return (
-      <PageShell
-        title="Create Store Post"
-        subtitle="Promote new releases, blogger calls, sales, marketplace finds, and in-world shopping events."
-      >
-        <CreateStorePostPage showToast={showToast} />
-      </PageShell>
-    );
-  }
-
-  if (activePage === "CreateBloggerPost") {
-    return (
-      <PageShell
-        title="Create Blogger Post"
-        subtitle="Share your look, credits, photos, locations, brands, poses, and SLURLs in one polished post."
-      >
-        <CreateBloggerPostPage showToast={showToast} />
-      </PageShell>
-    );
-  }
-
-  if (activePage === "CreateCommunityHub") {
-    return (
-      <PageShell
-        title="Create Community Hub"
-        subtitle="Build a home for your roleplay sim, club, family, fandom, venue crew, or themed community."
-      >
-        <CreateCommunityHubPage showToast={showToast} />
       </PageShell>
     );
   }
@@ -523,17 +507,6 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         subtitle="Tune your Gridster feed so you see more of what you love and less of what is not for you."
       >
         <FeedPreferencesPage showToast={showToast} />
-      </PageShell>
-    );
-  }
-
-  if (activePage === "AddSLURL") {
-    return (
-      <PageShell
-        title="Add SLURL"
-        subtitle="Save clear teleport links, rate destinations honestly, and help residents find places across the grid."
-      >
-        <AddSLURLPage showToast={showToast} />
       </PageShell>
     );
   }
@@ -1126,49 +1099,6 @@ function ProfilePreviewSection({ title, items }) {
         ))}
       </div>
     </article>
-  );
-}
-
-function AddSLURLPage({ showToast }) {
-  return (
-    <section className="add-slurl-page">
-      <div className="slurl-form-card glass-card">
-        <div className="slurl-form-grid">
-          <div className="slurl-fields">
-            {gridsterAddSlurlFields.map(([label, value]) => (
-              <label className="slurl-field" key={label}>
-                <span>{label}</span>
-                <input value={value} readOnly />
-              </label>
-            ))}
-          </div>
-
-          <aside className="slurl-preview-panel">
-            <span>Saved Landmark</span>
-            <h3>SLURL PREVIEW</h3>
-            <p>Show residents the destination name, rating, tags, and a clean teleport action before they jump.</p>
-            <button {...getTeleportButtonProps("Moonlit Cathedral")}>Test Teleport</button>
-            <TeleportStatusChip
-              slurl={getGridsterDestination("Moonlit Cathedral")?.slurl}
-              destinationName="Moonlit Cathedral"
-              showToast={showToast}
-            />
-          </aside>
-        </div>
-
-        <div className="slurl-actions">
-          <SaveButton label="Save Landmark" storageKey="add-slurl-landmark" />
-          <button onClick={() => showToast?.("SLURL preview coming soon.")}>Preview SLURL</button>
-          <button className="share-slurl-button" onClick={() => showToast?.("Sharing to grid coming soon.")}>Share to Grid</button>
-        </div>
-
-        <p className="slurl-helper-note">
-          Clear SLURLs, accurate ratings, and honest destination details make teleport discovery feel safer.
-        </p>
-      </div>
-
-      <TeleportCenter showToast={showToast} />
-    </section>
   );
 }
 
@@ -1841,174 +1771,6 @@ function VerificationCenterPage({ showToast }) {
   );
 }
 
-function CreateCommunityHubPage({ showToast }) {
-  return (
-    <section className="create-community-page">
-      <div className="community-hub-form-card glass-card">
-        <div className="community-hub-form-grid">
-          <div className="community-hub-fields">
-            {gridsterCreateCommunityHubFields.map(([label, value]) => (
-              <label className="community-hub-field" key={label}>
-                <span>{label}</span>
-                <input value={value} readOnly />
-              </label>
-            ))}
-          </div>
-
-          <aside className="community-hub-preview-panel">
-            <span>Gridster Community Page</span>
-            <h3>COMMUNITY HUB PREVIEW</h3>
-            <p>Frame your sim, crew, family, fandom, or group with a banner residents can recognize instantly.</p>
-            <button onClick={() => showToast?.("Uploading a banner coming soon.")}>Upload Banner</button>
-          </aside>
-        </div>
-
-        <section className="hub-sections-card">
-          <SectionHeader className="hub-sections-heading" eyebrow="Hub Sections" title="Hub Sections" />
-          <div className="hub-section-list">
-            {gridsterCreateCommunityHubSections.map((section) => (
-              <article className="hub-section-row" key={section}>
-                <span>{section}</span>
-                <button onClick={() => showToast?.(`Adding a ${section} section coming soon.`)}>Add Section</button>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <div className="community-hub-actions">
-          <button onClick={() => showToast?.("Draft saved.")}>Save Draft</button>
-          <button onClick={() => showToast?.("Hub preview coming soon.")}>Preview Hub</button>
-          <button className="publish-hub-button" onClick={() => showToast?.("Publishing a community hub coming soon.")}>Publish Hub</button>
-        </div>
-
-        <p className="community-hub-helper-note">
-          Clear rules, accurate ratings, and honest SLURLs help residents find communities that fit them.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-function CreateBloggerPostPage({ showToast }) {
-  return (
-    <section className="create-blogger-page">
-      <div className="blogger-form-card glass-card">
-        <div className="blogger-form-grid">
-          <div className="blogger-fields">
-            {gridsterCreateBloggerPostFields.map(([label, value]) => (
-              <label className="blogger-field" key={label}>
-                <span>{label}</span>
-                <input value={value} readOnly />
-              </label>
-            ))}
-          </div>
-
-          <aside className="blog-photo-preview-panel">
-            <span>Gridster Blogger Post</span>
-            <h3>BLOG PHOTO PREVIEW</h3>
-            <p>Upload an editorial look, location shoot, fashion detail, or creator feature image.</p>
-            <button onClick={() => showToast?.("Uploading a photo coming soon.")}>Upload Photo</button>
-          </aside>
-        </div>
-
-        <section className="credit-builder-card">
-          <SectionHeader className="credit-builder-heading" eyebrow="Credit Builder" title="Credit Builder" />
-          <div className="credit-row-list">
-            {gridsterBloggerCreditRows.map((row) => (
-              <article className="credit-row" key={row}>
-                <span>{row}</span>
-                <button onClick={() => showToast?.(`Adding a ${row} credit coming soon.`)}>Add Credit</button>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <div className="blogger-form-actions">
-          <button onClick={() => showToast?.("Draft saved.")}>Save Draft</button>
-          <button onClick={() => showToast?.("Post preview coming soon.")}>Preview Post</button>
-          <button className="publish-blogger-button" onClick={() => showToast?.("Publishing a blogger post coming soon.")}>Publish Blogger Post</button>
-        </div>
-
-        <p className="blogger-helper-note">
-          Good credits help stores, photographers, pose makers, and creators get seen.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-function CreateStorePostPage({ showToast }) {
-  return (
-    <section className="create-store-page">
-      <div className="store-form-card glass-card">
-        <div className="store-form-grid">
-          <div className="store-fields">
-            {gridsterCreateStorePostFields.map(([label, value]) => (
-              <label className="store-field" key={label}>
-                <span>{label}</span>
-                <input value={value} readOnly />
-              </label>
-            ))}
-          </div>
-
-          <aside className="product-preview-panel">
-            <span>Gridster Store Post</span>
-            <h3>PRODUCT PREVIEW</h3>
-            <p>Show a release image, vendor ad, blogger pack graphic, or event booth promo.</p>
-            <button onClick={() => showToast?.("Uploading a product image coming soon.")}>Upload Product Image</button>
-          </aside>
-        </div>
-
-        <div className="store-form-actions">
-          <button onClick={() => showToast?.("Draft saved.")}>Save Draft</button>
-          <button onClick={() => showToast?.("Post preview coming soon.")}>Preview Post</button>
-          <button className="publish-store-button" onClick={() => showToast?.("Publishing a store post coming soon.")}>Publish Store Post</button>
-        </div>
-
-        <p className="store-helper-note">
-          Clear credits, honest ratings, working links, and SLURLs help shoppers find your creations faster.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-function CreateEventPage({ showToast }) {
-  return (
-    <section className="create-event-page">
-      <div className="event-form-card glass-card">
-        <div className="event-form-grid">
-          <div className="event-fields">
-            {gridsterCreateEventFields.map(([label, value]) => (
-              <label className="event-field" key={label}>
-                <span>{label}</span>
-                <input value={value} readOnly />
-              </label>
-            ))}
-          </div>
-
-          <aside className="event-poster-preview">
-            <span>Gridster Event Preview</span>
-            <h3>YOUR EVENT POSTER</h3>
-            <p>Drop in a club flyer, DJ poster, sale graphic, or community event image.</p>
-            <button onClick={() => showToast?.("Uploading a poster coming soon.")}>Upload Poster</button>
-          </aside>
-        </div>
-
-        <div className="event-form-actions">
-          <button onClick={() => showToast?.("Draft saved.")}>Save Draft</button>
-          <button onClick={() => showToast?.("Event preview coming soon.")}>Preview Event</button>
-          <button className="publish-event-button" onClick={() => showToast?.("Publishing an event coming soon.")}>Publish Event</button>
-        </div>
-
-        <p className="event-helper-note">
-          Clear SLURLs, accurate ratings, and honest event details help residents teleport with confidence.
-        </p>
-      </div>
-    </section>
-  );
-}
-
 function SettingsPage({ setActivePage, showToast }) {
   return (
     <div className="settings-grid">
@@ -2046,19 +1808,45 @@ function SettingsPage({ setActivePage, showToast }) {
   );
 }
 
-function CreatePostComposer({ showToast }) {
+const COMPOSER_ACTION_TABS = {
+  "▣ Photo": "photo",
+  "◇ Event": "event",
+  "⌖ SLURL": "slurl",
+  "✎ Blog": "blog",
+};
+
+function CreatePostComposer({ onOpenComposer, showToast }) {
+  const [content, setContent] = useState("");
+
+  const handleAction = (action) => {
+    const tab = COMPOSER_ACTION_TABS[action];
+
+    if (tab) {
+      onOpenComposer?.(tab);
+    } else {
+      showToast?.(`${action} coming soon.`);
+    }
+  };
+
   return (
     <section className="create-post glass-card">
       <div className="composer-top">
         <div className="mini-avatar">CJ</div>
-        <input placeholder="What's happening in your world?" />
+        <input
+          value={content}
+          onChange={(event) => setContent(event.target.value)}
+          placeholder="What's happening in your world?"
+        />
         <span className="sparkle">✦</span>
       </div>
 
       <div className="composer-actions">
         {gridsterComposerActions.map((action) => (
-          <button key={action} onClick={() => showToast?.(`${action} coming soon.`)}>{action}</button>
+          <button key={action} onClick={() => handleAction(action)}>{action}</button>
         ))}
+        <button className="composer-post-button" onClick={() => onOpenComposer?.("general", content)}>
+          Post
+        </button>
       </div>
 
       <div className="composer-templates">
@@ -2077,6 +1865,87 @@ function CreatePostComposer({ showToast }) {
         <p className="composer-helper">Share a moment, promote an event, drop a SLURL, or show off your latest look.</p>
       </div>
     </section>
+  );
+}
+
+function RecentPostsFeed({ refreshToken, showToast }) {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    fetchRecentPosts()
+      .then((data) => {
+        if (active) {
+          setPosts(data || []);
+        }
+      })
+      .catch((loadError) => {
+        if (active) {
+          showToast?.(loadError.message || "Could not load the feed.");
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshToken]);
+
+  if (loading) {
+    return <p className="groups-directory-message">Loading feed...</p>;
+  }
+
+  if (!posts.length) {
+    return null;
+  }
+
+  return (
+    <>
+      {posts.map((post) => (
+        <FeedPost
+          key={post.id}
+          header={(
+            <div className="post-header">
+              <div className="post-avatar">{(post.author_name || "G").charAt(0)}</div>
+              <div className="post-header-copy">
+                <strong>{post.author_name || "A Gridster resident"}</strong>
+                <span>{GRIDSTER_POST_TYPE_LABELS[post.post_type] || "Post"} • {new Date(post.created_at).toLocaleString()}</span>
+              </div>
+            </div>
+          )}
+          actions={<PostActions likes="0" comments="0" postId={post.id} showToast={showToast} />}
+        >
+          <div className="recent-post-body">
+            {post.content ? <p>{post.content}</p> : null}
+            {post.photo_url ? (
+              <div className="recent-post-photo">
+                <img src={post.photo_url} alt="" />
+              </div>
+            ) : null}
+            {post.link_url ? (
+              <a className="recent-post-link" href={post.link_url} target="_blank" rel="noreferrer">
+                {post.link_url}
+              </a>
+            ) : null}
+            {post.slurl ? (
+              <div className="recent-post-actions">
+                <button type="button" data-destination={post.region_name || post.content || "Gridster"} data-slurl={post.slurl}>
+                  Teleport
+                </button>
+                <TeleportStatusChip slurl={post.slurl} destinationName={post.region_name || post.content || "Gridster"} showToast={showToast} />
+              </div>
+            ) : null}
+          </div>
+        </FeedPost>
+      ))}
+    </>
   );
 }
 

@@ -9,9 +9,9 @@ only enters their Second Life legacy username on the Gridster website, then the
 official Gridster sender object sends that avatar a private IM containing the
 verification code.
 
-## Netlify environment variables
+## Cloudflare Pages environment variables
 
-Set these in Netlify before using the sender:
+Set these in the Cloudflare Pages project settings before using the sender:
 
 - `SUPABASE_URL` or `VITE_SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
@@ -25,10 +25,13 @@ Second Life sender object. Do not use the Supabase service-role key in Second Li
 Put these values in `gridster-verification-sender.lsl`:
 
 - `GET_PENDING_URL`:
-  `https://gridster-social.netlify.app/.netlify/functions/get-pending-sl-verification-code`
+  `https://YOUR-CLOUDFLARE-DOMAIN/api/get-pending-sl-verification-code`
 - `MARK_SENT_URL`:
-  `https://gridster-social.netlify.app/.netlify/functions/mark-sl-verification-sent`
-- `SENDER_SECRET`: the same value as `GRIDSTER_SL_SENDER_SECRET` in Netlify
+  `https://YOUR-CLOUDFLARE-DOMAIN/api/mark-sl-verification-sent`
+- `SENDER_SECRET`: the same value as `GRIDSTER_SL_SENDER_SECRET` in Cloudflare Pages
+
+Replace `YOUR-CLOUDFLARE-DOMAIN` with your real Cloudflare Pages domain
+(e.g. `gridster-social.pages.dev`, or a custom domain) once deployed.
 
 The browser never receives `GRIDSTER_SL_SENDER_SECRET` and never calls the
 pending-code sender endpoint.

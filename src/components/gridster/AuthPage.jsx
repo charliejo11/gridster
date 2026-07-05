@@ -59,7 +59,7 @@ function AuthPage({ initialMode = "login", onProfileOpen }) {
         throw new Error("Log in to Gridster before verifying your Second Life avatar.");
       }
 
-      const response = await fetch("/.netlify/functions/create-sl-verification-code", {
+      const response = await fetch("/api/create-sl-verification-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -96,7 +96,7 @@ function AuthPage({ initialMode = "login", onProfileOpen }) {
     setAvatarVerified(false);
 
     try {
-      const response = await fetch("/.netlify/functions/verify-sl-verification-code", {
+      const response = await fetch("/api/verify-sl-verification-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

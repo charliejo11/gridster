@@ -2172,6 +2172,21 @@ button {
   box-shadow: 0 0 18px rgba(141, 53, 255, 0.13);
 }
 
+.auth-forgot-password-link {
+  margin: 10px 0 0;
+  border: none;
+  background: transparent;
+  color: rgba(235, 230, 255, 0.6);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.auth-forgot-password-link:hover {
+  color: #ffffff;
+}
+
 .auth-verification-panel {
   display: grid;
   gap: 13px;
@@ -3812,6 +3827,33 @@ button {
   margin: 0;
   color: #c9c2dd;
   font-size: 14px;
+  line-height: 1.55;
+}
+
+.legal-content-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px !important;
+}
+
+.legal-content-intro {
+  margin: 0;
+  color: #c9c2dd;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.legal-content-section h3 {
+  margin: 0 0 6px;
+  color: #ffffff;
+  font-size: 15px;
+}
+
+.legal-content-section p {
+  margin: 0;
+  color: rgba(235, 230, 255, 0.78);
+  font-size: 13px;
   line-height: 1.55;
 }
 

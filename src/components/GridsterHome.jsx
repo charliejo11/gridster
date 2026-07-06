@@ -587,7 +587,31 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
     return (
       <PageShell title="Groups" subtitle="Join clubs, creator circles, RP hubs, blogger networks, and community crews.">
         <GroupsPage onOpenGroup={onOpenGroup} onAuthOpen={onAuthOpen} showToast={showToast} />
-        <CommunityStandards showToast={showToast} />
+        <CommunityStandards setActivePage={setActivePage} />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "CommunityGuidelines") {
+    return (
+      <PageShell title="Community Guidelines" subtitle="Keep the grid fun, creative, and respectful.">
+        <LegalContentPage sections={COMMUNITY_GUIDELINES_SECTIONS} />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "TermsOfService") {
+    return (
+      <PageShell title="Terms of Service" subtitle="The basics of using Gridster during its early beta.">
+        <LegalContentPage sections={TERMS_OF_SERVICE_SECTIONS} />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "PrivacyPolicy") {
+    return (
+      <PageShell title="Privacy Policy" subtitle="What we collect, how we use it, and how you stay in control.">
+        <LegalContentPage sections={PRIVACY_POLICY_SECTIONS} />
       </PageShell>
     );
   }
@@ -2537,7 +2561,7 @@ function CreatorsCollectivePost({ showToast }) {
   );
 }
 
-function CommunityStandards({ showToast }) {
+function CommunityStandards({ setActivePage }) {
   return (
     <section className="community-card glass-card">
       <div className="community-header">
@@ -2546,7 +2570,7 @@ function CommunityStandards({ showToast }) {
           <h2>Gridster Community Standards</h2>
           <p>Keep the grid fun, creative, and respectful.</p>
         </div>
-        <button onClick={() => showToast?.("Community guidelines coming soon.")}>Read Guidelines</button>
+        <button onClick={() => setActivePage?.("CommunityGuidelines")}>Read Guidelines</button>
       </div>
 
       <div className="community-rules">
@@ -2570,6 +2594,47 @@ function CommunityStandards({ showToast }) {
     </section>
   );
 }
+
+function LegalContentPage({ intro, sections }) {
+  return (
+    <section className="legal-content-page glass-card">
+      {intro ? <p className="legal-content-intro">{intro}</p> : null}
+      {sections.map((section) => (
+        <article className="legal-content-section" key={section.heading}>
+          <h3>{section.heading}</h3>
+          <p>{section.body}</p>
+        </article>
+      ))}
+    </section>
+  );
+}
+
+const COMMUNITY_GUIDELINES_SECTIONS = [
+  { heading: "Respect residents", body: "No harassment, stalking, threats, or personal attacks against other residents or creators." },
+  { heading: "Credit creators", body: "Give credit for photos, outfits, builds, poses, and store releases whenever you can." },
+  { heading: "Mark mature content", body: "Use proper ratings for adult, moderate, and general content so residents know what to expect." },
+  { heading: "No spam or teleport traps", body: "SLURLs, event listings, and store links should be clear, honest, and safe to visit." },
+  { heading: "No impersonation", body: "Don't post as, or claim to be, another resident, creator, store, or venue." },
+  { heading: "Report problems", body: "Use the report option on posts and profiles to flag anything that breaks these guidelines. Violations may lead to content removal or account suspension." },
+];
+
+const TERMS_OF_SERVICE_SECTIONS = [
+  { heading: "About Gridster", body: "Gridster is an independent, fan-made social hub for the Second Life community. It is not affiliated with, endorsed by, or sponsored by Linden Research, Inc. “Second Life” is a trademark of Linden Research, Inc." },
+  { heading: "Beta status", body: "Gridster is currently in early beta. Features may change, break, or be removed without notice while we keep improving the site." },
+  { heading: "Your account and content", body: "You're responsible for what you post. You keep ownership of your content, and by posting it you allow Gridster to display it to other residents on the platform." },
+  { heading: "Acceptable use", body: "You agree to follow Gridster's Community Guidelines and to use the platform lawfully and respectfully." },
+  { heading: "No warranty", body: "Gridster is provided “as is,” without warranties of any kind, during this beta period and beyond." },
+  { heading: "Suspension", body: "We may suspend or remove accounts or content that violate these terms or the Community Guidelines." },
+];
+
+const PRIVACY_POLICY_SECTIONS = [
+  { heading: "What we collect", body: "Your email address (for login), the Second Life username and profile details you choose to add, and the content you post — including posts, events, places, and photo links." },
+  { heading: "How we use it", body: "To run your account, show your profile and content to other residents, and improve Gridster." },
+  { heading: "What we don't do", body: "We don't sell your personal data to third parties." },
+  { heading: "Storage", body: "Your data is stored securely with Supabase, our database provider." },
+  { heading: "Your control", body: "You can edit or delete your profile and your posts at any time from within Gridster." },
+  { heading: "Beta note", body: "Since Gridster is in early beta, please avoid posting highly sensitive personal information until the platform has matured." },
+];
 
 function BlingBits({ showToast }) {
   return (
@@ -3360,7 +3425,9 @@ function GridsterFooter({ showToast, setActivePage }) {
       <nav className="footer-links" aria-label="Footer navigation">
         <a onClick={() => showToast?.("About Gridster coming soon.")}>About</a>
         <a onClick={() => showToast?.("Safety Center coming soon.")}>Safety</a>
-        <a onClick={() => showToast?.("Community Guidelines coming soon.")}>Community Guidelines</a>
+        <a onClick={() => setActivePage?.("CommunityGuidelines")}>Community Guidelines</a>
+        <a onClick={() => setActivePage?.("PrivacyPolicy")}>Privacy Policy</a>
+        <a onClick={() => setActivePage?.("TermsOfService")}>Terms of Service</a>
         <a onClick={() => setActivePage?.("BlingBoost")}>Premium</a>
         <a onClick={() => setActivePage?.("Sponsors")}>Sponsors</a>
         <a onClick={() => showToast?.("Support coming soon.")}>Support</a>

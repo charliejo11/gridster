@@ -7,6 +7,7 @@ function getAuthMode(mode) {
 
 function AuthPage({ initialMode = "login", onProfileOpen }) {
   const [mode, setMode] = useState(() => getAuthMode(initialMode));
+  const [newPassword, setNewPassword] = useState("");
   const [slUsername, setSlUsername] = useState("");
   const [verificationRequestId, setVerificationRequestId] = useState("");
   const [enteredVerificationCode, setEnteredVerificationCode] = useState("");
@@ -34,8 +35,12 @@ function AuthPage({ initialMode = "login", onProfileOpen }) {
       }
     }).catch(() => {});
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+
+      if (event === "PASSWORD_RECOVERY") {
+        setMode("reset");
+      }
     });
 
     return () => listener?.subscription?.unsubscribe();
@@ -128,12 +133,52 @@ function AuthPage({ initialMode = "login", onProfileOpen }) {
     setLoading(true);
     setMessage("");
 
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
 
     if (error) {
       setMessage(error.message);
     } else {
       setMessage("Check your email for the confirmation link.");
+    }
+
+    setLoading(false);
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+
+    if (error) {
+      setMessage(error.message);
+    } else {
+      setMessage("Check your email for a password reset link.");
+    }
+
+    setLoading(false);
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    if (error) {
+      setMessage(error.message);
+    } else {
+      setNewPassword("");
+      setMessage("Password updated. You're logged in with your new password.");
+      setMode("login");
     }
 
     setLoading(false);
@@ -172,6 +217,41 @@ function AuthPage({ initialMode = "login", onProfileOpen }) {
 
     setLoading(false);
   };
+
+  if (mode === "reset") {
+    return (
+      <section className="auth-page">
+        <div className="auth-card glass-card auth-login-card">
+          <div className="auth-card-heading">
+            <span>Gridster Account</span>
+            <h3>Choose a new password.</h3>
+          </div>
+
+          <form className="auth-form" onSubmit={handleResetPassword}>
+            <label className="auth-field">
+              <span>New password</span>
+              <input
+                className="auth-input"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password"
+                required
+              />
+            </label>
+
+            <div className="auth-actions">
+              <button type="submit" className="auth-login-button" disabled={loading}>
+                {loading ? "Updating..." : "Update Password"}
+              </button>
+            </div>
+          </form>
+
+          {message ? <p className="auth-message">{message}</p> : null}
+        </div>
+      </section>
+    );
+  }
 
   if (user) {
     return (
@@ -261,6 +341,53 @@ function AuthPage({ initialMode = "login", onProfileOpen }) {
     );
   }
 
+  if (mode === "forgot") {
+    return (
+      <section className="auth-page">
+        <div className="auth-card glass-card auth-login-card">
+          <div className="auth-card-heading">
+            <span>Gridster Account</span>
+            <h3>Reset your password.</h3>
+            <p>Enter your email and we'll send you a link to choose a new password.</p>
+          </div>
+
+          <form className="auth-form" onSubmit={handleForgotPassword}>
+            <label className="auth-field">
+              <span>Email</span>
+              <input
+                className="auth-input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+              />
+            </label>
+
+            <div className="auth-actions">
+              <button type="submit" className="auth-login-button" disabled={loading}>
+                {loading ? "Sending..." : "Send Reset Link"}
+              </button>
+              <button
+                type="button"
+                className="auth-signup-button"
+                onClick={() => {
+                  setMode("login");
+                  setMessage("");
+                }}
+                disabled={loading}
+              >
+                Back to Log In
+              </button>
+            </div>
+          </form>
+
+          {message ? <p className="auth-message">{message}</p> : null}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="auth-page">
       <div className="auth-card glass-card auth-login-card">
@@ -315,6 +442,20 @@ function AuthPage({ initialMode = "login", onProfileOpen }) {
               {isSignupMode ? "Log In Instead" : "Sign Up Instead"}
             </button>
           </div>
+
+          {!isSignupMode ? (
+            <button
+              type="button"
+              className="auth-forgot-password-link"
+              onClick={() => {
+                setMode("forgot");
+                setMessage("");
+              }}
+              disabled={loading}
+            >
+              Forgot password?
+            </button>
+          ) : null}
         </form>
 
         {message ? <p className="auth-message">{message}</p> : null}

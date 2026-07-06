@@ -8,6 +8,7 @@ import {
   fetchFriendNotifications,
   formatFriendNotificationTime,
   markFriendNotificationsSeen,
+  respondToFriendRequest,
 } from "../../lib/gridsterFriends";
 
 function initialsFromName(name) {
@@ -49,6 +50,7 @@ function Header({
   const [currentUser, setCurrentUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [friendNotifications, setFriendNotifications] = useState([]);
+  const [respondingRequestId, setRespondingRequestId] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -218,6 +220,21 @@ function Header({
     setShowNotifications(false);
   };
 
+  const handleRespondToRequest = (requestId, accept) => {
+    setRespondingRequestId(requestId);
+
+    respondToFriendRequest(requestId, accept)
+      .then(() => {
+        showToast?.(accept ? "Friend request accepted." : "Friend request declined.");
+
+        if (currentUser) {
+          fetchFriendNotifications(currentUser.id).then(setFriendNotifications).catch(() => {});
+        }
+      })
+      .catch((error) => showToast?.(error.message || "Could not update that friend request."))
+      .finally(() => setRespondingRequestId(""));
+  };
+
   const unreadNotificationCount = friendNotifications.filter((item) => item.unread).length;
 
   return (
@@ -341,6 +358,25 @@ function Header({
                           {notification.type === "friend_request_received" ? "sent you a friend request" : "accepted your friend request"}
                         </strong>
                         <small>{formatFriendNotificationTime(notification.time)}</small>
+
+                        {notification.type === "friend_request_received" ? (
+                          <div className="notification-inline-actions">
+                            <button
+                              type="button"
+                              disabled={respondingRequestId === notification.requestId}
+                              onClick={() => handleRespondToRequest(notification.requestId, true)}
+                            >
+                              Accept
+                            </button>
+                            <button
+                              type="button"
+                              disabled={respondingRequestId === notification.requestId}
+                              onClick={() => handleRespondToRequest(notification.requestId, false)}
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        ) : null}
                       </div>
                       {notification.unread ? <em aria-label="Unread notification"></em> : null}
                     </article>

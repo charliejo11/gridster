@@ -65,6 +65,7 @@ function RightSidebar({
   liveNow,
   onOpenProfile,
   onOpenResidentProfile,
+  onOpenMessages,
   places,
   showToast,
 }) {
@@ -174,6 +175,9 @@ function RightSidebar({
                 </div>
               </div>
               <div className="friend-online-actions">
+                <ActionButton onClick={() => onOpenMessages?.(friend.user_id)}>
+                  Message
+                </ActionButton>
                 <ActionButton onClick={() => onOpenResidentProfile?.(friend.user_id)}>
                   View
                 </ActionButton>

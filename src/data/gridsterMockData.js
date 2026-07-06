@@ -129,36 +129,6 @@ export const gridsterDjSets = [
   ["DJ NovaVixen", "Moonlit Market", "Pop / Dance"],
 ];
 
-export const gridsterSearchFilters = ["Residents", "Events", "Stores", "Groups", "Photo Spots", "SLURLs", "General", "Moderate", "Adult"];
-
-export const gridsterSearchResults = [
-  ["Sanctuary Rocks", "Venue • Rock / Metal • Live Events", "View"],
-  ["CharlieJo", "Blogger • Photographer • Creator", "View Profile"],
-  ["Moonlit Cathedral", "Photo Spot • Gothic • Moderate", "Save Landmark"],
-  ["Valentina Boutique", "Store • Fashion • New Releases", "Shop"],
-  ["Neon Nights Party", "Event • Tonight • 9 PM SLT", "Teleport"],
-  ["Moonlit Hollow", "Community Hub • Gothic RP", "Join"],
-];
-
-export const gridsterMessageConversations = [
-  ["R", "RavenHex", "That photo spot is insane.", "2m"],
-  ["S", "Sanctuary Rocks", "You’re invited to Metal Night.", "14m"],
-  ["N", "NovaVixen", "Loved your latest blog post.", "1h"],
-  ["V", "Valentina Boutique", "New blogger pack available.", "3h"],
-  ["D", "DJ Starfall", "Can you share the event SLURL?", "5h"],
-  ["M", "Moonlit Hollow", "Community application update.", "1d"],
-];
-
-export const gridsterMessageThreads = {
-  RavenHex: [
-    ["RavenHex", "That photo spot is insane.", "received"],
-    ["CharlieJo", "Right? The lighting is perfect for gothic shots.", "sent"],
-    ["RavenHex", "Send me the SLURL when you can.", "received"],
-  ],
-};
-
-export const gridsterMessageQuickActions = ["Send SLURL", "Share Post", "Invite to Event"];
-
 export const gridsterLeftSidebarProfile = {
   stats: [
     ["2.4K", "Followers"],

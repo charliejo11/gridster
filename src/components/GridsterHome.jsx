@@ -2,10 +2,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { getBlingBalanceSummary, getEquippedCosmeticsForUser } from "../lib/blingDepot";
 import {
+  GRIDSTER_MESSAGE_EVENT,
+  fetchConversations,
+  fetchThread,
+  markThreadRead,
+  sendMessage,
+} from "../lib/gridsterMessages";
+import {
   addFavoritePlace,
   computeGridsterProfileStrength,
   fetchFavoritePlaces,
   fetchGridsterProfile,
+  fetchResidentDirectory,
   removeFavoritePlace,
 } from "../lib/gridsterProfiles";
 import {
@@ -17,6 +25,7 @@ import {
   fetchGridsterEvents,
   fetchGridsterPlaces,
 } from "../lib/gridsterPlaces";
+import { GRIDSTER_GROUP_CATEGORY_LABELS, fetchGroups } from "../lib/gridsterGroups";
 import { GRIDSTER_POST_TYPE_LABELS, fetchPostsByIds, fetchRecentPosts } from "../lib/gridsterPosts";
 import {
   createPhotoChallenge,
@@ -48,13 +57,8 @@ import {
   gridsterLiveNow,
   gridsterLiveNowEvents,
   gridsterMarketplaceFinds,
-  gridsterMessageConversations,
-  gridsterMessageThreads,
-  gridsterMessageQuickActions,
   gridsterPostSampleComments,
   gridsterProfileFlairBadges,
-  gridsterSearchFilters,
-  gridsterSearchResults,
   gridsterSidebarGroups,
   gridsterSuggestedCreators,
   gridsterTeleportCenterDestinations,
@@ -156,6 +160,7 @@ function GridsterHome() {
   const [selectedProfileName, setSelectedProfileName] = useState("CharlieJo");
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [selectedResidentUserId, setSelectedResidentUserId] = useState(null);
+  const [selectedMessageFriendId, setSelectedMessageFriendId] = useState(null);
   const [selectedCreatorPageId, setSelectedCreatorPageId] = useState(null);
   const [initialTeleportCategory, setInitialTeleportCategory] = useState(null);
   const [composer, setComposer] = useState(null);
@@ -253,6 +258,13 @@ function GridsterHome() {
     setShowNotifications(false);
     setShowThemeMenu(false);
     setActivePage("ResidentProfile");
+  };
+
+  const openMessages = (friendUserId) => {
+    setSelectedMessageFriendId(friendUserId ?? null);
+    setShowNotifications(false);
+    setShowThemeMenu(false);
+    setActivePage("Messages");
   };
 
   const openCreatorPage = (pageId) => {
@@ -366,6 +378,7 @@ function GridsterHome() {
             liveNow={gridsterLiveNow}
             onOpenProfile={openProfile}
             onOpenResidentProfile={openResidentProfile}
+            onOpenMessages={openMessages}
             places={gridsterFeaturedPlaces}
             showToast={showToast}
           />
@@ -378,6 +391,7 @@ function GridsterHome() {
           selectedProfileName={selectedProfileName}
           selectedGroupId={selectedGroupId}
           selectedResidentUserId={selectedResidentUserId}
+          selectedMessageFriendId={selectedMessageFriendId}
           selectedCreatorPageId={selectedCreatorPageId}
           initialTeleportCategory={initialTeleportCategory}
           postsRefreshToken={postsRefreshToken}
@@ -385,6 +399,7 @@ function GridsterHome() {
           onOpenProfile={openProfile}
           onOpenGroup={openGroup}
           onOpenResidentProfile={openResidentProfile}
+          onOpenMessages={openMessages}
           onOpenCreatorPage={openCreatorPage}
           onOpenMyCreatorPages={openMyCreatorPages}
           onOpenTeleportDiscovery={openTeleportDiscovery}
@@ -416,7 +431,7 @@ function GridsterHome() {
   );
 }
 
-function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, selectedGroupId, selectedResidentUserId, selectedCreatorPageId, initialTeleportCategory, postsRefreshToken, setActivePage, onOpenProfile, onOpenGroup, onOpenResidentProfile, onOpenCreatorPage, onOpenMyCreatorPages, onOpenTeleportDiscovery, onOpenComposer, onAuthOpen, showToast }) {
+function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, selectedGroupId, selectedResidentUserId, selectedMessageFriendId, selectedCreatorPageId, initialTeleportCategory, postsRefreshToken, setActivePage, onOpenProfile, onOpenGroup, onOpenResidentProfile, onOpenMessages, onOpenCreatorPage, onOpenMyCreatorPages, onOpenTeleportDiscovery, onOpenComposer, onAuthOpen, showToast }) {
   if (activePage === "Home") {
     return (
       <>
@@ -453,7 +468,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   if (activePage === "Search") {
     return (
       <PageShell title="Search" subtitle="Find residents, stores, events, groups, photo spots, SLURLs, and communities.">
-        <SearchResultsPage onOpenProfile={onOpenProfile} showToast={showToast} />
+        <SearchResultsPage onOpenResidentProfile={onOpenResidentProfile} onOpenGroup={onOpenGroup} showToast={showToast} />
       </PageShell>
     );
   }
@@ -683,7 +698,11 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Messages"
         subtitle="Keep up with comments, event invites, creator updates, store notices, and private messages."
       >
-        <MessagesPageContent onOpenProfile={onOpenProfile} showToast={showToast} />
+        <MessagesPageContent
+          initialFriendId={selectedMessageFriendId}
+          onOpenResidentProfile={onOpenResidentProfile}
+          showToast={showToast}
+        />
       </PageShell>
     );
   }
@@ -819,65 +838,184 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   return null;
 }
 
-function SearchResultsPage({ onOpenProfile, showToast }) {
+const SEARCH_FILTERS = ["All", "Residents", "Groups", "Places", "Events"];
+
+function SearchResultsPage({ onOpenResidentProfile, onOpenGroup, showToast }) {
+  const [query, setQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [residents, setResidents] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [places, setPlaces] = useState([]);
+  const [events, setEvents] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+
+    Promise.allSettled([
+      fetchResidentDirectory(),
+      fetchGroups(),
+      fetchGridsterPlaces(),
+      fetchGridsterEvents(),
+    ]).then(([residentsResult, groupsResult, placesResult, eventsResult]) => {
+      if (!active) {
+        return;
+      }
+
+      setResidents(residentsResult.status === "fulfilled" ? residentsResult.value || [] : []);
+      setGroups(groupsResult.status === "fulfilled" ? groupsResult.value || [] : []);
+      setPlaces(placesResult.status === "fulfilled" ? placesResult.value || [] : []);
+      setEvents(eventsResult.status === "fulfilled" ? eventsResult.value || [] : []);
+      setLoading(false);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const normalizedQuery = query.trim().toLowerCase();
+
+  const results = useMemo(() => {
+    const matches = [];
+
+    if (activeFilter === "All" || activeFilter === "Residents") {
+      residents.forEach((resident) => {
+        const name = resident.display_name || resident.sl_username || "Resident";
+        const haystack = `${resident.display_name || ""} ${resident.sl_username || ""}`.toLowerCase();
+
+        if (!normalizedQuery || haystack.includes(normalizedQuery)) {
+          matches.push({
+            type: "resident",
+            key: `resident-${resident.user_id}`,
+            title: name,
+            meta: resident.creator_type || "Resident",
+            data: resident,
+          });
+        }
+      });
+    }
+
+    if (activeFilter === "All" || activeFilter === "Groups") {
+      groups.forEach((group) => {
+        const haystack = `${group.name || ""}`.toLowerCase();
+
+        if (!normalizedQuery || haystack.includes(normalizedQuery)) {
+          matches.push({
+            type: "group",
+            key: `group-${group.id}`,
+            title: group.name,
+            meta: `${GRIDSTER_GROUP_CATEGORY_LABELS[group.category] || group.category} • ${group.member_count || 0} members`,
+            data: group,
+          });
+        }
+      });
+    }
+
+    if (activeFilter === "All" || activeFilter === "Places") {
+      places.forEach((place) => {
+        const haystack = `${place.title || ""} ${place.region_name || ""}`.toLowerCase();
+
+        if (!normalizedQuery || haystack.includes(normalizedQuery)) {
+          matches.push({
+            type: "place",
+            key: `place-${place.id}`,
+            title: place.title,
+            meta: `${GRIDSTER_PLACE_CATEGORY_LABELS[place.category] || place.category}${place.region_name ? " • " + place.region_name : ""}`,
+            data: place,
+          });
+        }
+      });
+    }
+
+    if (activeFilter === "All" || activeFilter === "Events") {
+      events.forEach((event) => {
+        const haystack = `${event.title || ""} ${event.region_name || ""}`.toLowerCase();
+
+        if (!normalizedQuery || haystack.includes(normalizedQuery)) {
+          matches.push({
+            type: "event",
+            key: `event-${event.id}`,
+            title: event.title,
+            meta: `${GRIDSTER_EVENT_TYPE_LABELS[event.event_type] || "Event"}${event.when_label ? " • " + event.when_label : ""}`,
+            data: event,
+          });
+        }
+      });
+    }
+
+    return matches;
+  }, [residents, groups, places, events, normalizedQuery, activeFilter]);
+
   return (
     <section className="search-results-page">
-      <BetaPlaceholderNotice>
-        🚧 Real-time search is still in beta — the results below are sample previews. Try Explore, Groups, or Residents to browse real content.
-      </BetaPlaceholderNotice>
-
       <div className="search-preview-card glass-card">
         <label className="search-preview-input">
           <span>⌕</span>
-          <input placeholder="Search Gridster..." />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search residents, groups, places, and events..."
+          />
         </label>
 
         <div className="search-filter-pills">
-          {gridsterSearchFilters.map((filter) => (
-            <button key={filter} onClick={() => showToast?.(`Filtering by ${filter} coming soon.`)}>{filter}</button>
+          {SEARCH_FILTERS.map((filter) => (
+            <button
+              key={filter}
+              className={activeFilter === filter ? "active" : ""}
+              onClick={() => setActiveFilter(filter)}
+            >
+              {filter}
+            </button>
           ))}
         </div>
       </div>
 
-      <CardGrid className="search-results-grid">
-        {gridsterSearchResults.map(([title, meta, action], index) => (
-          <article className="search-result-card glass-card" key={title}>
-            <div className={`search-result-icon result-${index}`}>{title.charAt(0)}</div>
-            <div className="search-result-copy">
-              <h3>{title}</h3>
-              <p>{meta}</p>
-            </div>
-            <ResultActionButton action={action} title={title} onOpenProfile={onOpenProfile} showToast={showToast} />
-          </article>
-        ))}
-      </CardGrid>
+      {loading ? (
+        <p className="tonight-message">Loading search results...</p>
+      ) : results.length === 0 ? (
+        <p className="tonight-message">
+          {normalizedQuery ? `No results for "${query}".` : "Nothing here yet in this category."}
+        </p>
+      ) : (
+        <CardGrid className="search-results-grid">
+          {results.map((result, index) => (
+            <article className="search-result-card glass-card" key={result.key}>
+              <div className={`search-result-icon result-${index % 6}`}>{result.title?.charAt(0) || "?"}</div>
+              <div className="search-result-copy">
+                <h3>{result.title}</h3>
+                <p>{result.meta}</p>
+              </div>
+              <SearchResultAction
+                result={result}
+                onOpenResidentProfile={onOpenResidentProfile}
+                onOpenGroup={onOpenGroup}
+                showToast={showToast}
+              />
+            </article>
+          ))}
+        </CardGrid>
+      )}
     </section>
   );
 }
 
-function ResultActionButton({ action, title, onOpenProfile, showToast }) {
-  if (["View", "View Profile", "Shop"].includes(action) && hasGridsterProfile(title)) {
-    return <button onClick={() => onOpenProfile?.(title)}>{action}</button>;
+function SearchResultAction({ result, onOpenResidentProfile, onOpenGroup, showToast }) {
+  if (result.type === "resident") {
+    return <button onClick={() => onOpenResidentProfile?.(result.data.user_id)}>View Profile</button>;
   }
 
-  if (action === "Join") {
-    return <JoinButton storageKey={title} />;
+  if (result.type === "group") {
+    return <button onClick={() => onOpenGroup?.(result.data.id)}>View Group</button>;
   }
 
-  if (action === "Teleport") {
-    return (
-      <>
-        <button {...getTeleportButtonProps(title)}>{action}</button>
-        <TeleportStatusChip slurl={getGridsterDestination(title)?.slurl} destinationName={title} showToast={showToast} />
-      </>
-    );
-  }
-
-  if (action.toLowerCase().startsWith("save")) {
-    return <SaveButton label={action} storageKey={`search-result:${title}`} />;
-  }
-
-  return <button onClick={() => showToast?.(`${action} for ${title} coming soon.`)}>{action}</button>;
+  return (
+    <>
+      <button {...getTeleportButtonProps(result.title, result.data.slurl)}>Teleport</button>
+      <TeleportStatusChip slurl={result.data.slurl} destinationName={result.title} showToast={showToast} />
+    </>
+  );
 }
 
 const EXPLORE_CATEGORY_DESCRIPTIONS = {
@@ -1060,62 +1198,133 @@ function EventsPageContent({ onOpenComposer, showToast }) {
   );
 }
 
-function MessagesPageContent({ onOpenProfile, showToast }) {
-  const [selectedName, setSelectedName] = useState(gridsterMessageConversations[0]?.[1] ?? "");
-  const [threads, setThreads] = useState(() => ({ ...gridsterMessageThreads }));
+function MessagesPageContent({ initialFriendId, onOpenResidentProfile, showToast }) {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [conversations, setConversations] = useState([]);
+  const [selectedFriendId, setSelectedFriendId] = useState(initialFriendId || null);
+  const [thread, setThread] = useState([]);
   const [draft, setDraft] = useState("");
+  const [loadingConversations, setLoadingConversations] = useState(true);
+  const [sending, setSending] = useState(false);
   const [equippedThemeClass, setEquippedThemeClass] = useState("");
+
+  const refreshConversations = (userId) => {
+    if (!userId) {
+      setConversations([]);
+      setLoadingConversations(false);
+      return;
+    }
+
+    fetchConversations(userId)
+      .then((data) => setConversations(data))
+      .catch(() => {})
+      .finally(() => setLoadingConversations(false));
+  };
 
   useEffect(() => {
     let active = true;
 
-    supabase.auth
-      .getUser()
-      .then(({ data }) => {
-        const currentUser = data?.user;
+    supabase.auth.getUser().then(({ data }) => {
+      const user = data?.user ?? null;
 
-        if (!currentUser) {
-          return null;
-        }
+      if (!active) {
+        return;
+      }
 
-        return getEquippedCosmeticsForUser(currentUser.id);
-      })
-      .then((equipped) => {
-        if (!active || !equipped) {
-          return;
-        }
+      setCurrentUser(user);
+      refreshConversations(user?.id);
 
-        const theme = equipped.find((cosmetic) => cosmetic.item_type === "messenger_theme");
-        setEquippedThemeClass(theme?.bling_items?.preview_class || "");
-      })
-      .catch(() => {});
+      if (user) {
+        getEquippedCosmeticsForUser(user.id)
+          .then((equipped) => {
+            if (!active) {
+              return;
+            }
+
+            const theme = equipped?.find((cosmetic) => cosmetic.item_type === "messenger_theme");
+            setEquippedThemeClass(theme?.bling_items?.preview_class || "");
+          })
+          .catch(() => {});
+      }
+    }).catch(() => {});
 
     return () => {
       active = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const selectedConversation = gridsterMessageConversations.find(([, name]) => name === selectedName);
-  const selectedInitial = selectedConversation?.[0] ?? "?";
-  const activeMessages = threads[selectedName]
-    ?? (selectedConversation ? [[selectedName, selectedConversation[2], "received"]] : []);
+  useEffect(() => {
+    if (initialFriendId) {
+      setSelectedFriendId(initialFriendId);
+    }
+  }, [initialFriendId]);
+
+  useEffect(() => {
+    if (!currentUser || !selectedFriendId) {
+      setThread([]);
+      return;
+    }
+
+    let active = true;
+
+    const refreshThread = () => {
+      fetchThread(currentUser.id, selectedFriendId)
+        .then((data) => {
+          if (active) {
+            setThread(data);
+          }
+        })
+        .catch(() => {});
+    };
+
+    refreshThread();
+    markThreadRead(currentUser.id, selectedFriendId).catch(() => {});
+
+    const pollTimer = setInterval(refreshThread, 4000);
+
+    const handleMessageEvent = () => {
+      refreshThread();
+      refreshConversations(currentUser.id);
+    };
+
+    window.addEventListener(GRIDSTER_MESSAGE_EVENT, handleMessageEvent);
+
+    return () => {
+      active = false;
+      clearInterval(pollTimer);
+      window.removeEventListener(GRIDSTER_MESSAGE_EVENT, handleMessageEvent);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, selectedFriendId]);
+
+  const selectedConversation = conversations.find((item) => item.friend.user_id === selectedFriendId);
+  const selectedFriend = selectedConversation?.friend;
 
   const handleSend = (event) => {
     event.preventDefault();
 
     const text = draft.trim();
 
-    if (!text || !selectedName) {
+    if (!text || !selectedFriendId || !currentUser) {
       return;
     }
 
-    setThreads((current) => ({
-      ...current,
-      [selectedName]: [...activeMessages, ["CharlieJo", text, "sent"]],
-    }));
-    setDraft("");
-    showToast?.("Message sent.");
+    setSending(true);
+
+    sendMessage(currentUser.id, selectedFriendId, text)
+      .then(() => {
+        setDraft("");
+        return fetchThread(currentUser.id, selectedFriendId);
+      })
+      .then((data) => setThread(data))
+      .catch((error) => showToast?.(error.message || "Could not send that message."))
+      .finally(() => setSending(false));
   };
+
+  if (!currentUser) {
+    return <p className="groups-directory-message">Log in to message your friends.</p>;
+  }
 
   return (
     <section className="gridster-inbox-page">
@@ -1126,67 +1335,78 @@ function MessagesPageContent({ onOpenProfile, showToast }) {
               <span>Direct Messages</span>
               <h3>Inbox</h3>
             </div>
-            <strong>{gridsterMessageConversations.length}</strong>
+            <strong>{conversations.length}</strong>
           </div>
 
           <div className="inbox-conversation-list">
-            {gridsterMessageConversations.map(([initial, name, message, time], index) => (
-              <button
-                type="button"
-                className={`inbox-conversation-row ${name === selectedName ? "active" : ""}`}
-                key={name}
-                onClick={() => {
-                  setSelectedName(name);
-                  setDraft("");
-                }}
-              >
-                <span className={`conversation-avatar conversation-${index}`}>{initial}</span>
-                <span className="conversation-copy">
-                  <strong>{name}</strong>
-                  <small>{message}</small>
-                </span>
-                <em>{time}</em>
-              </button>
-            ))}
+            {loadingConversations ? (
+              <p className="sidebar-widget-empty">Loading conversations...</p>
+            ) : conversations.length === 0 ? (
+              <p className="sidebar-widget-empty">No friends yet — add a friend from their profile to start chatting.</p>
+            ) : (
+              conversations.map(({ friend, lastMessage, unreadCount }, index) => (
+                <button
+                  type="button"
+                  className={`inbox-conversation-row ${friend.user_id === selectedFriendId ? "active" : ""}`}
+                  key={friend.user_id}
+                  onClick={() => setSelectedFriendId(friend.user_id)}
+                >
+                  <span className={`conversation-avatar conversation-${index % 6}`}>
+                    {friend.avatar_url ? <img src={friend.avatar_url} alt="" /> : (friend.display_name || friend.sl_username || "?").charAt(0).toUpperCase()}
+                  </span>
+                  <span className="conversation-copy">
+                    <strong>{friend.display_name || friend.sl_username}</strong>
+                    <small>{lastMessage ? lastMessage.content : "Say hello!"}</small>
+                  </span>
+                  {unreadCount > 0 ? <em>{unreadCount}</em> : null}
+                </button>
+              ))
+            )}
           </div>
         </aside>
 
         <section className={`inbox-preview-panel ${equippedThemeClass}`}>
-          <div className="inbox-preview-header">
-            <div className="preview-identity">
-              <span className="preview-avatar">{selectedInitial}</span>
-              <div>
-                <h3>{selectedName}</h3>
-                <span className="preview-status">Online</span>
+          {!selectedFriend ? (
+            <p className="groups-directory-message">Select a friend to start messaging.</p>
+          ) : (
+            <>
+              <div className="inbox-preview-header">
+                <div className="preview-identity">
+                  <span className="preview-avatar">
+                    {selectedFriend.avatar_url ? <img src={selectedFriend.avatar_url} alt="" /> : (selectedFriend.display_name || selectedFriend.sl_username || "?").charAt(0).toUpperCase()}
+                  </span>
+                  <div>
+                    <h3>{selectedFriend.display_name || selectedFriend.sl_username}</h3>
+                  </div>
+                </div>
+                <button type="button" onClick={() => onOpenResidentProfile?.(selectedFriend.user_id)}>View Profile</button>
               </div>
-            </div>
-            <button type="button" onClick={() => onOpenProfile?.(selectedName)}>View Profile</button>
-          </div>
 
-          <div className="inbox-message-stack">
-            {activeMessages.map(([name, text, direction], index) => (
-              <article className={`dm-message ${direction === "sent" ? "sent" : ""}`} key={`${selectedName}-${index}`}>
-                <span>{name}</span>
-                <p>{text}</p>
-              </article>
-            ))}
-          </div>
+              <div className="inbox-message-stack">
+                {thread.length === 0 ? (
+                  <p className="sidebar-widget-empty">No messages yet. Say hello!</p>
+                ) : (
+                  thread.map((message) => (
+                    <article className={`dm-message ${message.sender_id === currentUser.id ? "sent" : ""}`} key={message.id}>
+                      <p>{message.content}</p>
+                    </article>
+                  ))
+                )}
+              </div>
 
-          <div className="message-quick-actions">
-            {gridsterMessageQuickActions.map((action) => (
-              <button type="button" key={action} onClick={() => showToast?.(`${action} coming soon.`)}>{action}</button>
-            ))}
-          </div>
-
-          <form className="dm-input-row" onSubmit={handleSend}>
-            <span>CJ</span>
-            <input
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder="Write a message..."
-            />
-            <button type="submit">Send</button>
-          </form>
+              <form className="dm-input-row" onSubmit={handleSend}>
+                <input
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  placeholder="Write a message..."
+                  disabled={sending}
+                />
+                <button type="submit" disabled={sending || !draft.trim()}>
+                  {sending ? "Sending..." : "Send"}
+                </button>
+              </form>
+            </>
+          )}
         </section>
       </div>
     </section>

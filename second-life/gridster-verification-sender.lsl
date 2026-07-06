@@ -2,11 +2,9 @@
 // Rez one official object in Second Life and name it "Gridster Verification".
 // Users do not rez this. They only enter their SL legacy username on Gridster.
 
-// TODO: replace YOUR-CLOUDFLARE-DOMAIN with your real Cloudflare Pages domain
-// (e.g. gridster-social.pages.dev, or your custom domain) after deploying.
-string GET_PENDING_URL = "https://YOUR-CLOUDFLARE-DOMAIN/api/get-pending-sl-verification-code";
-string MARK_SENT_URL = "https://YOUR-CLOUDFLARE-DOMAIN/api/mark-sl-verification-sent";
-string SENDER_SECRET = "CHANGE_ME_TO_MATCH_GRIDSTER_SL_SENDER_SECRET";
+string GET_PENDING_URL = "https://gridster.elfavina89.workers.dev/api/get-pending-sl-verification-code";
+string MARK_SENT_URL = "https://gridster.elfavina89.workers.dev/api/mark-sl-verification-sent";
+string SENDER_SECRET = "6IFERpNwCf1pDJ-NLsGxEtxDQ2Z2GisQ";
 
 float POLL_SECONDS = 30.0;
 integer DEBUG = TRUE;
@@ -66,7 +64,7 @@ pollForVerification()
     if (!isConfigured())
     {
         llSetTimerEvent(0.0);
-        debugLog("Set SENDER_SECRET to match GRIDSTER_SL_SENDER_SECRET in Netlify, then reset this script.");
+        debugLog("Set SENDER_SECRET to match the GRIDSTER_SL_SENDER_SECRET Cloudflare Worker secret, then reset this script.");
         return;
     }
 

@@ -135,8 +135,17 @@ function LeftSidebar({
   return (
     <aside className="left-panel">
       <section className="profile-card glass-card">
-        <div className="profile-cover"></div>
-        <div className="profile-avatar">{currentUser ? initialsFromName(displayName) : "?"}</div>
+        <div
+          className="profile-cover"
+          style={profile?.banner_url ? { backgroundImage: `url("${profile.banner_url}")` } : undefined}
+        ></div>
+        <div className="profile-avatar">
+          {currentUser && profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt="" />
+          ) : (
+            currentUser ? initialsFromName(displayName) : "?"
+          )}
+        </div>
 
         <h2>{displayName}</h2>
         <p className="profile-role">{currentUser ? profile?.creator_type || "Resident" : "Not logged in"}</p>

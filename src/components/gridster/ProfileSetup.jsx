@@ -12,6 +12,8 @@ import {
   fetchGridsterProfile,
   removeFavoritePlace,
   saveGridsterProfile,
+  updateGridsterProfile,
+  uploadGridsterProfileImage,
 } from "../../lib/gridsterProfiles";
 import { fetchGridsterPlaces } from "../../lib/gridsterPlaces";
 import { getEquippedCosmeticsForUser } from "../../lib/blingDepot";
@@ -67,6 +69,8 @@ function ProfileSetup({ onAuthOpen, onOpenResidentProfile, onOpenBlingDepot, onO
   const [favoritePlaceIds, setFavoritePlaceIds] = useState(new Set());
   const [favoriteBusyId, setFavoriteBusyId] = useState("");
   const [moodIsCustom, setMoodIsCustom] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -179,6 +183,39 @@ function ProfileSetup({ onAuthOpen, onOpenResidentProfile, onOpenBlingDepot, onO
       ...current,
       [field]: value,
     }));
+  };
+
+  const handleImageFileChange = async (event, kind) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file || !user) {
+      return;
+    }
+
+    const field = kind === "avatar" ? "avatar_url" : "banner_url";
+    const setUploading = kind === "avatar" ? setUploadingAvatar : setUploadingBanner;
+
+    setUploading(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const publicUrl = await uploadGridsterProfileImage(user.id, file, kind);
+
+      updateField(field, publicUrl);
+
+      if (hasProfile) {
+        const updatedProfile = await updateGridsterProfile(user.id, { [field]: publicUrl });
+        setProfile(updatedProfile);
+      }
+
+      showToast?.(kind === "avatar" ? "Profile photo updated." : "Cover image updated.");
+    } catch (uploadError) {
+      setError(uploadError.message || "Could not upload that image.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const toggleInterest = (tag) => {
@@ -426,7 +463,7 @@ function ProfileSetup({ onAuthOpen, onOpenResidentProfile, onOpenBlingDepot, onO
               />
             </label>
 
-            <label className="profile-field">
+            <div className="profile-field">
               <span>Avatar image URL</span>
               <input
                 className="profile-setup-input"
@@ -435,9 +472,20 @@ function ProfileSetup({ onAuthOpen, onOpenResidentProfile, onOpenBlingDepot, onO
                 onChange={(event) => updateField("avatar_url", event.target.value)}
                 placeholder="https://..."
               />
-            </label>
+              <label className="profile-upload-button">
+                {uploadingAvatar ? "Uploading..." : "Upload Profile Photo"}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  hidden
+                  disabled={uploadingAvatar}
+                  onChange={(event) => handleImageFileChange(event, "avatar")}
+                />
+              </label>
+              <p className="profile-upload-hint">PNG, JPEG, WEBP, or GIF. Max 5MB.</p>
+            </div>
 
-            <label className="profile-field">
+            <div className="profile-field">
               <span>Banner image URL</span>
               <input
                 className="profile-setup-input"
@@ -446,7 +494,18 @@ function ProfileSetup({ onAuthOpen, onOpenResidentProfile, onOpenBlingDepot, onO
                 onChange={(event) => updateField("banner_url", event.target.value)}
                 placeholder="https://..."
               />
-            </label>
+              <label className="profile-upload-button">
+                {uploadingBanner ? "Uploading..." : "Upload Cover Image"}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  hidden
+                  disabled={uploadingBanner}
+                  onChange={(event) => handleImageFileChange(event, "banner")}
+                />
+              </label>
+              <p className="profile-upload-hint">PNG, JPEG, WEBP, or GIF. Max 5MB.</p>
+            </div>
           </div>
 
           <label className="profile-field">

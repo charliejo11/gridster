@@ -323,7 +323,13 @@ function Header({
               : `${blingSummary.balance.toLocaleString()} Bling Bits`}
         </button>
         <div className="mini-profile">
-          <div className="mini-pic">{currentUser ? initialsFromName(profile?.display_name || profile?.sl_username) : "?"}</div>
+          <div className="mini-pic">
+            {currentUser && profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" />
+            ) : (
+              currentUser ? initialsFromName(profile?.display_name || profile?.sl_username) : "?"
+            )}
+          </div>
           <div>
             <strong>{currentUser ? profile?.display_name || profile?.sl_username || "Set up your profile" : "Guest"}</strong>
             <span>{currentUser ? "Online" : "Not logged in"}</span>

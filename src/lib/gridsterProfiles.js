@@ -4,6 +4,16 @@ export const GRIDSTER_PROFILE_TABLE = "profiles";
 export const GRIDSTER_FAVORITE_PLACES_TABLE = "gridster_favorite_places";
 export const DEFAULT_BLING_BITS = 1250;
 export const GRIDSTER_PROFILE_UPDATED_EVENT = "gridster:profile-updated";
+export const GRIDSTER_PROFILE_IMAGES_BUCKET = "profile-images";
+export const GRIDSTER_MAX_PROFILE_IMAGE_BYTES = 5 * 1024 * 1024;
+export const GRIDSTER_ALLOWED_PROFILE_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+
+const PROFILE_IMAGE_EXTENSIONS_BY_TYPE = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
 
 function notifyGridsterProfileUpdated() {
   if (typeof window !== "undefined") {
@@ -233,7 +243,34 @@ export async function updateGridsterProfile(userId, updates) {
     throw error;
   }
 
+  notifyGridsterProfileUpdated();
+
   return data;
+}
+
+export async function uploadGridsterProfileImage(userId, file, kind) {
+  if (!GRIDSTER_ALLOWED_PROFILE_IMAGE_TYPES.includes(file.type)) {
+    throw new Error("Please choose a PNG, JPEG, WEBP, or GIF image.");
+  }
+
+  if (file.size > GRIDSTER_MAX_PROFILE_IMAGE_BYTES) {
+    throw new Error("Images must be 5MB or smaller.");
+  }
+
+  const extension = PROFILE_IMAGE_EXTENSIONS_BY_TYPE[file.type] || "jpg";
+  const path = `${userId}/${kind}-${Date.now()}.${extension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(GRIDSTER_PROFILE_IMAGES_BUCKET)
+    .upload(path, file, { contentType: file.type });
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const { data } = supabase.storage.from(GRIDSTER_PROFILE_IMAGES_BUCKET).getPublicUrl(path);
+
+  return data.publicUrl;
 }
 
 const PROFILE_STRENGTH_CHECKS = [

@@ -1932,10 +1932,20 @@ button {
 .creator-avatar {
   display: grid;
   place-items: center;
+  overflow: hidden;
   border-radius: 50%;
   background: linear-gradient(135deg, #d72cff, #168cff);
   color: white;
   font-weight: 700;
+}
+
+.mini-pic img,
+.mini-avatar img,
+.post-avatar img,
+.creator-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .mini-pic {
@@ -2294,6 +2304,8 @@ button {
   background:
     radial-gradient(circle at top left, rgba(215, 44, 255, 0.45), transparent 55%),
     linear-gradient(135deg, #191033, #07152d);
+  background-position: center;
+  background-size: cover;
   border-radius: 16px 16px 0 0;
   border-bottom: 1px solid rgba(157, 64, 255, 0.32);
 }
@@ -2305,11 +2317,18 @@ button {
   border-radius: 22px;
   display: grid;
   place-items: center;
+  overflow: hidden;
   background: linear-gradient(135deg, #d72cff, #168cff);
   border: 3px solid #05060d;
   box-shadow: 0 0 22px rgba(215, 44, 255, 0.45);
   font-size: 24px;
   font-weight: 700;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .profile-card h2 {
@@ -12738,6 +12757,35 @@ button.join-toggle.is-joined {
 .profile-field {
   display: grid;
   gap: 7px;
+}
+
+.profile-upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 36px;
+  border: 1px solid rgba(215, 44, 255, 0.32);
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: rgba(12, 14, 30, 0.72);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(141, 53, 255, 0.13);
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.profile-upload-button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.profile-upload-hint {
+  margin: 0;
+  color: rgba(235, 230, 255, 0.55);
+  font-size: 11px;
 }
 
 .profile-setup-input {

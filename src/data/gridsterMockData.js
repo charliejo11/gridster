@@ -87,15 +87,6 @@ export const gridsterLiveNow = [
   ["NovaVixen", "Shopping Stream"],
 ];
 
-export const gridsterFriendsOnline = [
-  { name: "RavenHex", status: "Online" },
-  { name: "NovaVixen", status: "Online" },
-  { name: "DJ Starfall", status: "Busy" },
-  { name: "EchoMoon", status: "Away" },
-  { name: "Pixel Pixie", status: "Offline" },
-  { name: "LunaVale", status: "Online" },
-];
-
 export const gridsterGalleryItems = [
   { title: "Neon Rooftop", category: "Nightlife", creator: "CharlieJo", index: 0 },
   { title: "Moonlit Cathedral", category: "Gothic", creator: "RavenHex", index: 1 },
@@ -105,14 +96,6 @@ export const gridsterGalleryItems = [
   { title: "Metal Night Stage", category: "Events", creator: "DJ Starfall", index: 5 },
   { title: "Mystic Forest", category: "Fantasy", creator: "LunaVale", index: 6 },
   { title: "Market Glow", category: "Shopping", creator: "Pixel Pixie", index: 7 },
-];
-
-export const gridsterNotifications = [
-  ["R", "RavenHex commented on your photo", "2m"],
-  ["S", "Sanctuary Rocks added Metal Night", "14m"],
-  ["N", "NovaVixen followed you", "1h"],
-  ["B", "You earned +25 Bling Bits", "2h"],
-  ["M", "Moonlit Market posted new releases", "3h"],
 ];
 
 export const gridsterThemeOptions = [
@@ -175,13 +158,6 @@ export const gridsterMessageThreads = {
 };
 
 export const gridsterMessageQuickActions = ["Send SLURL", "Share Post", "Invite to Event"];
-
-export const gridsterSidebarAlerts = [
-  ["R", "RavenHex", "commented on your photo", "2m"],
-  ["S", "Sanctuary Rocks", "added a new event", "14m"],
-  ["N", "NovaVixen", "followed you", "1h"],
-  ["M", "Moonlit Market", "posted new releases", "3h"],
-];
 
 export const gridsterLeftSidebarProfile = {
   stats: [

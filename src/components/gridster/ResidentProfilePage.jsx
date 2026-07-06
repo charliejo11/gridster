@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../../lib/supabaseClient";
 import { getEquippedCosmeticsForUser } from "../../lib/blingDepot";
 import { getBlingProfileStyles } from "./blingDepotItems";
 import BlingBuddyShowcase from "./BlingBuddyShowcase";
@@ -8,6 +9,12 @@ import {
   fetchFavoritePlaces,
   fetchResidentProfile,
 } from "../../lib/gridsterProfiles";
+import {
+  cancelFriendRequest,
+  fetchFriendshipStatus,
+  respondToFriendRequest,
+  sendFriendRequest,
+} from "../../lib/gridsterFriends";
 import TeleportStatusChip from "./TeleportStatusChip";
 
 function getInitials(profile) {
@@ -23,6 +30,44 @@ function ResidentProfilePage({ userId, showToast }) {
   const [favoritePlaces, setFavoritePlaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
+  const [friendship, setFriendship] = useState({ status: "none", request: null });
+  const [friendActionBusy, setFriendActionBusy] = useState(false);
+
+  const refreshFriendship = (nextCurrentUser) => {
+    if (!nextCurrentUser || !userId) {
+      setFriendship({ status: "none", request: null });
+      return;
+    }
+
+    fetchFriendshipStatus(nextCurrentUser.id, userId)
+      .then(setFriendship)
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    let active = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (!active) {
+        return;
+      }
+
+      setCurrentUser(data?.user ?? null);
+      refreshFriendship(data?.user ?? null);
+    }).catch(() => {});
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+      refreshFriendship(session?.user ?? null);
+    });
+
+    return () => {
+      active = false;
+      listener?.subscription?.unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   useEffect(() => {
     let active = true;
@@ -80,6 +125,61 @@ function ResidentProfilePage({ userId, showToast }) {
     };
   }, [userId]);
 
+  const handleSendFriendRequest = async () => {
+    if (!currentUser) {
+      showToast?.("Log in to add friends.");
+      return;
+    }
+
+    setFriendActionBusy(true);
+
+    try {
+      await sendFriendRequest(currentUser.id, userId);
+      showToast?.("Friend request sent.");
+      refreshFriendship(currentUser);
+    } catch (requestError) {
+      showToast?.(requestError.message || "Could not send friend request.");
+    } finally {
+      setFriendActionBusy(false);
+    }
+  };
+
+  const handleRespondToRequest = async (accept) => {
+    if (!friendship.request) {
+      return;
+    }
+
+    setFriendActionBusy(true);
+
+    try {
+      await respondToFriendRequest(friendship.request.id, accept);
+      showToast?.(accept ? "Friend request accepted." : "Friend request declined.");
+      refreshFriendship(currentUser);
+    } catch (respondError) {
+      showToast?.(respondError.message || "Could not update that friend request.");
+    } finally {
+      setFriendActionBusy(false);
+    }
+  };
+
+  const handleCancelRequest = async () => {
+    if (!friendship.request) {
+      return;
+    }
+
+    setFriendActionBusy(true);
+
+    try {
+      await cancelFriendRequest(friendship.request.id);
+      showToast?.("Friend request canceled.");
+      refreshFriendship(currentUser);
+    } catch (cancelError) {
+      showToast?.(cancelError.message || "Could not cancel that friend request.");
+    } finally {
+      setFriendActionBusy(false);
+    }
+  };
+
   const blingProfile = useMemo(
     () => (profile ? getBlingProfileStyles(profile, equippedCosmetics) : null),
     [profile, equippedCosmetics]
@@ -130,6 +230,31 @@ function ResidentProfilePage({ userId, showToast }) {
             {profile.current_mood ? <span className="resident-mood-badge">{profile.current_mood}</span> : null}
             {profile.bio ? <p>{profile.bio}</p> : null}
           </div>
+
+          {currentUser && currentUser.id !== userId ? (
+            <div className="resident-profile-friend-action">
+              {friendship.status === "friends" ? (
+                <span className="friend-status-pill">✔ Friends</span>
+              ) : friendship.status === "pending_sent" ? (
+                <button type="button" disabled={friendActionBusy} onClick={handleCancelRequest}>
+                  {friendActionBusy ? "Canceling..." : "Cancel Request"}
+                </button>
+              ) : friendship.status === "pending_received" ? (
+                <div className="friend-request-response">
+                  <button type="button" disabled={friendActionBusy} onClick={() => handleRespondToRequest(true)}>
+                    Accept
+                  </button>
+                  <button type="button" disabled={friendActionBusy} onClick={() => handleRespondToRequest(false)}>
+                    Decline
+                  </button>
+                </div>
+              ) : (
+                <button type="button" disabled={friendActionBusy} onClick={handleSendFriendRequest}>
+                  {friendActionBusy ? "Sending..." : "+ Add Friend"}
+                </button>
+              )}
+            </div>
+          ) : null}
         </div>
 
         {profile.available_for?.length ? (

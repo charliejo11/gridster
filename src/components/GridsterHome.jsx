@@ -51,7 +51,6 @@ import {
   gridsterMessageConversations,
   gridsterMessageThreads,
   gridsterMessageQuickActions,
-  gridsterNotifications,
   gridsterPostSampleComments,
   gridsterProfileFlairBadges,
   gridsterSearchFilters,
@@ -345,7 +344,6 @@ function GridsterHome() {
         onAuthOpen={() => openAuth("login")}
         themeOptions={gridsterThemeOptions}
         activeThemeLabel={activeThemeLabel}
-        notifications={gridsterNotifications}
       />
 
       <DashboardLayout
@@ -367,6 +365,7 @@ function GridsterHome() {
             groups={gridsterSidebarGroups}
             liveNow={gridsterLiveNow}
             onOpenProfile={openProfile}
+            onOpenResidentProfile={openResidentProfile}
             places={gridsterFeaturedPlaces}
             showToast={showToast}
           />

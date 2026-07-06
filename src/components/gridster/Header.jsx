@@ -3,6 +3,12 @@ import { supabase } from "../../lib/supabaseClient";
 import { BLING_BALANCE_EVENT, getBlingBalanceSummary, notifyBlingBalanceChanged } from "../../lib/blingDepot";
 import { claimDailyLoginBonus, claimProfileCompleteBonus, claimSlVerifiedBonus } from "../../lib/gridsterBonuses";
 import { GRIDSTER_PROFILE_UPDATED_EVENT, fetchGridsterProfile } from "../../lib/gridsterProfiles";
+import {
+  GRIDSTER_FRIEND_REQUEST_UPDATED_EVENT,
+  fetchFriendNotifications,
+  formatFriendNotificationTime,
+  markFriendNotificationsSeen,
+} from "../../lib/gridsterFriends";
 
 function initialsFromName(name) {
   const trimmed = String(name || "").trim();
@@ -38,11 +44,11 @@ function Header({
   onAuthOpen,
   themeOptions,
   activeThemeLabel,
-  notifications,
 }) {
   const [blingSummary, setBlingSummary] = useState({ balance: null, isAdmin: false });
   const [currentUser, setCurrentUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [friendNotifications, setFriendNotifications] = useState([]);
 
   useEffect(() => {
     let active = true;
@@ -67,6 +73,21 @@ function Header({
         .then((nextProfile) => {
           if (active) {
             setProfile(nextProfile);
+          }
+        })
+        .catch(() => {});
+    };
+
+    const refreshFriendNotifications = (nextUser) => {
+      if (!nextUser) {
+        setFriendNotifications([]);
+        return;
+      }
+
+      fetchFriendNotifications(nextUser.id)
+        .then((nextNotifications) => {
+          if (active) {
+            setFriendNotifications(nextNotifications);
           }
         })
         .catch(() => {});
@@ -105,6 +126,7 @@ function Header({
       if (active) {
         setCurrentUser(data?.user ?? null);
         refreshProfile(data?.user ?? null);
+        refreshFriendNotifications(data?.user ?? null);
         claimEligibleBonuses(data?.user ?? null);
       }
     }).catch(() => {});
@@ -114,6 +136,7 @@ function Header({
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUser(session?.user ?? null);
       refreshProfile(session?.user ?? null);
+      refreshFriendNotifications(session?.user ?? null);
       refreshBalance();
       claimEligibleBonuses(session?.user ?? null);
     });
@@ -122,13 +145,19 @@ function Header({
       supabase.auth.getUser().then(({ data }) => refreshProfile(data?.user ?? null)).catch(() => {});
     };
 
+    const handleFriendRequestUpdated = () => {
+      supabase.auth.getUser().then(({ data }) => refreshFriendNotifications(data?.user ?? null)).catch(() => {});
+    };
+
     window.addEventListener(BLING_BALANCE_EVENT, refreshBalance);
     window.addEventListener(GRIDSTER_PROFILE_UPDATED_EVENT, handleProfileUpdated);
+    window.addEventListener(GRIDSTER_FRIEND_REQUEST_UPDATED_EVENT, handleFriendRequestUpdated);
 
     return () => {
       active = false;
       listener?.subscription?.unsubscribe();
       window.removeEventListener(BLING_BALANCE_EVENT, refreshBalance);
+      window.removeEventListener(GRIDSTER_FRIEND_REQUEST_UPDATED_EVENT, handleFriendRequestUpdated);
       window.removeEventListener(GRIDSTER_PROFILE_UPDATED_EVENT, handleProfileUpdated);
     };
   }, []);
@@ -174,6 +203,12 @@ function Header({
   };
 
   const handleMarkAllRead = () => {
+    if (currentUser) {
+      markFriendNotificationsSeen(currentUser.id)
+        .then(() => setFriendNotifications((current) => current.map((item) => ({ ...item, unread: false }))))
+        .catch(() => {});
+    }
+
     showToast?.("All notifications marked as read.");
     setShowNotifications(false);
   };
@@ -182,6 +217,8 @@ function Header({
     setActivePage("Messages");
     setShowNotifications(false);
   };
+
+  const unreadNotificationCount = friendNotifications.filter((item) => item.unread).length;
 
   return (
     <header className="topbar">
@@ -277,27 +314,38 @@ function Header({
             aria-expanded={showNotifications}
           >
             <span className="notification-bell">🔔</span>
-            <span className="notification-count">5</span>
+            {unreadNotificationCount > 0 ? (
+              <span className="notification-count">{unreadNotificationCount}</span>
+            ) : null}
           </button>
 
           {showNotifications ? (
             <div className="notification-dropdown glass-card">
               <div className="notification-dropdown-header">
                 <h3>Notifications</h3>
-                <span>5 new</span>
+                <span>{unreadNotificationCount > 0 ? `${unreadNotificationCount} new` : "All caught up"}</span>
               </div>
 
               <div className="notification-list-preview">
-                {notifications.map(([initial, text, time], index) => (
-                  <article className="notification-preview-row" key={text}>
-                    <span className={`notification-preview-icon notice-${index}`}>{initial}</span>
-                    <div>
-                      <strong>{text}</strong>
-                      <small>{time}</small>
-                    </div>
-                    <em aria-label="Unread notification"></em>
-                  </article>
-                ))}
+                {friendNotifications.length === 0 ? (
+                  <p className="sidebar-widget-empty">No notifications yet.</p>
+                ) : (
+                  friendNotifications.map((notification, index) => (
+                    <article className="notification-preview-row" key={notification.id}>
+                      <span className={`notification-preview-icon notice-${index % 5}`}>
+                        {initialsFromName(notification.person?.display_name || notification.person?.sl_username)}
+                      </span>
+                      <div>
+                        <strong>
+                          {notification.person?.display_name || notification.person?.sl_username || "A resident"}{" "}
+                          {notification.type === "friend_request_received" ? "sent you a friend request" : "accepted your friend request"}
+                        </strong>
+                        <small>{formatFriendNotificationTime(notification.time)}</small>
+                      </div>
+                      {notification.unread ? <em aria-label="Unread notification"></em> : null}
+                    </article>
+                  ))
+                )}
               </div>
 
               <div className="notification-dropdown-actions">

@@ -1,13 +1,18 @@
+import { useEffect, useState } from "react";
 import {
   getGridsterDestination,
-  gridsterFriendsOnline,
-  gridsterSidebarAlerts,
   gridsterSlurlTeleports,
   hasGridsterProfile,
 } from "../../data/gridsterMockData";
 import { usePersistedGridsterFlag } from "../../lib/gridsterStorage";
+import { supabase } from "../../lib/supabaseClient";
+import {
+  GRIDSTER_FRIEND_REQUEST_UPDATED_EVENT,
+  fetchFriendNotifications,
+  fetchFriends,
+  formatFriendNotificationTime,
+} from "../../lib/gridsterFriends";
 import ActionButton from "./ActionButton";
-import StatusDot from "./StatusDot";
 import TeleportStatusChip from "./TeleportStatusChip";
 import Widget from "./Widget";
 
@@ -42,38 +47,69 @@ function getTeleportButtonProps(destinationName) {
   };
 }
 
+function friendInitials(profile) {
+  const source = profile?.display_name || profile?.sl_username || "?";
+
+  return source
+    .split(" ")
+    .map((part) => part.charAt(0))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 function RightSidebar({
   creators,
   events,
   groups,
   liveNow,
   onOpenProfile,
+  onOpenResidentProfile,
   places,
   showToast,
 }) {
-  const friendInitials = (name) =>
-    name
-      .split(" ")
-      .map((part) => part.charAt(0))
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [friends, setFriends] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
-  const statusClass = (status) => {
-    if (status === "Online") return "friend-status-online";
-    if (status === "Busy") return "friend-status-busy";
-    if (status === "Away") return "friend-status-away";
-    return "friend-status-offline";
-  };
+  useEffect(() => {
+    let active = true;
 
-  const handleViewFriend = (name) => {
-    if (onOpenProfile && hasGridsterProfile(name)) {
-      onOpenProfile(name);
-      return;
-    }
+    const refresh = (nextUser) => {
+      if (!nextUser) {
+        setFriends([]);
+        setNotifications([]);
+        return;
+      }
 
-    showToast?.(`Opening ${name} profile.`);
-  };
+      fetchFriends(nextUser.id).then((data) => { if (active) setFriends(data); }).catch(() => {});
+      fetchFriendNotifications(nextUser.id).then((data) => { if (active) setNotifications(data); }).catch(() => {});
+    };
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (active) {
+        setCurrentUser(data?.user ?? null);
+        refresh(data?.user ?? null);
+      }
+    }).catch(() => {});
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+      refresh(session?.user ?? null);
+    });
+
+    const handleFriendRequestUpdated = () => {
+      supabase.auth.getUser().then(({ data }) => refresh(data?.user ?? null)).catch(() => {});
+    };
+
+    window.addEventListener(GRIDSTER_FRIEND_REQUEST_UPDATED_EVENT, handleFriendRequestUpdated);
+
+    return () => {
+      active = false;
+      listener?.subscription?.unsubscribe();
+      window.removeEventListener(GRIDSTER_FRIEND_REQUEST_UPDATED_EVENT, handleFriendRequestUpdated);
+    };
+  }, []);
 
   return (
     <aside className="right-panel">
@@ -121,29 +157,30 @@ function RightSidebar({
         ))}
       </Widget>
 
-      <Widget title="Friends Online" onAction={() => showToast?.("Full friends list coming soon.")}>
-        {gridsterFriendsOnline.map(({ name, status }) => (
-          <div className="friend-online-row" key={name}>
-            <div className="friend-online-person">
-              <div className="friend-online-avatar">{friendInitials(name)}</div>
-              <div className="friend-online-copy">
-                <strong>{name}</strong>
-                <small>
-                  <StatusDot className={`friend-status-dot ${statusClass(status)}`} />
-                  {status}
-                </small>
+      <Widget title="Friends" onAction={() => showToast?.("Full friends list coming soon.")}>
+        {!currentUser ? (
+          <p className="sidebar-widget-empty">Log in to add and see friends.</p>
+        ) : friends.length === 0 ? (
+          <p className="sidebar-widget-empty">No friends yet — visit a resident's profile to add one.</p>
+        ) : (
+          friends.map((friend) => (
+            <div className="friend-online-row" key={friend.user_id}>
+              <div className="friend-online-person">
+                <div className="friend-online-avatar">
+                  {friend.avatar_url ? <img src={friend.avatar_url} alt="" /> : friendInitials(friend)}
+                </div>
+                <div className="friend-online-copy">
+                  <strong>{friend.display_name || friend.sl_username}</strong>
+                </div>
+              </div>
+              <div className="friend-online-actions">
+                <ActionButton onClick={() => onOpenResidentProfile?.(friend.user_id)}>
+                  View
+                </ActionButton>
               </div>
             </div>
-            <div className="friend-online-actions">
-              <ActionButton onClick={() => showToast?.(`Message opened with ${name}.`)}>
-                Message
-              </ActionButton>
-              <ActionButton onClick={() => handleViewFriend(name)}>
-                View
-              </ActionButton>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </Widget>
 
       <Widget title="Live Now" onAction={() => showToast?.("Full live now list coming soon.")}>
@@ -159,10 +196,23 @@ function RightSidebar({
         ))}
       </Widget>
 
-      <Widget title="Messages & Alerts" onAction={() => showToast?.("Full alerts list coming soon.")}>
-        {gridsterSidebarAlerts.map(([initial, name, note, time]) => (
-          <AlertRow key={`${name}-${time}`} initial={initial} name={name} note={note} time={time} />
-        ))}
+      <Widget title="Friend Alerts" onAction={() => showToast?.("Full alerts list coming soon.")}>
+        {!currentUser ? (
+          <p className="sidebar-widget-empty">Log in to see friend request alerts.</p>
+        ) : notifications.length === 0 ? (
+          <p className="sidebar-widget-empty">No alerts yet.</p>
+        ) : (
+          notifications.map((notification) => (
+            <AlertRow
+              key={notification.id}
+              initial={friendInitials(notification.person)}
+              name={notification.person?.display_name || notification.person?.sl_username || "A resident"}
+              note={notification.type === "friend_request_received" ? "sent you a friend request" : "accepted your friend request"}
+              time={formatFriendNotificationTime(notification.time)}
+              unread={notification.unread}
+            />
+          ))
+        )}
       </Widget>
 
       <Widget title="SLURL Teleport" onAction={() => showToast?.("Full teleport directory coming soon.")}>
@@ -218,9 +268,9 @@ function PlaceCard({ title, desc, index, onOpenProfile, showToast }) {
   );
 }
 
-function AlertRow({ initial, name, note, time }) {
+function AlertRow({ initial, name, note, time, unread }) {
   return (
-    <div className="alert-row">
+    <div className={unread ? "alert-row is-unread" : "alert-row"}>
       <div className="alert-avatar">{initial}</div>
       <div className="alert-content">
         <strong>{name}</strong>

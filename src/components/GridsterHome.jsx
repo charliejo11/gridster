@@ -11,9 +11,11 @@ import {
 import {
   GRIDSTER_EVENT_TYPE_LABELS,
   GRIDSTER_MATURITY_RATING_LABELS,
+  GRIDSTER_PLACE_CATEGORIES,
   GRIDSTER_PLACE_CATEGORY_LABELS,
   fetchFeaturedPhotoSpots,
   fetchGridsterEvents,
+  fetchGridsterPlaces,
 } from "../lib/gridsterPlaces";
 import { GRIDSTER_POST_TYPE_LABELS, fetchPostsByIds, fetchRecentPosts } from "../lib/gridsterPosts";
 import {
@@ -40,8 +42,6 @@ import {
   gridsterComposerTemplates,
   gridsterDashboardEvents,
   gridsterDjSets,
-  gridsterExploreCategories,
-  gridsterExploreDestinations,
   gridsterFeaturedPlaces,
   gridsterGalleryItems,
   gridsterGridNightEvents,
@@ -442,7 +442,11 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         title="Explore"
         subtitle="Discover where residents are posting, shopping, dancing, roleplaying, and teleporting right now."
       >
-        <ExplorePageContent galleryItems={galleryItems} showToast={showToast} />
+        <ExplorePageContent
+          galleryItems={galleryItems}
+          onOpenTeleportDiscovery={onOpenTeleportDiscovery}
+          showToast={showToast}
+        />
       </PageShell>
     );
   }
@@ -840,35 +844,81 @@ function ResultActionButton({ action, title, onOpenProfile, showToast }) {
   return <button onClick={() => showToast?.(`${action} for ${title} coming soon.`)}>{action}</button>;
 }
 
-function ExplorePageContent({ galleryItems, showToast }) {
+const EXPLORE_CATEGORY_DESCRIPTIONS = {
+  clubs: "Live DJs, parties, hosts, and nightlife.",
+  beaches: "Sandy shores, sunsets, and beach hangouts.",
+  rp_sims: "Roleplay hubs, fandoms, and story-driven sims.",
+  stores: "New releases, sales, and creator drops.",
+  photo_spots: "Beautiful sims, sets, and scenic backdrops.",
+  adult_venues: "Adult-rated venues and experiences.",
+  live_music: "Live shows, concerts, and music venues.",
+  hangouts: "Casual hangouts and social spaces.",
+};
+
+function ExplorePageContent({ galleryItems, onOpenTeleportDiscovery, showToast }) {
+  const [places, setPlaces] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    fetchGridsterPlaces()
+      .then((data) => {
+        if (active) {
+          setPlaces(data || []);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const recentPlaces = places.slice(0, 5);
+
   return (
     <>
       <section className="nav-card-grid explore-category-grid">
-        {gridsterExploreCategories.map(([icon, title, desc]) => (
-          <article className="nav-feature-card glass-card" key={title}>
-            <span className="nav-card-icon">{icon}</span>
-            <h3>{title}</h3>
-            <p>{desc}</p>
-            <button onClick={() => showToast?.(`Browsing ${title} coming soon.`)}>Browse</button>
+        {GRIDSTER_PLACE_CATEGORIES.map((category) => (
+          <article className="nav-feature-card glass-card" key={category}>
+            <span className="nav-card-icon">{GRIDSTER_PLACE_CATEGORY_LABELS[category].charAt(0)}</span>
+            <h3>{GRIDSTER_PLACE_CATEGORY_LABELS[category]}</h3>
+            <p>{EXPLORE_CATEGORY_DESCRIPTIONS[category]}</p>
+            <button onClick={() => onOpenTeleportDiscovery?.(category)}>Browse</button>
           </article>
         ))}
       </section>
 
       <section className="nav-list-card glass-card">
-        <SectionHeader className="nav-section-heading" eyebrow="Live Discovery" title="Trending Destinations" />
+        <SectionHeader className="nav-section-heading" eyebrow="Live Discovery" title="Recently Added Places" />
+
+        {loading ? <p className="tonight-message">Loading destinations...</p> : null}
+
+        {!loading && recentPlaces.length === 0 ? (
+          <p className="tonight-message">
+            No places posted yet.{" "}
+            <button type="button" className="tonight-post-button" onClick={() => onOpenTeleportDiscovery?.()}>
+              Browse Places
+            </button>
+          </p>
+        ) : null}
 
         <div className="nav-destination-list">
-          {gridsterExploreDestinations.map(([title, rating, action]) => (
-            <article className="nav-destination-row" key={title}>
-              <div className="nav-row-orb">{title.charAt(0)}</div>
+          {recentPlaces.map((place) => (
+            <article className="nav-destination-row" key={place.id}>
+              <div className="nav-row-orb">{place.title.charAt(0)}</div>
               <div>
-                <strong>{title}</strong>
-                <small>{rating}</small>
+                <strong>{place.title}</strong>
+                <small>{GRIDSTER_PLACE_CATEGORY_LABELS[place.category] || place.category} • {place.region_name}</small>
               </div>
-              <button {...(action === "Teleport" ? getTeleportButtonProps(title) : {})}>{action}</button>
-              {action === "Teleport" ? (
-                <TeleportStatusChip slurl={getGridsterDestination(title)?.slurl} destinationName={title} showToast={showToast} />
-              ) : null}
+              <button {...getTeleportButtonProps(place.title, place.slurl)}>Teleport</button>
+              <TeleportStatusChip slurl={place.slurl} destinationName={place.title} showToast={showToast} />
             </article>
           ))}
         </div>

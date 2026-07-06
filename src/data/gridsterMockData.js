@@ -157,23 +157,6 @@ export const gridsterSearchResults = [
   ["Moonlit Hollow", "Community Hub • Gothic RP", "Join"],
 ];
 
-export const gridsterExploreCategories = [
-  ["C", "Clubs", "Live DJs, parties, hosts, and nightlife."],
-  ["S", "Stores", "New releases, sales, and creator drops."],
-  ["P", "Photo Spots", "Beautiful sims, sets, and scenic backdrops."],
-  ["R", "Rentals", "Homes, skyboxes, beaches, and private spaces."],
-  ["H", "Communities", "RP hubs, groups, families, and fandoms."],
-  ["E", "Events", "Live shows, markets, parties, and gatherings."],
-];
-
-export const gridsterExploreDestinations = [
-  ["Sanctuary Rocks", "Moderate • Rock / Metal • Live venue", "Teleport"],
-  ["Neon District", "Adult • Cyber nightlife • Trending", "Teleport"],
-  ["Moonlit Cathedral", "Moderate • Gothic photo spot • Popular", "Browse"],
-  ["Ocean Breeze", "General • Beach hangout • Active", "Teleport"],
-  ["Valentina Boutique", "General • Fashion store • New releases", "Browse"],
-];
-
 export const gridsterMessageConversations = [
   ["R", "RavenHex", "That photo spot is insane.", "2m"],
   ["S", "Sanctuary Rocks", "You’re invited to Metal Night.", "14m"],

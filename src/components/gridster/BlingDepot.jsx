@@ -182,9 +182,6 @@ function BlingDepot({ onAuthOpen, showToast }) {
     [shopItems]
   );
 
-  const featuredSeasonalItems = useMemo(() => {
-    return shopItems.filter((item) => item.limited).slice(0, 4);
-  }, [shopItems]);
   const ownedItemIds = useMemo(
     () => new Set(shopData.purchases.map((purchase) => purchase.item_id)),
     [shopData.purchases]
@@ -350,75 +347,6 @@ function BlingDepot({ onAuthOpen, showToast }) {
           </button>
         ))}
       </section>
-
-      {featuredSeasonalItems.length > 0 && (
-        <section className="bling-seasonal-drop">
-          <div className="bling-seasonal-header">
-            <p className="bling-kicker">Limited Seasonal Drop</p>
-            <h2>Seasonal Bling</h2>
-            <span>Grab it before it gets vaulted.</span>
-          </div>
-
-          <div className="bling-grid">
-            {featuredSeasonalItems.map((item) => {
-              const owned = ownedItemIds.has(item.id);
-              const equipped = equippedByType[item.itemType] === item.id;
-              const busy = busyItemId === item.id;
-
-              return (
-                <article className="bling-card bling-limited-card" key={item.id}>
-                  <div className={`bling-preview ${item.previewClass || item.preview_class || ""}`}>
-                    {item.itemType === "badge" && (
-                      <span className="bling-preview-badge">{item.name}</span>
-                    )}
-                  </div>
-
-                  <div className="bling-card-body">
-                    <div className="bling-season-pill">
-                      {item.season}
-                    </div>
-
-                    <h3>{item.name}</h3>
-                    <p>{item.description}</p>
-
-                    <div className="bling-card-footer">
-                      <span className="bling-price">
-                        {Number(item.price || 0).toLocaleString()} Bits
-                      </span>
-
-                      {!owned && (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => handleBuy(item)}
-                        >
-                          {busy ? "Buying..." : "Buy This Bling"}
-                        </button>
-                      )}
-
-                      {owned && !equipped && (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => handleEquip(item)}
-                        >
-                          {busy ? "Equipping..." : "Wear It"}
-                        </button>
-                      )}
-
-                      {owned && equipped && (
-                        <button type="button" disabled className="is-equipped">
-                          Wearing It
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      )}
 
       {activeTab === "bling_buddy" ? (
         <BlingBuddyFilters

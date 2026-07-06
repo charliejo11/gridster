@@ -422,7 +422,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
     return (
       <>
         <CreatePostComposer onOpenComposer={onOpenComposer} showToast={showToast} />
-        <RecentPostsFeed refreshToken={postsRefreshToken} showToast={showToast} />
+        <RecentPostsFeed refreshToken={postsRefreshToken} onOpenComposer={onOpenComposer} showToast={showToast} />
         <TrendingNow showToast={showToast} />
         <WelcomeCard onExplore={() => setActivePage("Explore")} />
         <ExplorePreview showToast={showToast} />
@@ -692,6 +692,9 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   if (activePage === "GridNights") {
     return (
       <PageShell title="Grid Nights" subtitle="Live events, DJ sets, club nights, parties, and gatherings happening across Second Life.">
+        <BetaPlaceholderNotice>
+          🚧 Grid Nights is showing sample events while we build this out — post real events from Tonight in SL or the Events page.
+        </BetaPlaceholderNotice>
         <CardGrid as="section" className="nav-event-grid grid-nights-grid">
           {gridsterGridNightEvents.map(([title, time, thumb]) => (
             <article className="nav-event-card glass-card" key={title}>
@@ -718,6 +721,9 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   if (activePage === "Marketplace") {
     return (
       <PageShell title="Marketplace Finds" subtitle="Discover products, outfits, décor, accessories, blogger picks, and creator drops.">
+        <BetaPlaceholderNotice>
+          🚧 Marketplace Finds is showing sample listings while we build this out — post real store drops from the composer's Store tab.
+        </BetaPlaceholderNotice>
         <CardGrid as="section" className="page-card-grid marketplace-grid">
           {gridsterMarketplaceFinds.map(([name, category], index) => (
             <article className="marketplace-card glass-card" key={name}>
@@ -740,6 +746,9 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   if (activePage === "DJSets") {
     return (
       <PageShell title="DJ Sets" subtitle="Find live DJs, upcoming sets, club schedules, and music nights across the grid.">
+        <BetaPlaceholderNotice>
+          🚧 DJ Sets is showing sample listings while we build this out — post real live DJ events from Tonight in SL.
+        </BetaPlaceholderNotice>
         <CardGrid as="section" className="page-card-grid dj-sets-grid">
           {gridsterDjSets.map(([name, venue, genre]) => (
             <article className="dj-set-card glass-card" key={name}>
@@ -814,6 +823,10 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
 function SearchResultsPage({ onOpenProfile, showToast }) {
   return (
     <section className="search-results-page">
+      <BetaPlaceholderNotice>
+        🚧 Real-time search is still in beta — the results below are sample previews. Try Explore, Groups, or Residents to browse real content.
+      </BetaPlaceholderNotice>
+
       <div className="search-preview-card glass-card">
         <label className="search-preview-input">
           <span>⌕</span>
@@ -1278,6 +1291,9 @@ function ProfilePreviewSection({ title, items }) {
 function FeedPreferencesPage({ showToast }) {
   return (
     <section className="feed-preferences-page">
+      <BetaPlaceholderNotice>
+        🚧 Feed tuning isn't wired up yet — these preferences don't affect your feed during beta.
+      </BetaPlaceholderNotice>
       <div className="feed-preferences-grid">
         {gridsterFeedPreferenceCards.map(([title, options]) => (
           <article className="feed-preference-card glass-card" key={title}>
@@ -2171,8 +2187,12 @@ function VerificationCenterPage({ showToast, onAuthOpen }) {
 
 function SettingsPage({ setActivePage, showToast }) {
   return (
-    <div className="settings-grid">
-      {gridsterSettingsCards.map(({ icon, title, desc, options }) => (
+    <div className="settings-page-inner">
+      <BetaPlaceholderNotice>
+        🚧 Most settings here are previews for now — Profile Settings is the one that's fully wired up during beta.
+      </BetaPlaceholderNotice>
+      <div className="settings-grid">
+        {gridsterSettingsCards.map(({ icon, title, desc, options }) => (
         <article className="settings-card glass-card" key={title}>
           <div className="settings-card-top">
             <span className="settings-icon">{icon}</span>
@@ -2201,7 +2221,8 @@ function SettingsPage({ setActivePage, showToast }) {
             {title === "Profile Settings" ? "Edit Profile" : "Manage"}
           </button>
         </article>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -2266,7 +2287,7 @@ function CreatePostComposer({ onOpenComposer, showToast }) {
   );
 }
 
-function RecentPostsFeed({ refreshToken, showToast }) {
+function RecentPostsFeed({ refreshToken, onOpenComposer, showToast }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -2301,7 +2322,14 @@ function RecentPostsFeed({ refreshToken, showToast }) {
   }
 
   if (!posts.length) {
-    return null;
+    return (
+      <p className="groups-directory-message">
+        No posts yet. Be the first to start the grid.{" "}
+        <button type="button" className="groups-directory-create-button" onClick={() => onOpenComposer?.("general")}>
+          + Create the First Post
+        </button>
+      </p>
+    );
   }
 
   return (
@@ -3154,6 +3182,10 @@ function PageShell({ title, subtitle, children }) {
       {children}
     </section>
   );
+}
+
+function BetaPlaceholderNotice({ children }) {
+  return <p className="beta-placeholder-notice">{children}</p>;
 }
 
 function PostHeader({ name, label, showToast, onHide }) {

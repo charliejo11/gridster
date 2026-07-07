@@ -4393,8 +4393,7 @@ button {
 }
 
 .conversation-avatar,
-.preview-avatar,
-.dm-input-row > span {
+.preview-avatar {
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -4480,8 +4479,7 @@ button {
   gap: 10px;
 }
 
-.preview-avatar,
-.dm-input-row > span {
+.preview-avatar {
   width: 42px;
   height: 42px;
   border-radius: 50%;
@@ -4652,7 +4650,7 @@ button {
 
 .dm-input-row {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 9px;
   padding: 10px;
@@ -9437,14 +9435,6 @@ button {
     max-width: 100%;
   }
 
-  .dm-input-row {
-    grid-template-columns: 42px minmax(0, 1fr);
-  }
-
-  .dm-input-row button {
-    grid-column: 2 / 3;
-    justify-self: start;
-  }
 }
 
 .post-card {

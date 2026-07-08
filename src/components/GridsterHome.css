@@ -15006,6 +15006,98 @@ button.join-toggle.is-joined {
   font-size: 13px;
 }
 
+.gridster-photo-dropzone-field {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  color: rgba(235, 230, 255, 0.78);
+}
+
+.gridster-photo-dropzone {
+  border: 1.5px dashed rgba(215, 44, 255, 0.4);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(141, 53, 255, 0.12), rgba(22, 140, 255, 0.08)),
+    rgba(5, 6, 13, 0.7);
+  transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.gridster-photo-dropzone.dragging {
+  border-color: rgba(215, 44, 255, 0.85);
+  background:
+    linear-gradient(135deg, rgba(141, 53, 255, 0.22), rgba(22, 140, 255, 0.16)),
+    rgba(5, 6, 13, 0.7);
+  box-shadow: 0 0 24px rgba(148, 53, 255, 0.3);
+}
+
+.gridster-photo-dropzone.has-preview {
+  border-style: solid;
+  border-color: rgba(215, 44, 255, 0.25);
+}
+
+.gridster-photo-dropzone-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 180px;
+  padding: 24px 16px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.gridster-photo-dropzone-icon {
+  font-size: 32px;
+  line-height: 1;
+  filter: drop-shadow(0 0 10px rgba(215, 44, 255, 0.5));
+}
+
+.gridster-photo-dropzone-text {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.gridster-photo-dropzone-hint {
+  color: rgba(235, 230, 255, 0.55);
+  font-size: 11px;
+}
+
+.gridster-photo-preview {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.gridster-photo-preview img {
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.gridster-photo-remove {
+  justify-self: center;
+  border: 1px solid rgba(255, 122, 178, 0.4);
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: rgba(12, 14, 30, 0.72);
+  color: #ff9ecf;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.gridster-photo-remove:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
 .composer-post-button {
   margin-left: auto;
   padding: 8px 18px;

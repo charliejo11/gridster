@@ -12,6 +12,7 @@ import {
   createGridsterPlace,
 } from "../../lib/gridsterPlaces";
 import { createGridsterPost } from "../../lib/gridsterPosts";
+import { uploadGridsterPostPhoto, validateGridsterPostPhoto } from "../../lib/gridsterMediaUploads";
 
 const TABS = [
   { id: "general", label: "Post" },
@@ -54,6 +55,10 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
   const [placeForm, setPlaceForm] = useState(EMPTY_PLACE_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState("");
+  const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -85,15 +90,107 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (photoPreviewUrl) {
+        URL.revokeObjectURL(photoPreviewUrl);
+      }
+    };
+  }, [photoPreviewUrl]);
+
   const updatePostField = (field, value) => setPostForm((current) => ({ ...current, [field]: value }));
   const updateEventField = (field, value) => setEventForm((current) => ({ ...current, [field]: value }));
   const updatePlaceField = (field, value) => setPlaceForm((current) => ({ ...current, [field]: value }));
+
+  const handlePhotoFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file || !user) {
+      return;
+    }
+
+    setUploadingPhoto(true);
+    setError("");
+
+    try {
+      const publicUrl = await uploadGridsterPostPhoto(user.id, file);
+
+      if (activeTab === "event") {
+        updateEventField("photo_url", publicUrl);
+      } else if (activeTab === "slurl") {
+        updatePlaceField("photo_url", publicUrl);
+      } else {
+        updatePostField("photo_url", publicUrl);
+      }
+    } catch (uploadError) {
+      setError(uploadError.message || "Could not upload that image.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const clearSelectedPhoto = () => {
+    if (photoPreviewUrl) {
+      URL.revokeObjectURL(photoPreviewUrl);
+    }
+
+    setPhotoFile(null);
+    setPhotoPreviewUrl("");
+  };
+
+  const handleSelectPhotoFile = (file) => {
+    if (!file) {
+      return;
+    }
+
+    try {
+      validateGridsterPostPhoto(file);
+    } catch (validationError) {
+      setError(validationError.message || "Please choose a valid image.");
+      return;
+    }
+
+    if (photoPreviewUrl) {
+      URL.revokeObjectURL(photoPreviewUrl);
+    }
+
+    setError("");
+    setPhotoFile(file);
+    setPhotoPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handlePhotoInputChange = (event) => {
+    handleSelectPhotoFile(event.target.files?.[0]);
+    event.target.value = "";
+  };
+
+  const handlePhotoDragOver = (event) => {
+    event.preventDefault();
+    setIsDraggingPhoto(true);
+  };
+
+  const handlePhotoDragLeave = (event) => {
+    event.preventDefault();
+    setIsDraggingPhoto(false);
+  };
+
+  const handlePhotoDrop = (event) => {
+    event.preventDefault();
+    setIsDraggingPhoto(false);
+    handleSelectPhotoFile(event.dataTransfer.files?.[0]);
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!user) {
       onAuthOpen?.("login");
+      return;
+    }
+
+    if (activeTab === "photo" && !photoFile) {
+      setError("Please choose a photo to upload.");
       return;
     }
 
@@ -107,11 +204,16 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
       } else if (activeTab === "slurl") {
         await createGridsterPlace(user.id, placeForm);
         showToast?.("Place posted.");
+      } else if (activeTab === "photo") {
+        const photoUrl = await uploadGridsterPostPhoto(user.id, photoFile);
+        await createGridsterPost(user.id, { ...postForm, photo_url: photoUrl, post_type: activeTab, author_name: displayName });
+        showToast?.("Posted.");
       } else {
         await createGridsterPost(user.id, { ...postForm, post_type: activeTab, author_name: displayName });
         showToast?.("Posted.");
       }
 
+      clearSelectedPhoto();
       onPosted?.();
       onClose?.();
     } catch (submitError) {
@@ -164,16 +266,68 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
                 />
               </label>
 
-              <label>
-                <span>Photo URL{activeTab === "photo" ? "" : " (optional)"}</span>
-                <input
-                  type="text"
-                  value={postForm.photo_url}
-                  onChange={(event) => updatePostField("photo_url", event.target.value)}
-                  placeholder="https://..."
-                  required={activeTab === "photo"}
-                />
-              </label>
+              {activeTab === "photo" ? (
+                <div className="gridster-photo-dropzone-field">
+                  <span>Photo</span>
+                  <div
+                    className={[
+                      "gridster-photo-dropzone",
+                      isDraggingPhoto ? "dragging" : "",
+                      photoPreviewUrl ? "has-preview" : "",
+                    ].filter(Boolean).join(" ")}
+                    onDragOver={handlePhotoDragOver}
+                    onDragEnter={handlePhotoDragOver}
+                    onDragLeave={handlePhotoDragLeave}
+                    onDrop={handlePhotoDrop}
+                  >
+                    {photoPreviewUrl ? (
+                      <div className="gridster-photo-preview">
+                        <img src={photoPreviewUrl} alt="Selected preview" />
+                        <button type="button" className="gridster-photo-remove" onClick={clearSelectedPhoto}>
+                          Remove Photo
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="gridster-photo-dropzone-label">
+                        <span className="gridster-photo-dropzone-icon" aria-hidden="true">📷</span>
+                        <span className="gridster-photo-dropzone-text">
+                          Drag and drop a photo here, or click to browse
+                        </span>
+                        <span className="gridster-photo-dropzone-hint">PNG, JPEG, WEBP, or GIF. Max 8MB.</span>
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/gif"
+                          hidden
+                          onChange={handlePhotoInputChange}
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="profile-field">
+                  <label>
+                    <span>Photo URL (optional)</span>
+                    <input
+                      type="text"
+                      value={postForm.photo_url}
+                      onChange={(event) => updatePostField("photo_url", event.target.value)}
+                      placeholder="https://..."
+                    />
+                  </label>
+                  <label className="profile-upload-button">
+                    {uploadingPhoto ? "Uploading..." : "Upload from Computer"}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      hidden
+                      disabled={uploadingPhoto}
+                      onChange={handlePhotoFileChange}
+                    />
+                  </label>
+                  <p className="profile-upload-hint">PNG, JPEG, WEBP, or GIF. Max 8MB.</p>
+                </div>
+              )}
 
               {activeTab === "blog" || activeTab === "store" ? (
                 <label>
@@ -242,15 +396,28 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
                 />
               </label>
 
-              <label>
-                <span>Photo URL</span>
-                <input
-                  type="text"
-                  value={eventForm.photo_url}
-                  onChange={(event) => updateEventField("photo_url", event.target.value)}
-                  placeholder="https://..."
-                />
-              </label>
+              <div className="profile-field">
+                <label>
+                  <span>Photo URL</span>
+                  <input
+                    type="text"
+                    value={eventForm.photo_url}
+                    onChange={(event) => updateEventField("photo_url", event.target.value)}
+                    placeholder="https://..."
+                  />
+                </label>
+                <label className="profile-upload-button">
+                  {uploadingPhoto ? "Uploading..." : "Upload from Computer"}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    hidden
+                    disabled={uploadingPhoto}
+                    onChange={handlePhotoFileChange}
+                  />
+                </label>
+                <p className="profile-upload-hint">PNG, JPEG, WEBP, or GIF. Max 8MB.</p>
+              </div>
 
               <label>
                 <span>Teleport SLURL</span>
@@ -324,15 +491,28 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
                 />
               </label>
 
-              <label>
-                <span>Photo URL</span>
-                <input
-                  type="text"
-                  value={placeForm.photo_url}
-                  onChange={(event) => updatePlaceField("photo_url", event.target.value)}
-                  placeholder="https://..."
-                />
-              </label>
+              <div className="profile-field">
+                <label>
+                  <span>Photo URL</span>
+                  <input
+                    type="text"
+                    value={placeForm.photo_url}
+                    onChange={(event) => updatePlaceField("photo_url", event.target.value)}
+                    placeholder="https://..."
+                  />
+                </label>
+                <label className="profile-upload-button">
+                  {uploadingPhoto ? "Uploading..." : "Upload from Computer"}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    hidden
+                    disabled={uploadingPhoto}
+                    onChange={handlePhotoFileChange}
+                  />
+                </label>
+                <p className="profile-upload-hint">PNG, JPEG, WEBP, or GIF. Max 8MB.</p>
+              </div>
 
               <label>
                 <span>Teleport SLURL</span>
@@ -398,7 +578,7 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
 
           <div className="gridster-composer-actions place-post-form-actions">
             <button type="button" onClick={onClose}>Cancel</button>
-            <button type="submit" disabled={submitting}>
+            <button type="submit" disabled={submitting || uploadingPhoto}>
               {submitting ? "Posting..." : "Post"}
             </button>
           </div>

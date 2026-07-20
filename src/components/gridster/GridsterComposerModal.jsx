@@ -23,7 +23,15 @@ const TABS = [
   { id: "slurl", label: "SLURL" },
 ];
 
-const EMPTY_POST_FORM = { content: "", photo_url: "", link_url: "", region_name: "", slurl: "", tags: "" };
+const EMPTY_POST_FORM = {
+  content: "",
+  photo_url: "",
+  link_url: "",
+  region_name: "",
+  slurl: "",
+  tags: "",
+  maturity_rating: "general",
+};
 const EMPTY_EVENT_FORM = {
   title: "",
   description: "",
@@ -374,6 +382,18 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
                   onChange={(event) => updatePostField("tags", event.target.value)}
                   placeholder="Fashion, Nightlife, Photos"
                 />
+              </label>
+
+              <label>
+                <span>Maturity Rating</span>
+                <select
+                  value={postForm.maturity_rating}
+                  onChange={(event) => updatePostField("maturity_rating", event.target.value)}
+                >
+                  {GRIDSTER_MATURITY_RATINGS.map((rating) => (
+                    <option key={rating} value={rating}>{GRIDSTER_MATURITY_RATING_LABELS[rating]}</option>
+                  ))}
+                </select>
               </label>
             </>
           ) : null}

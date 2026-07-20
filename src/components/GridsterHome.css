@@ -8540,6 +8540,74 @@ button {
   box-shadow: 0 0 14px rgba(215, 44, 255, 0.16), 0 0 18px rgba(22, 140, 255, 0.1);
 }
 
+.feed-preference-pills button.active {
+  border-color: rgba(255, 79, 216, 0.7);
+  background: linear-gradient(135deg, rgba(215, 44, 255, 0.6), rgba(22, 140, 255, 0.45));
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(215, 44, 255, 0.28), 0 0 20px rgba(22, 140, 255, 0.18);
+}
+
+.feed-preference-management-group {
+  margin-top: 14px;
+}
+
+.feed-preference-management-group h4 {
+  margin: 0 0 8px;
+  color: #e7ddff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.feed-preference-management-group p {
+  margin: 0;
+  color: #b6aed6;
+  font-size: 12px;
+}
+
+.feed-preference-management-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.feed-preference-management-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: rgba(12, 14, 30, 0.6);
+  border: 1px solid rgba(215, 44, 255, 0.16);
+}
+
+.feed-preference-management-list li span {
+  color: #d8d2ea;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feed-preference-management-list li button {
+  flex-shrink: 0;
+  min-height: 28px;
+  border: 1px solid rgba(22, 140, 255, 0.4);
+  border-radius: 999px;
+  padding: 5px 12px;
+  background: linear-gradient(135deg, rgba(215, 44, 255, 0.2), rgba(22, 140, 255, 0.14));
+  color: #e7ddff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.feed-preference-management-list li button:disabled {
+  opacity: 0.5;
+}
+
 .feed-preferences-note {
   display: flex;
   align-items: center;

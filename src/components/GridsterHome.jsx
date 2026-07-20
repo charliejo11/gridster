@@ -8,6 +8,27 @@ import {
   markThreadRead,
   sendMessage,
 } from "../lib/gridsterMessages";
+import { fetchFriends } from "../lib/gridsterFriends";
+import {
+  FEED_DISCOVERY_FOCUS_ACTIVE,
+  FEED_SHOW_LESS_ACTIVE,
+  FEED_SHOW_MORE_ACTIVE,
+  RATING_LABEL_TO_VALUE,
+  blockCreator,
+  fetchCreatorActions,
+  fetchFeedPreferences,
+  fetchHiddenPostIds,
+  fetchHiddenPostsWithContent,
+  fetchMyReportedPostIds,
+  hidePostForUser,
+  muteCreator,
+  rankAndFilterPosts,
+  reportPost,
+  saveFeedPreferences,
+  unblockCreator,
+  unhidePostForUser,
+  unmuteCreator,
+} from "../lib/gridsterFeedPreferences";
 import {
   addFavoritePlace,
   computeGridsterProfileStrength,
@@ -1505,31 +1526,267 @@ function ProfilePreviewSection({ title, items }) {
   );
 }
 
+const FEED_RATING_VALUE_TO_LABEL = Object.fromEntries(
+  Object.entries(RATING_LABEL_TO_VALUE).map(([label, value]) => [value, label])
+);
+
 function FeedPreferencesPage({ showToast }) {
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [busyKey, setBusyKey] = useState("");
+  const [showMore, setShowMore] = useState([]);
+  const [showLess, setShowLess] = useState([]);
+  const [ratings, setRatings] = useState([]);
+  const [discoveryFocus, setDiscoveryFocus] = useState([]);
+  const [hiddenPosts, setHiddenPosts] = useState([]);
+  const [mutedProfiles, setMutedProfiles] = useState([]);
+  const [blockedProfiles, setBlockedProfiles] = useState([]);
+  const [reportedCount, setReportedCount] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      const { data: userData } = await supabase.auth.getUser();
+      const currentUserId = userData?.user?.id ?? null;
+
+      if (!active) return;
+      setUserId(currentUserId);
+
+      const [prefs, hidden, creatorActions, reportedIds] = await Promise.all([
+        fetchFeedPreferences(currentUserId),
+        fetchHiddenPostsWithContent(currentUserId),
+        fetchCreatorActions(currentUserId),
+        fetchMyReportedPostIds(currentUserId),
+      ]);
+
+      if (!active) return;
+
+      setShowMore(prefs.show_more);
+      setShowLess(prefs.show_less);
+      setRatings(prefs.ratings.map((value) => FEED_RATING_VALUE_TO_LABEL[value]).filter(Boolean));
+      setDiscoveryFocus(prefs.discovery_focus);
+      setHiddenPosts(hidden);
+      setReportedCount(reportedIds.size);
+
+      const profileMap = await fetchProfilesByUserIds([...creatorActions.muted, ...creatorActions.blocked]);
+
+      if (!active) return;
+
+      setMutedProfiles([...creatorActions.muted].map((id) => ({ id, profile: profileMap.get(id) })));
+      setBlockedProfiles([...creatorActions.blocked].map((id) => ({ id, profile: profileMap.get(id) })));
+    }
+
+    load()
+      .catch((loadError) => {
+        console.error("Gridster feed preferences: could not load", loadError);
+        if (active) showToast?.(loadError.message || "Could not load your feed preferences.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const togglePill = (setValue, option) => {
+    setValue((current) => (current.includes(option) ? current.filter((item) => item !== option) : [...current, option]));
+  };
+
+  const handleSave = async () => {
+    if (!userId) {
+      showToast?.("Log in to save feed preferences.");
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      await saveFeedPreferences(userId, {
+        show_more: showMore,
+        show_less: showLess,
+        ratings: ratings.map((label) => RATING_LABEL_TO_VALUE[label]).filter(Boolean),
+        discovery_focus: discoveryFocus,
+      });
+      showToast?.("Feed preferences saved.");
+    } catch (saveError) {
+      console.error("Gridster feed preferences: could not save", saveError);
+      showToast?.(saveError.message || "Could not save feed preferences.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUnhide = async (postId) => {
+    setBusyKey(`hide-${postId}`);
+
+    try {
+      await unhidePostForUser(userId, postId);
+      setHiddenPosts((current) => current.filter((post) => post.id !== postId));
+    } catch (unhideError) {
+      console.error("Gridster feed preferences: could not unhide post", unhideError);
+      showToast?.(unhideError.message || "Could not unhide this post.");
+    } finally {
+      setBusyKey("");
+    }
+  };
+
+  const handleUnmute = async (targetUserId) => {
+    setBusyKey(`mute-${targetUserId}`);
+
+    try {
+      await unmuteCreator(userId, targetUserId);
+      setMutedProfiles((current) => current.filter((entry) => entry.id !== targetUserId));
+      showToast?.("Creator unmuted.");
+    } catch (unmuteError) {
+      console.error("Gridster feed preferences: could not unmute creator", unmuteError);
+      showToast?.(unmuteError.message || "Could not unmute this creator.");
+    } finally {
+      setBusyKey("");
+    }
+  };
+
+  const handleUnblock = async (targetUserId) => {
+    setBusyKey(`block-${targetUserId}`);
+
+    try {
+      await unblockCreator(userId, targetUserId);
+      setBlockedProfiles((current) => current.filter((entry) => entry.id !== targetUserId));
+      showToast?.("Resident unblocked.");
+    } catch (unblockError) {
+      console.error("Gridster feed preferences: could not unblock resident", unblockError);
+      showToast?.(unblockError.message || "Could not unblock this resident.");
+    } finally {
+      setBusyKey("");
+    }
+  };
+
+  if (loading) {
+    return <p className="groups-directory-message">Loading feed preferences...</p>;
+  }
+
+  const cardConfigByTitle = {
+    "Show Me More": { value: showMore, setValue: setShowMore, activeOptions: FEED_SHOW_MORE_ACTIVE },
+    "Show Me Less": { value: showLess, setValue: setShowLess, activeOptions: FEED_SHOW_LESS_ACTIVE },
+    "Ratings I Want To See": { value: ratings, setValue: setRatings, activeOptions: null },
+    "Discovery Focus": { value: discoveryFocus, setValue: setDiscoveryFocus, activeOptions: FEED_DISCOVERY_FOCUS_ACTIVE },
+  };
+
   return (
     <section className="feed-preferences-page">
-      <BetaPlaceholderNotice>
-        🚧 Feed tuning isn't wired up yet — these preferences don't affect your feed during beta.
-      </BetaPlaceholderNotice>
       <div className="feed-preferences-grid">
-        {gridsterFeedPreferenceCards.map(([title, options]) => (
-          <article className="feed-preference-card glass-card" key={title}>
-            <SectionHeader className="feed-preference-heading" eyebrow="Feed Tuning" title={title} />
+        {gridsterFeedPreferenceCards
+          .filter(([title]) => title !== "Hidden & Muted")
+          .map(([title, options]) => {
+            const config = cardConfigByTitle[title];
 
-            <div className="feed-preference-pills">
-              {options.map((option) => (
-                <button key={option} onClick={() => showToast?.(`${option} coming soon.`)}>{option}</button>
-              ))}
-            </div>
-          </article>
-        ))}
+            return (
+              <article className="feed-preference-card glass-card" key={title}>
+                <SectionHeader className="feed-preference-heading" eyebrow="Feed Tuning" title={title} />
+
+                <div className="feed-preference-pills">
+                  {options.map((option) => {
+                    const selected = config.value.includes(option);
+                    const inactive = config.activeOptions && !config.activeOptions.includes(option);
+
+                    return (
+                      <button
+                        key={option}
+                        className={selected ? "active" : ""}
+                        title={inactive ? "Saved, but doesn't affect your feed yet." : undefined}
+                        onClick={() => togglePill(config.setValue, option)}
+                      >
+                        {option}
+                        {inactive ? " •" : ""}
+                      </button>
+                    );
+                  })}
+                </div>
+              </article>
+            );
+          })}
       </div>
+
+      <article className="feed-preference-card glass-card feed-preference-hidden-muted">
+        <SectionHeader className="feed-preference-heading" eyebrow="Feed Tuning" title="Hidden & Muted" />
+
+        <div className="feed-preference-management-group">
+          <h4>Hidden posts ({hiddenPosts.length})</h4>
+          {hiddenPosts.length ? (
+            <ul className="feed-preference-management-list">
+              {hiddenPosts.map((post) => (
+                <li key={post.id}>
+                  <span>
+                    {post.author_name || "A Gridster resident"}
+                    {": "}
+                    {(post.content || "").slice(0, 60) || GRIDSTER_POST_TYPE_LABELS[post.post_type] || "Post"}
+                  </span>
+                  <button disabled={busyKey === `hide-${post.id}`} onClick={() => handleUnhide(post.id)}>
+                    Unhide
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No hidden posts.</p>
+          )}
+        </div>
+
+        <div className="feed-preference-management-group">
+          <h4>Muted creators ({mutedProfiles.length})</h4>
+          {mutedProfiles.length ? (
+            <ul className="feed-preference-management-list">
+              {mutedProfiles.map((entry) => (
+                <li key={entry.id}>
+                  <span>{entry.profile?.display_name || "A Gridster resident"}</span>
+                  <button disabled={busyKey === `mute-${entry.id}`} onClick={() => handleUnmute(entry.id)}>
+                    Unmute
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No muted creators.</p>
+          )}
+        </div>
+
+        <div className="feed-preference-management-group">
+          <h4>Blocked residents ({blockedProfiles.length})</h4>
+          {blockedProfiles.length ? (
+            <ul className="feed-preference-management-list">
+              {blockedProfiles.map((entry) => (
+                <li key={entry.id}>
+                  <span>{entry.profile?.display_name || "A Gridster resident"}</span>
+                  <button disabled={busyKey === `block-${entry.id}`} onClick={() => handleUnblock(entry.id)}>
+                    Unblock
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No blocked residents.</p>
+          )}
+        </div>
+
+        <div className="feed-preference-management-group">
+          <h4>Reported content ({reportedCount})</h4>
+          <p>{reportedCount ? "Thanks for helping keep Gridster safe." : "You haven't reported anything yet."}</p>
+        </div>
+      </article>
 
       <div className="feed-preferences-note glass-card">
         <p>
-          Using Not For Me helps Gridster learn what to show less often without publicly downvoting anyone.
+          Using 👎 Not For Me on a post also helps Gridster learn what to show less often, without publicly
+          downvoting anyone. Options marked with • are saved to your account but don't change your feed yet —
+          there's no real signal for them today, so we're not faking one.
         </p>
-        <button onClick={() => showToast?.("Feed preferences saved.")}>Save Preferences</button>
+        <button disabled={saving} onClick={handleSave}>
+          {saving ? "Saving..." : "Save Preferences"}
+        </button>
       </div>
     </section>
   );
@@ -2508,31 +2765,65 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, showToast }) {
   const [posts, setPosts] = useState([]);
   const [profilesById, setProfilesById] = useState(new Map());
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const [hiddenPostIds, setHiddenPostIds] = useState(() => new Set());
+  const [mutedUserIds, setMutedUserIds] = useState(() => new Set());
+  const [blockedUserIds, setBlockedUserIds] = useState(() => new Set());
+  const [friendUserIds, setFriendUserIds] = useState(() => new Set());
+  const [feedPreferences, setFeedPreferences] = useState(null);
+  // Posts hidden *this render*, kept separate from the DB-backed hiddenPostIds
+  // above so the user sees a brief "post hidden" confirmation card instead of
+  // the post just vanishing - the DB list is what actually filters posts out
+  // on the next load.
+  const [sessionHiddenIds, setSessionHiddenIds] = useState(() => new Set());
 
   useEffect(() => {
     let active = true;
+    setSessionHiddenIds(new Set());
 
-    fetchRecentPosts()
-      .then(async (data) => {
-        if (!active) {
-          return;
+    async function load() {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id ?? null;
+
+      if (!active) {
+        return;
+      }
+
+      setCurrentUserId(userId);
+
+      const [rawPosts, prefs, hiddenIds, creatorActions, friends] = await Promise.all([
+        fetchRecentPosts(),
+        fetchFeedPreferences(userId),
+        fetchHiddenPostIds(userId),
+        fetchCreatorActions(userId),
+        userId ? fetchFriends(userId) : Promise.resolve([]),
+      ]);
+
+      if (!active) {
+        return;
+      }
+
+      setFeedPreferences(prefs);
+      setHiddenPostIds(hiddenIds);
+      setMutedUserIds(creatorActions.muted);
+      setBlockedUserIds(creatorActions.blocked);
+      setFriendUserIds(new Set(friends.map((friend) => friend.user_id)));
+      setPosts(rawPosts || []);
+
+      // Best-effort: the feed still works with the author_name snapshot
+      // stored on each post if this lookup fails for any reason.
+      try {
+        const profileMap = await fetchProfilesByUserIds((rawPosts || []).map((post) => post.user_id));
+
+        if (active) {
+          setProfilesById(profileMap);
         }
+      } catch (profileError) {
+        console.error("Gridster feed: could not load author profiles", profileError);
+      }
+    }
 
-        setPosts(data || []);
-
-        // Best-effort: the feed still works with the author_name snapshot
-        // stored on each post if this lookup fails for any reason.
-        try {
-          const profileMap = await fetchProfilesByUserIds((data || []).map((post) => post.user_id));
-
-          if (active) {
-            setProfilesById(profileMap);
-          }
-        } catch (profileError) {
-          console.error("Gridster feed: could not load author profiles", profileError);
-        }
-      })
+    load()
       .catch((loadError) => {
         console.error("Gridster feed: could not load posts", loadError);
 
@@ -2552,6 +2843,78 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, showToast }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshToken]);
 
+  const rankedPosts = useMemo(() => {
+    if (!feedPreferences) {
+      return posts;
+    }
+
+    return rankAndFilterPosts(posts, {
+      preferences: feedPreferences,
+      hiddenPostIds,
+      mutedUserIds,
+      blockedUserIds,
+      friendUserIds,
+      profilesById,
+      trendingTags: gridsterTrendingTopics.map(([tag]) => tag),
+    });
+  }, [posts, feedPreferences, hiddenPostIds, mutedUserIds, blockedUserIds, friendUserIds, profilesById]);
+
+  const handleHide = (post) => {
+    setSessionHiddenIds((current) => new Set(current).add(post.id));
+
+    if (!currentUserId) {
+      return;
+    }
+
+    hidePostForUser(currentUserId, post.id).catch((hideError) => {
+      console.error("Gridster feed: could not save hidden post", hideError);
+    });
+  };
+
+  const handleMute = (post, authorName) => {
+    if (!currentUserId) {
+      onOpenComposer && showToast?.("Log in to mute creators.");
+      return;
+    }
+
+    setMutedUserIds((current) => new Set(current).add(post.user_id));
+    muteCreator(currentUserId, post.user_id)
+      .then(() => showToast?.(`${authorName} muted. You'll see less from them.`))
+      .catch((muteError) => {
+        console.error("Gridster feed: could not mute creator", muteError);
+        showToast?.(muteError.message || "Could not mute this resident.");
+      });
+  };
+
+  const handleBlock = (post, authorName) => {
+    if (!currentUserId) {
+      showToast?.("Log in to block residents.");
+      return;
+    }
+
+    setBlockedUserIds((current) => new Set(current).add(post.user_id));
+    blockCreator(currentUserId, post.user_id)
+      .then(() => showToast?.(`${authorName} blocked.`))
+      .catch((blockError) => {
+        console.error("Gridster feed: could not block resident", blockError);
+        showToast?.(blockError.message || "Could not block this resident.");
+      });
+  };
+
+  const handleReport = (post, reason) => {
+    if (!currentUserId) {
+      showToast?.("Log in to report posts.");
+      return;
+    }
+
+    reportPost(currentUserId, post.id, reason)
+      .then(() => showToast?.("Report submitted. Thank you for helping keep Gridster safe."))
+      .catch((reportError) => {
+        console.error("Gridster feed: could not submit report", reportError);
+        showToast?.(reportError.message || "Could not submit this report.");
+      });
+  };
+
   if (loading) {
     return <p className="groups-directory-message">Loading feed...</p>;
   }
@@ -2567,14 +2930,22 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, showToast }) {
     );
   }
 
+  if (!rankedPosts.length) {
+    return (
+      <p className="groups-directory-message">
+        No posts match your current Feed Preferences. Try adjusting your ratings or muted/blocked list.
+      </p>
+    );
+  }
+
   return (
     <>
-      {posts.map((post) => {
+      {rankedPosts.map((post) => {
         const authorProfile = profilesById.get(post.user_id);
         const authorName = authorProfile?.display_name || post.author_name || "A Gridster resident";
         const authorAvatarUrl = authorProfile?.avatar_url;
 
-        if (hiddenPostIds.has(post.id)) {
+        if (sessionHiddenIds.has(post.id)) {
           return <HiddenPostNotice key={post.id} name={authorName} />;
         }
 
@@ -2588,7 +2959,10 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, showToast }) {
               label={GRIDSTER_POST_TYPE_LABELS[post.post_type] || "Post"}
               timeLabel={new Date(post.created_at).toLocaleString()}
               showToast={showToast}
-              onHide={() => setHiddenPostIds((current) => new Set(current).add(post.id))}
+              onHide={() => handleHide(post)}
+              onMute={() => handleMute(post, authorName)}
+              onBlock={() => handleBlock(post, authorName)}
+              onReport={(reason) => handleReport(post, reason)}
             />
           )}
           actions={<PostActions likes="0" comments="0" postId={post.id} showToast={showToast} />}
@@ -3307,7 +3681,7 @@ function BetaPlaceholderNotice({ children }) {
   return <p className="beta-placeholder-notice">{children}</p>;
 }
 
-function PostHeader({ name, avatarUrl, label, timeLabel = "2h ago", showToast, onHide }) {
+function PostHeader({ name, avatarUrl, label, timeLabel = "2h ago", showToast, onHide, onMute, onBlock, onReport }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("Spam");
@@ -3349,7 +3723,15 @@ function PostHeader({ name, avatarUrl, label, timeLabel = "2h ago", showToast, o
             <button onClick={() => setReportOpen(true)}>Report Post</button>
             <button
               onClick={() => {
-                showToast?.("Resident blocked. You can manage blocked users in Settings.");
+                onMute?.();
+                closeMenu();
+              }}
+            >
+              Mute Creator
+            </button>
+            <button
+              onClick={() => {
+                onBlock?.();
                 closeMenu();
               }}
             >
@@ -3392,7 +3774,7 @@ function PostHeader({ name, avatarUrl, label, timeLabel = "2h ago", showToast, o
             <button
               className="submit-report-button"
               onClick={() => {
-                showToast?.("Report submitted. Thank you for helping keep Gridster safe.");
+                onReport?.(reportReason);
                 closeMenu();
               }}
             >

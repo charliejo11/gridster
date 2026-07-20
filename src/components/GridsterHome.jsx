@@ -13,6 +13,7 @@ import {
   computeGridsterProfileStrength,
   fetchFavoritePlaces,
   fetchGridsterProfile,
+  fetchProfilesByUserIds,
   fetchResidentDirectory,
   removeFavoritePlace,
 } from "../lib/gridsterProfiles";
@@ -441,9 +442,6 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         <WelcomeCard onExplore={() => setActivePage("Explore")} />
         <ExplorePreview showToast={showToast} />
         <TeleportCenter showToast={showToast} />
-        <LunarEclipsePost showToast={showToast} />
-        <VoguePixelsPost showToast={showToast} />
-        <CreatorsCollectivePost showToast={showToast} />
         <UpcomingGridNights showToast={showToast} />
         <FeaturedPhotoSpots onAuthOpen={onAuthOpen} onViewAll={() => onOpenTeleportDiscovery?.("photo_spots")} showToast={showToast} />
       </>
@@ -2508,18 +2506,36 @@ function CreatePostComposer({ onOpenComposer, showToast }) {
 
 function RecentPostsFeed({ refreshToken, onOpenComposer, showToast }) {
   const [posts, setPosts] = useState([]);
+  const [profilesById, setProfilesById] = useState(new Map());
   const [loading, setLoading] = useState(true);
+  const [hiddenPostIds, setHiddenPostIds] = useState(() => new Set());
 
   useEffect(() => {
     let active = true;
 
     fetchRecentPosts()
-      .then((data) => {
-        if (active) {
-          setPosts(data || []);
+      .then(async (data) => {
+        if (!active) {
+          return;
+        }
+
+        setPosts(data || []);
+
+        // Best-effort: the feed still works with the author_name snapshot
+        // stored on each post if this lookup fails for any reason.
+        try {
+          const profileMap = await fetchProfilesByUserIds((data || []).map((post) => post.user_id));
+
+          if (active) {
+            setProfilesById(profileMap);
+          }
+        } catch (profileError) {
+          console.error("Gridster feed: could not load author profiles", profileError);
         }
       })
       .catch((loadError) => {
+        console.error("Gridster feed: could not load posts", loadError);
+
         if (active) {
           showToast?.(loadError.message || "Could not load the feed.");
         }
@@ -2553,17 +2569,27 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, showToast }) {
 
   return (
     <>
-      {posts.map((post) => (
+      {posts.map((post) => {
+        const authorProfile = profilesById.get(post.user_id);
+        const authorName = authorProfile?.display_name || post.author_name || "A Gridster resident";
+        const authorAvatarUrl = authorProfile?.avatar_url;
+
+        if (hiddenPostIds.has(post.id)) {
+          return <HiddenPostNotice key={post.id} name={authorName} />;
+        }
+
+        return (
         <FeedPost
           key={post.id}
           header={(
-            <div className="post-header">
-              <div className="post-avatar">{(post.author_name || "G").charAt(0)}</div>
-              <div className="post-header-copy">
-                <strong>{post.author_name || "A Gridster resident"}</strong>
-                <span>{GRIDSTER_POST_TYPE_LABELS[post.post_type] || "Post"} • {new Date(post.created_at).toLocaleString()}</span>
-              </div>
-            </div>
+            <PostHeader
+              name={authorName}
+              avatarUrl={authorAvatarUrl}
+              label={GRIDSTER_POST_TYPE_LABELS[post.post_type] || "Post"}
+              timeLabel={new Date(post.created_at).toLocaleString()}
+              showToast={showToast}
+              onHide={() => setHiddenPostIds((current) => new Set(current).add(post.id))}
+            />
           )}
           actions={<PostActions likes="0" comments="0" postId={post.id} showToast={showToast} />}
         >
@@ -2589,7 +2615,8 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, showToast }) {
             ) : null}
           </div>
         </FeedPost>
-      ))}
+        );
+      })}
     </>
   );
 }
@@ -2678,133 +2705,6 @@ function TeleportCenter({ showToast }) {
         ))}
       </div>
     </section>
-  );
-}
-
-function LunarEclipsePost({ showToast }) {
-  const [hidden, setHidden] = useState(false);
-
-  if (hidden) {
-    return <HiddenPostNotice name="Club Elysium" />;
-  }
-
-  return (
-    <FeedPost
-      header={(
-        <PostHeader
-          name="Club Elysium"
-          label="posted an event"
-          showToast={showToast}
-          onHide={() => setHidden(true)}
-        />
-      )}
-      actions={<PostActions likes="156" comments="32" postId="lunar-eclipse-event" showToast={showToast} />}
-    >
-      <div className="event-card">
-        <div className="event-poster">
-          <span className="event-poster-label">CLUB ELYSIUM</span>
-          <h2>LUNAR ECLIPSE</h2>
-          <p>Live DJ Set</p>
-          <div className="event-poster-badge">Featured Event</div>
-        </div>
-
-        <div className="event-info">
-          <div className="featured-label">✦ Featured Event</div>
-          <h2>Lunar Eclipse Live DJ Set</h2>
-          <p>An unforgettable night of music, light, fog, neon, and connection.</p>
-
-          <ul className="event-details-list">
-            <li>
-              <span className="detail-icon">✦</span>
-              <span>Saturday, May 24, 2025</span>
-            </li>
-            <li>
-              <span className="detail-icon">⏰</span>
-              <span>9:00 PM SLT</span>
-            </li>
-            <li>
-              <span className="detail-icon">⌖</span>
-              <span>Club Elysium • Elysium Isle</span>
-            </li>
-          </ul>
-
-          <div className="slurl-card">
-            <div className="place-thumb"></div>
-            <div>
-              <strong>Club Elysium</strong>
-              <small>Elysium Isle</small>
-            </div>
-            <button {...getTeleportButtonProps("Club Elysium")}>Teleport</button>
-            <TeleportStatusChip
-              slurl={getGridsterDestination("Club Elysium")?.slurl}
-              destinationName="Club Elysium"
-              showToast={showToast}
-            />
-          </div>
-        </div>
-      </div>
-    </FeedPost>
-  );
-}
-
-function VoguePixelsPost({ showToast }) {
-  const [hidden, setHidden] = useState(false);
-
-  if (hidden) {
-    return <HiddenPostNotice name="Vogue Pixels" />;
-  }
-
-  return (
-    <FeedPost
-      header={(
-        <PostHeader
-          name="Vogue Pixels"
-          label="shared a blog post"
-          showToast={showToast}
-          onHide={() => setHidden(true)}
-        />
-      )}
-      actions={<PostActions likes="98" comments="14" postId="vogue-pixels-blog" showToast={showToast} />}
-    >
-      <p className="post-text">
-        Neon dreams and city lights. New editorial is up on the blog! ✨
-      </p>
-
-      <div className="photo-grid">
-        <div className="photo-tile tile-one"></div>
-        <div className="photo-tile tile-two"></div>
-        <div className="photo-tile tile-three">
-          <span>+6</span>
-        </div>
-      </div>
-
-    </FeedPost>
-  );
-}
-
-function CreatorsCollectivePost({ showToast }) {
-  const [hidden, setHidden] = useState(false);
-
-  if (hidden) {
-    return <HiddenPostNotice name="The Creators Collective" />;
-  }
-
-  return (
-    <FeedPost
-      header={(
-        <PostHeader
-          name="The Creators Collective"
-          label="posted an update"
-          showToast={showToast}
-          onHide={() => setHidden(true)}
-        />
-      )}
-      actions={<PostActions likes="72" comments="18" postId="creators-collective-update" showToast={showToast} />}
-    >
-      <p className="post-text">
-        We’re excited to welcome NovaVixen to the team as our new Events Coordinator. Get ready for even more amazing grid experiences.
-      </p>
-    </FeedPost>
   );
 }
 
@@ -3407,7 +3307,7 @@ function BetaPlaceholderNotice({ children }) {
   return <p className="beta-placeholder-notice">{children}</p>;
 }
 
-function PostHeader({ name, label, showToast, onHide }) {
+function PostHeader({ name, avatarUrl, label, timeLabel = "2h ago", showToast, onHide }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("Spam");
@@ -3419,10 +3319,12 @@ function PostHeader({ name, label, showToast, onHide }) {
 
   return (
     <div className="post-header">
-      <div className="post-avatar">{name.charAt(0)}</div>
+      <div className="post-avatar">
+        {avatarUrl ? <img src={avatarUrl} alt="" /> : name.charAt(0).toUpperCase()}
+      </div>
       <div className="post-header-copy">
         <strong>{name}</strong>
-        <span>{label} • 2h ago</span>
+        <span>{label} • {timeLabel}</span>
       </div>
       <div className="post-safety-control">
         <button

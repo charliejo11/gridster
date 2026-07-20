@@ -124,6 +124,7 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
         updatePostField("photo_url", publicUrl);
       }
     } catch (uploadError) {
+      console.error("Gridster composer: photo upload failed", uploadError);
       setError(uploadError.message || "Could not upload that image.");
     } finally {
       setUploadingPhoto(false);
@@ -217,6 +218,7 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
       onPosted?.();
       onClose?.();
     } catch (submitError) {
+      console.error("Gridster composer: post submission failed", submitError);
       setError(submitError.message || "Could not post this.");
     } finally {
       setSubmitting(false);

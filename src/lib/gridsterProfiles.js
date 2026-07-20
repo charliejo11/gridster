@@ -174,6 +174,30 @@ export async function fetchGridsterProfile(userId) {
   return data;
 }
 
+// Batch profile lookup for feed rendering: posts.user_id references
+// auth.users(id), and profiles.user_id also references auth.users(id) -
+// there's no direct FK between gridster_posts and profiles for PostgREST
+// to embed automatically, so the feed fetches profiles separately and
+// maps them by user_id here.
+export async function fetchProfilesByUserIds(userIds) {
+  const uniqueIds = [...new Set((userIds || []).filter(Boolean))];
+
+  if (!uniqueIds.length) {
+    return new Map();
+  }
+
+  const { data, error } = await supabase
+    .from(GRIDSTER_PROFILE_TABLE)
+    .select("user_id, display_name, sl_username, avatar_url")
+    .in("user_id", uniqueIds);
+
+  if (error) {
+    throw error;
+  }
+
+  return new Map((data || []).map((profile) => [profile.user_id, profile]));
+}
+
 export async function ensureGridsterProfile(user) {
   if (!user?.id) {
     return null;

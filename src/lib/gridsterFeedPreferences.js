@@ -82,13 +82,16 @@ export async function fetchFeedPreferences(userId) {
 export async function saveFeedPreferences(userId, preferences) {
   const { data, error } = await supabase
     .from("profiles")
-    .update({
-      feed_show_more: preferences.show_more || [],
-      feed_show_less: preferences.show_less || [],
-      feed_ratings: preferences.ratings?.length ? preferences.ratings : DEFAULT_FEED_PREFERENCES.ratings,
-      feed_discovery_focus: preferences.discovery_focus || [],
-    })
-    .eq("user_id", userId)
+    .upsert(
+      {
+        user_id: userId,
+        feed_show_more: preferences.show_more || [],
+        feed_show_less: preferences.show_less || [],
+        feed_ratings: preferences.ratings?.length ? preferences.ratings : DEFAULT_FEED_PREFERENCES.ratings,
+        feed_discovery_focus: preferences.discovery_focus || [],
+      },
+      { onConflict: "user_id" }
+    )
     .select("feed_show_more, feed_show_less, feed_ratings, feed_discovery_focus")
     .single();
 

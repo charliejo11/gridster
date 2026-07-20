@@ -212,6 +212,22 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
         showToast?.("Event posted.");
       } else if (activeTab === "slurl") {
         await createGridsterPlace(user.id, placeForm);
+
+        try {
+          await createGridsterPost(user.id, {
+            post_type: "general",
+            content: placeForm.description ? `📍 ${placeForm.title} — ${placeForm.description}` : `📍 ${placeForm.title}`,
+            photo_url: placeForm.photo_url,
+            region_name: placeForm.region_name,
+            slurl: placeForm.slurl,
+            tags: placeForm.vibe_tags,
+            maturity_rating: placeForm.maturity_rating,
+            author_name: displayName,
+          });
+        } catch (postMirrorError) {
+          console.error("Gridster composer: could not mirror place to Home feed", postMirrorError);
+        }
+
         showToast?.("Place posted.");
       } else if (activeTab === "photo") {
         const photoUrl = await uploadGridsterPostPhoto(user.id, photoFile);

@@ -11,6 +11,7 @@ import {
   fetchGridsterPlaces,
   reportBrokenTeleport,
 } from "../../lib/gridsterPlaces";
+import { uploadGridsterPostPhoto, validateGridsterPostPhoto } from "../../lib/gridsterMediaUploads";
 
 const EMPTY_PLACE_FORM = {
   title: "",
@@ -43,6 +44,7 @@ function TeleportDiscoveryFeed({ initialCategory, onAuthOpen, showToast }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_PLACE_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const refreshPlaces = async () => {
     const nextPlaces = await fetchGridsterPlaces();
@@ -119,6 +121,35 @@ function TeleportDiscoveryFeed({ initialCategory, onAuthOpen, showToast }) {
 
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handlePhotoFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file || !user) {
+      return;
+    }
+
+    try {
+      validateGridsterPostPhoto(file);
+    } catch (validationError) {
+      setError(validationError.message || "Please choose a valid image.");
+      return;
+    }
+
+    setUploadingPhoto(true);
+    setError("");
+
+    try {
+      const publicUrl = await uploadGridsterPostPhoto(user.id, file);
+      updateField("photo_url", publicUrl);
+    } catch (uploadError) {
+      console.error("Gridster places: photo upload failed", uploadError);
+      setError(uploadError.message || "Could not upload that image.");
+    } finally {
+      setUploadingPhoto(false);
+    }
   };
 
   const handleSubmitPlace = async (event) => {
@@ -222,15 +253,28 @@ function TeleportDiscoveryFeed({ initialCategory, onAuthOpen, showToast }) {
             />
           </label>
 
-          <label>
-            <span>Photo URL</span>
-            <input
-              type="text"
-              value={form.photo_url}
-              onChange={(event) => updateField("photo_url", event.target.value)}
-              placeholder="https://..."
-            />
-          </label>
+          <div className="profile-field">
+            <label>
+              <span>Photo URL</span>
+              <input
+                type="text"
+                value={form.photo_url}
+                onChange={(event) => updateField("photo_url", event.target.value)}
+                placeholder="https://..."
+              />
+            </label>
+            <label className="profile-upload-button">
+              {uploadingPhoto ? "Uploading..." : "Upload from Computer"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                hidden
+                disabled={uploadingPhoto}
+                onChange={handlePhotoFileChange}
+              />
+            </label>
+            <p className="profile-upload-hint">PNG, JPEG, WEBP, or GIF. Max 8MB.</p>
+          </div>
 
           <label>
             <span>Teleport SLURL</span>
@@ -298,7 +342,7 @@ function TeleportDiscoveryFeed({ initialCategory, onAuthOpen, showToast }) {
 
           <div className="place-post-form-actions">
             <button type="button" onClick={() => setShowForm(false)}>Cancel</button>
-            <button type="submit" disabled={submitting}>
+            <button type="submit" disabled={submitting || uploadingPhoto}>
               {submitting ? "Posting..." : "Post Place"}
             </button>
           </div>

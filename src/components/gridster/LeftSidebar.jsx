@@ -205,6 +205,16 @@ function LeftSidebar({
             {label} {suffix ? <b>{suffix}</b> : null}
           </button>
         ))}
+
+        {profile?.is_admin ? (
+          <button
+            className={activePage === "FeaturedAdmin" ? "active" : ""}
+            onClick={() => setActivePage("FeaturedAdmin")}
+          >
+            <span>🛡</span>
+            Manage Featured
+          </button>
+        ) : null}
       </section>
 
       <a href="/bling-depot" className="gridster-plus-card bling-depot-big-card" onClick={openBlingDepot}>

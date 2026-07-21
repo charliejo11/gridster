@@ -69,14 +69,6 @@ export const gridsterDashboardEvents = [
   ["Midnight Metal Mayhem", "Jun 2 • 11:00 PM SLT"],
 ];
 
-export const gridsterFeaturedPlaces = [
-  ["Elysium Isle", "Adult • Moderate"],
-  ["Neon District", "Adult • Moderate"],
-  ["Valentina Boutique", "Fashion Store"],
-  ["Luxe Villas", "Homes • Rentals"],
-  ["Moonlit Market", "Shopping • Events"],
-];
-
 export const gridsterSidebarGroups = ["Club Elysium", "The Creators Collective", "Pixel Fashion Society"];
 
 export const gridsterSuggestedCreators = ["NovaVixen", "DJ Starfall", "EchoMoon"];

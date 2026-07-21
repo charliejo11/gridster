@@ -12,6 +12,7 @@ import {
   reportBrokenTeleport,
 } from "../../lib/gridsterPlaces";
 import { uploadGridsterPostPhoto, validateGridsterPostPhoto } from "../../lib/gridsterMediaUploads";
+import { submitNomination } from "../../lib/gridsterFeatured";
 
 const EMPTY_PLACE_FORM = {
   title: "",
@@ -195,6 +196,31 @@ function TeleportDiscoveryFeed({ initialCategory, onAuthOpen, showToast }) {
       showToast?.("Teleport reported as broken.");
     } catch (reportError) {
       setError(reportError.message || "Could not report this teleport.");
+    } finally {
+      setBusyId("");
+    }
+  };
+
+  const handleNominate = async (place) => {
+    if (!user) {
+      onAuthOpen?.("login");
+      return;
+    }
+
+    setBusyId(place.id);
+    setMessage("");
+    setError("");
+
+    try {
+      await submitNomination(user.id, place.id);
+      setMessage(`${place.title} nominated for Featured — an admin will review it.`);
+      showToast?.("Nomination submitted.");
+    } catch (nominateError) {
+      const friendlyMessage = nominateError.code === "DUPLICATE_NOMINATION"
+        ? nominateError.message
+        : nominateError.message || "Could not submit this nomination.";
+      setError(friendlyMessage);
+      showToast?.(friendlyMessage);
     } finally {
       setBusyId("");
     }
@@ -421,6 +447,11 @@ function TeleportDiscoveryFeed({ initialCategory, onAuthOpen, showToast }) {
                 <button type="button" disabled={busy} onClick={() => handleReportBroken(place)}>
                   Report Broken
                 </button>
+                {!isOwner ? (
+                  <button type="button" disabled={busy} onClick={() => handleNominate(place)}>
+                    Nominate for Featured
+                  </button>
+                ) : null}
                 {isOwner ? (
                   <button type="button" disabled={busy} onClick={() => handleDeletePlace(place)}>
                     Delete

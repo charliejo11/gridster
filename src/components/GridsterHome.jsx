@@ -73,7 +73,6 @@ import {
   gridsterComposerTemplates,
   gridsterDashboardEvents,
   gridsterDjSets,
-  gridsterFeaturedPlaces,
   gridsterGalleryItems,
   gridsterGridNightEvents,
   gridsterLiveNow,
@@ -122,6 +121,7 @@ import BlingDepot from "./gridster/BlingDepot";
 import TeleportDiscoveryFeed from "./gridster/TeleportDiscoveryFeed";
 import TonightInSL from "./gridster/TonightInSL";
 import BookingBoard from "./gridster/BookingBoard";
+import FeaturedAdminPage from "./gridster/FeaturedAdminPage";
 import GroupsPage from "./gridster/GroupsPage";
 import GroupDetailPage from "./gridster/GroupDetailPage";
 import ResidentProfilePage from "./gridster/ResidentProfilePage";
@@ -406,7 +406,6 @@ function GridsterHome() {
             onOpenProfile={openProfile}
             onOpenResidentProfile={openResidentProfile}
             onOpenMessages={openMessages}
-            places={gridsterFeaturedPlaces}
             showToast={showToast}
           />
         )}
@@ -514,6 +513,17 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         subtitle="Spend Bling Bits on profile glowies, backgrounds, stickers, badges, and boosts."
       >
         <BlingDepot onAuthOpen={() => onAuthOpen?.("login")} showToast={showToast} />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "FeaturedAdmin") {
+    return (
+      <PageShell
+        title="Featured Places"
+        subtitle="Manage Featured Sim/Store placements and review resident nominations."
+      >
+        <FeaturedAdminPage showToast={showToast} />
       </PageShell>
     );
   }

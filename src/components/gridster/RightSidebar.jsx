@@ -12,6 +12,12 @@ import {
   fetchFriends,
   formatFriendNotificationTime,
 } from "../../lib/gridsterFriends";
+import {
+  GRIDSTER_PLACE_CATEGORY_LABELS,
+  fetchActiveFeaturedPlaces,
+  getPlaceTypeLabel,
+  recordFeaturedTeleportClick,
+} from "../../lib/gridsterFeatured";
 import ActionButton from "./ActionButton";
 import TeleportStatusChip from "./TeleportStatusChip";
 import Widget from "./Widget";
@@ -66,12 +72,13 @@ function RightSidebar({
   onOpenProfile,
   onOpenResidentProfile,
   onOpenMessages,
-  places,
   showToast,
 }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [friends, setFriends] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [featuredPlaces, setFeaturedPlaces] = useState([]);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -112,6 +119,29 @@ function RightSidebar({
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    fetchActiveFeaturedPlaces(3)
+      .then((data) => {
+        if (active) {
+          setFeaturedPlaces(data);
+        }
+      })
+      .catch((featuredError) => {
+        console.error("Gridster sidebar: could not load featured places", featuredError);
+      })
+      .finally(() => {
+        if (active) {
+          setFeaturedLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <aside className="right-panel">
       <Widget title="Trending Events" onAction={() => showToast?.("Full events list coming soon.")}>
@@ -120,11 +150,22 @@ function RightSidebar({
         ))}
       </Widget>
 
-      <Widget title="Featured Sims / Stores" onAction={() => showToast?.("Full sims and stores list coming soon.")}>
-        {places.map(([title, desc], index) => (
-          <PlaceCard key={title} title={title} desc={desc} index={index} onOpenProfile={onOpenProfile} showToast={showToast} />
-        ))}
-      </Widget>
+      {featuredLoading || featuredPlaces.length > 0 ? (
+        <Widget title="Featured Sims / Stores" onAction={() => showToast?.("Full sims and stores list coming soon.")}>
+          {featuredLoading ? (
+            <p className="sidebar-widget-empty">Loading featured places...</p>
+          ) : (
+            featuredPlaces.map((featured) => (
+              <FeaturedPlaceCard
+                key={featured.id}
+                featured={featured}
+                currentUserId={currentUser?.id}
+                showToast={showToast}
+              />
+            ))
+          )}
+        </Widget>
+      ) : null}
 
       <Widget title="Popular Groups" onAction={() => showToast?.("Full groups list coming soon.")}>
         {groups.map((group) => (
@@ -268,6 +309,44 @@ function PlaceCard({ title, desc, index, onOpenProfile, showToast }) {
         destinationName={title}
         showToast={showToast}
       />
+    </div>
+  );
+}
+
+function FeaturedPlaceCard({ featured, currentUserId, showToast }) {
+  const place = featured.gridster_places;
+
+  if (!place) {
+    return null;
+  }
+
+  const imageUrl = featured.image_url || place.photo_url;
+  const typeLabel = getPlaceTypeLabel(place.category);
+  const categoryLabel = GRIDSTER_PLACE_CATEGORY_LABELS[place.category] || place.category;
+
+  return (
+    <div className="place-card featured-place-card">
+      {imageUrl ? (
+        <div className="place-thumb small featured-place-thumb">
+          <img src={imageUrl} alt="" />
+        </div>
+      ) : (
+        <div className="place-thumb small featured-place-thumb featured-place-thumb-fallback">
+          {place.title.charAt(0).toUpperCase()}
+        </div>
+      )}
+      <div>
+        <strong>{place.title}</strong>
+        <small>{typeLabel} • {categoryLabel}</small>
+      </div>
+      <ActionButton
+        data-destination={place.region_name || place.title}
+        data-slurl={place.slurl}
+        onClick={() => recordFeaturedTeleportClick(place.id, currentUserId)}
+      >
+        Teleport
+      </ActionButton>
+      <TeleportStatusChip slurl={place.slurl} destinationName={place.title} showToast={showToast} />
     </div>
   );
 }

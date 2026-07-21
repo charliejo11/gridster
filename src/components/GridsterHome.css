@@ -15215,3 +15215,179 @@ button.join-toggle.is-joined {
   flex-direction: column;
   gap: 18px;
 }
+
+/* =========================================================
+   Featured Sim/Store system
+   ========================================================= */
+
+.featured-place-thumb {
+  overflow: hidden;
+  padding: 0;
+  background: linear-gradient(135deg, rgba(215, 44, 255, 0.7), rgba(22, 140, 255, 0.5));
+}
+
+.featured-place-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.featured-place-thumb-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.featured-sponsored-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 214, 79, 0.18);
+  border: 1px solid rgba(255, 214, 79, 0.4);
+  color: #ffd64f;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.featured-admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.featured-admin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px !important;
+  border: 1px solid rgba(255, 214, 79, 0.25);
+  border-radius: 20px;
+}
+
+.featured-admin-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.featured-admin-search-results button {
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(12, 14, 30, 0.6);
+  border: 1px solid rgba(215, 44, 255, 0.16);
+  color: #d8d2ea;
+}
+
+.featured-admin-search-results button:hover {
+  border-color: rgba(255, 79, 216, 0.4);
+}
+
+.featured-admin-selected-place {
+  color: #d8d2ea;
+  font-size: 13px;
+}
+
+.featured-admin-selected-place button {
+  margin-left: 8px;
+  color: #7ec8ff;
+  text-decoration: underline;
+}
+
+.featured-admin-warning {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 214, 79, 0.1);
+  border: 1px solid rgba(255, 214, 79, 0.35);
+}
+
+.featured-admin-warning p {
+  margin: 0;
+  color: #ffe9a8;
+  font-size: 13px;
+}
+
+.featured-admin-warning button {
+  align-self: flex-start;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: linear-gradient(90deg, #2c91ff, #943dff);
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.featured-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.featured-admin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(12, 14, 30, 0.6);
+  border: 1px solid rgba(215, 44, 255, 0.16);
+}
+
+.featured-admin-row strong {
+  display: block;
+  color: #ffffff;
+}
+
+.featured-admin-row small {
+  display: block;
+  color: #aaa7c8;
+  font-size: 12px;
+}
+
+.featured-admin-row.status-expired {
+  opacity: 0.55;
+}
+
+.featured-admin-row.status-active {
+  border-color: rgba(46, 204, 113, 0.35);
+}
+
+.featured-admin-row-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.featured-admin-row-actions button {
+  border: 1px solid rgba(22, 140, 255, 0.4);
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, rgba(215, 44, 255, 0.2), rgba(22, 140, 255, 0.14));
+  color: #e7ddff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.featured-admin-row-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

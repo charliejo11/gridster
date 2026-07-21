@@ -15183,15 +15183,19 @@ button.join-toggle.is-joined {
 }
 
 .recent-post-photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 16px;
   overflow: hidden;
   max-height: 420px;
+  background: rgba(0, 0, 0, 0.35);
 }
 
 .recent-post-photo img {
   width: 100%;
   max-height: 420px;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .recent-post-link {

@@ -73,6 +73,24 @@ function normalizeUrl(value) {
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
+// SL viewer chat/IM history prefixes every line with a timestamp, so pasting
+// a SLURL copied from there (e.g. "Monday, July 20, 2026 7:21 PM
+// https://maps.secondlife.com/...") saves a link the Teleport button can
+// never open. Extract just the URL if one is embedded in the pasted text.
+const SLURL_PATTERN = /(https?:\/\/\S+|secondlife:\/\/\S+)/i;
+
+export function normalizeSlurlInput(value) {
+  const trimmed = String(value || "").trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  const match = trimmed.match(SLURL_PATTERN);
+
+  return match ? match[0] : trimmed;
+}
+
 function normalizeTags(value) {
   const rawTags = Array.isArray(value) ? value : String(value || "").split(",");
 
@@ -84,7 +102,7 @@ export function normalizeGridsterPlaceForm(form) {
     title: String(form.title || "").trim(),
     description: String(form.description || "").trim(),
     photo_url: normalizeUrl(form.photo_url),
-    slurl: String(form.slurl || "").trim(),
+    slurl: normalizeSlurlInput(form.slurl),
     region_name: String(form.region_name || "").trim(),
     category: GRIDSTER_PLACE_CATEGORIES.includes(form.category) ? form.category : "hangouts",
     vibe_tags: normalizeTags(form.vibe_tags),
@@ -100,7 +118,7 @@ export function normalizeGridsterEventForm(form) {
     title: String(form.title || "").trim(),
     description: String(form.description || "").trim(),
     photo_url: normalizeUrl(form.photo_url),
-    slurl: String(form.slurl || "").trim(),
+    slurl: normalizeSlurlInput(form.slurl),
     region_name: String(form.region_name || "").trim(),
     event_type: GRIDSTER_EVENT_TYPES.includes(form.event_type) ? form.event_type : "live_dj",
     when_label: String(form.when_label || "").trim(),

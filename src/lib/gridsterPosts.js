@@ -1,5 +1,5 @@
 import { supabase } from "./supabaseClient";
-import { GRIDSTER_MATURITY_RATINGS } from "./gridsterPlaces";
+import { GRIDSTER_MATURITY_RATINGS, normalizeSlurlInput } from "./gridsterPlaces";
 
 export const GRIDSTER_POSTS_TABLE = "gridster_posts";
 
@@ -35,7 +35,7 @@ export function normalizeGridsterPostForm(form) {
     photo_url: normalizeUrl(form.photo_url),
     link_url: normalizeUrl(form.link_url),
     region_name: String(form.region_name || "").trim(),
-    slurl: String(form.slurl || "").trim(),
+    slurl: normalizeSlurlInput(form.slurl),
     tags: normalizeTags(form.tags),
     maturity_rating: GRIDSTER_MATURITY_RATINGS.includes(form.maturity_rating) ? form.maturity_rating : "general",
   };

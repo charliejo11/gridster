@@ -250,6 +250,11 @@ function GridsterHome() {
       return;
     }
 
+    if (!/^(https?:|secondlife:)\/\//i.test(slurl)) {
+      showToast("This SLURL looks broken — try re-saving it.");
+      return;
+    }
+
     window.open(slurl, "_blank", "noopener,noreferrer");
     showToast(`Teleport ready: ${destinationName}`);
   };

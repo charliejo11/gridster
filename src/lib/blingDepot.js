@@ -96,10 +96,38 @@ export async function getBlingShopData() {
     throw equippedResult.error;
   }
 
+  // An archived item (is_active = false) is intentionally excluded from
+  // itemsResult above so it never appears for new purchases - but an owner
+  // must still see it in "Your Collection" and be able to render it if
+  // equipped. Fetch just the archived rows the user actually owns (the RLS
+  // policy allows this for owned/equipped rows even when inactive) and
+  // merge them in, so equip/ownership lookups against `items` keep working
+  // for archived items exactly like active ones.
+  const purchasedItemIds = (purchasesResult.data || []).map((purchase) => purchase.item_id);
+  let archivedOwnedItems = [];
+
+  if (purchasedItemIds.length > 0) {
+    const activeIds = new Set((itemsResult.data || []).map((item) => item.id));
+    const missingIds = purchasedItemIds.filter((id) => !activeIds.has(id));
+
+    if (missingIds.length > 0) {
+      const archivedResult = await supabase
+        .from("bling_items")
+        .select("*")
+        .in("id", missingIds);
+
+      if (archivedResult.error) {
+        throw archivedResult.error;
+      }
+
+      archivedOwnedItems = archivedResult.data || [];
+    }
+  }
+
   return {
     balance: balanceResult.data,
     isAdmin,
-    items: itemsResult.data || [],
+    items: [...(itemsResult.data || []), ...archivedOwnedItems],
     purchases: purchasesResult.data || [],
     equipped: equippedResult.data || [],
   };

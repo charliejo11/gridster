@@ -78,13 +78,11 @@ import {
   gridsterLiveNow,
   gridsterLiveNowEvents,
   gridsterMarketplaceFinds,
-  gridsterPostSampleComments,
   gridsterProfileFlairBadges,
   gridsterSidebarGroups,
   gridsterSuggestedCreators,
   gridsterTeleportCenterDestinations,
   gridsterThemeOptions,
-  gridsterTrendingTopics,
   gridsterUpcomingGridNights,
   gridsterWelcomeFeatures,
   gridsterExplorePreviewTiles,
@@ -132,6 +130,35 @@ import MyCreatorPagesPage from "./gridster/MyCreatorPagesPage";
 import GridsterComposerModal from "./gridster/GridsterComposerModal";
 import TeleportStatusChip from "./gridster/TeleportStatusChip";
 import SponsorsPage from "./gridster/SponsorsPage";
+import BoostedLabel from "./gridster/BoostedLabel";
+import BoostPostDialog from "./gridster/BoostPostDialog";
+import BoostDashboard from "./gridster/BoostDashboard";
+import BoostAdminPage from "./gridster/BoostAdminPage";
+import {
+  fetchEngagementStats,
+  fetchMyReactedPostIds,
+  fetchMySavedPostIds,
+  fetchComments,
+  logPostClick,
+  logShare,
+  postComment,
+  reactToPost,
+  savePost,
+  unreactToPost,
+  unsavePost,
+} from "../lib/gridsterEngagement";
+import {
+  fetchActiveFeedBoosts,
+  recordBoostImpression,
+  recordBoostProfileClick,
+  recordBoostTeleportClick,
+} from "../lib/gridsterBoosts";
+import {
+  computeOrganicTrendingTags,
+  interleaveBoostedPosts,
+  readSessionShownBoostIds,
+  rememberSessionShownBoostId,
+} from "../lib/gridsterTrending";
 import "./GridsterHome.css";
 
 const GRIDSTER_PAGE_PATHS = {
@@ -359,6 +386,24 @@ function GridsterHome() {
 
     if (button.textContent.toLowerCase().includes("teleport")) {
       handleTeleport(button.dataset.destination, button.dataset.slurl);
+
+      // Best-effort click tracking - never blocks the teleport above,
+      // which has already fired via window.open by this point. Only
+      // post teleport buttons carry data-post-id; place/event teleport
+      // buttons elsewhere in the app simply don't set it.
+      const postId = button.dataset.postId;
+      const boostId = button.dataset.boostId;
+
+      if (postId) {
+        supabase.auth
+          .getUser()
+          .then(({ data }) => logPostClick(postId, data?.user?.id ?? null, "teleport"))
+          .catch(() => {});
+      }
+
+      if (boostId) {
+        recordBoostTeleportClick(boostId, "feed");
+      }
     }
   };
 
@@ -462,7 +507,12 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
     return (
       <>
         <CreatePostComposer onOpenComposer={onOpenComposer} showToast={showToast} />
-        <RecentPostsFeed refreshToken={postsRefreshToken} onOpenComposer={onOpenComposer} showToast={showToast} />
+        <RecentPostsFeed
+          refreshToken={postsRefreshToken}
+          onOpenComposer={onOpenComposer}
+          onOpenResidentProfile={onOpenResidentProfile}
+          showToast={showToast}
+        />
         <TrendingNow showToast={showToast} />
         <WelcomeCard onExplore={() => setActivePage("Explore")} />
         <ExplorePreview showToast={showToast} />
@@ -510,7 +560,7 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
     return (
       <PageShell
         title="Bling Depot"
-        subtitle="Spend Bling Bits on profile glowies, backgrounds, stickers, badges, and boosts."
+        subtitle="Spend Bling Bits on profile glowies, backgrounds, stickers, and badges."
       >
         <BlingDepot onAuthOpen={() => onAuthOpen?.("login")} showToast={showToast} />
       </PageShell>
@@ -524,6 +574,28 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
         subtitle="Manage Featured Sim/Store placements and review resident nominations."
       >
         <FeaturedAdminPage showToast={showToast} />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "MyBoosts") {
+    return (
+      <PageShell
+        title="My Boosts"
+        subtitle="Spend Bling Bits to boost your own posts for extra visibility. Boosting increases reach but does not guarantee Trending status."
+      >
+        <BoostDashboard />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "BoostAdmin") {
+    return (
+      <PageShell
+        title="Boost Review"
+        subtitle="Review active post boosts, cancel policy violations, and issue refunds."
+      >
+        <BoostAdminPage showToast={showToast} />
       </PageShell>
     );
   }
@@ -2723,6 +2795,13 @@ const COMPOSER_ACTION_TABS = {
   "✎ Blog": "blog",
 };
 
+const COMPOSER_TEMPLATE_TABS = {
+  "Event Notice": "event",
+  "New Blog Post": "blog",
+  "Store Release": "store",
+  "Photo Spot": "photo",
+};
+
 function CreatePostComposer({ onOpenComposer, showToast }) {
   const [content, setContent] = useState("");
 
@@ -2764,7 +2843,7 @@ function CreatePostComposer({ onOpenComposer, showToast }) {
             <button
               className="template-chip"
               key={template}
-              onClick={() => showToast?.(`${template} template coming soon.`)}
+              onClick={() => onOpenComposer?.(COMPOSER_TEMPLATE_TABS[template] || "general")}
             >
               {template}
             </button>
@@ -2776,7 +2855,7 @@ function CreatePostComposer({ onOpenComposer, showToast }) {
   );
 }
 
-function RecentPostsFeed({ refreshToken, onOpenComposer, showToast }) {
+function RecentPostsFeed({ refreshToken, onOpenComposer, onOpenResidentProfile, showToast }) {
   const [posts, setPosts] = useState([]);
   const [profilesById, setProfilesById] = useState(new Map());
   const [loading, setLoading] = useState(true);
@@ -2786,6 +2865,11 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, showToast }) {
   const [blockedUserIds, setBlockedUserIds] = useState(() => new Set());
   const [friendUserIds, setFriendUserIds] = useState(() => new Set());
   const [feedPreferences, setFeedPreferences] = useState(null);
+  const [engagementStatsByPostId, setEngagementStatsByPostId] = useState(() => new Map());
+  const [activeBoostsByPostId, setActiveBoostsByPostId] = useState(() => new Map());
+  const [reactedPostIds, setReactedPostIds] = useState(() => new Set());
+  const [savedPostIds, setSavedPostIds] = useState(() => new Set());
+  const [boostDialogPost, setBoostDialogPost] = useState(null);
   // Posts hidden *this render*, kept separate from the DB-backed hiddenPostIds
   // above so the user sees a brief "post hidden" confirmation card instead of
   // the post just vanishing - the DB list is what actually filters posts out
@@ -2825,6 +2909,8 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, showToast }) {
       setFriendUserIds(new Set(friends.map((friend) => friend.user_id)));
       setPosts(rawPosts || []);
 
+      const postIds = (rawPosts || []).map((post) => post.id);
+
       // Best-effort: the feed still works with the author_name snapshot
       // stored on each post if this lookup fails for any reason.
       try {
@@ -2835,6 +2921,27 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, showToast }) {
         }
       } catch (profileError) {
         console.error("Gridster feed: could not load author profiles", profileError);
+      }
+
+      // Engagement stats and active boosts are what drives organic
+      // Trending and feed labeling/interleaving - best-effort so a
+      // failure here never blocks the feed itself from rendering.
+      try {
+        const [stats, boosts, reacted, saved] = await Promise.all([
+          fetchEngagementStats(postIds),
+          fetchActiveFeedBoosts(postIds),
+          fetchMyReactedPostIds(userId, postIds),
+          fetchMySavedPostIds(userId, postIds),
+        ]);
+
+        if (active) {
+          setEngagementStatsByPostId(stats);
+          setActiveBoostsByPostId(boosts);
+          setReactedPostIds(reacted);
+          setSavedPostIds(saved);
+        }
+      } catch (engagementError) {
+        console.error("Gridster feed: could not load engagement/boost data", engagementError);
       }
     }
 
@@ -2870,9 +2977,122 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, showToast }) {
       blockedUserIds,
       friendUserIds,
       profilesById,
-      trendingTags: gridsterTrendingTopics.map(([tag]) => tag),
+      trendingTags: computeOrganicTrendingTags(posts, engagementStatsByPostId).map(([tag]) => tag),
+      engagementStatsByPostId,
+      activeBoostsByPostId,
     });
-  }, [posts, feedPreferences, hiddenPostIds, mutedUserIds, blockedUserIds, friendUserIds, profilesById]);
+  }, [posts, feedPreferences, hiddenPostIds, mutedUserIds, blockedUserIds, friendUserIds, profilesById, engagementStatsByPostId, activeBoostsByPostId]);
+
+  // Boosted posts are interleaved as *additional* slots after organic
+  // ranking/filtering above - this never reorders the organic list,
+  // it only inserts extra appearances of eligible boosted posts
+  // (section 7: buys reach, not popularity).
+  const feedEntries = useMemo(() => {
+    if (!rankedPosts.length) {
+      return [];
+    }
+
+    const boostCandidates = rankedPosts
+      .filter((post) => activeBoostsByPostId.has(post.id))
+      .map((post) => ({ post, boost: activeBoostsByPostId.get(post.id) }));
+
+    return interleaveBoostedPosts(rankedPosts, boostCandidates, {
+      currentUserId,
+      mutedUserIds,
+      blockedUserIds,
+      sessionShownBoostIds: readSessionShownBoostIds(),
+    });
+  }, [rankedPosts, activeBoostsByPostId, currentUserId, mutedUserIds, blockedUserIds]);
+
+  const adjustReactionCount = (postId, delta) => {
+    setEngagementStatsByPostId((current) => {
+      const next = new Map(current);
+      const stats = next.get(postId) || {};
+      next.set(postId, { ...stats, reaction_count: Math.max(0, (stats.reaction_count || 0) + delta) });
+      return next;
+    });
+  };
+
+  const handleToggleReaction = (post) => {
+    if (!currentUserId) {
+      return;
+    }
+
+    const isReacted = reactedPostIds.has(post.id);
+    // The stats view excludes a creator's own reaction on their own post,
+    // so only nudge the visible count when someone else is reacting.
+    const countsTowardStats = post.user_id !== currentUserId;
+
+    setReactedPostIds((current) => {
+      const next = new Set(current);
+      if (isReacted) next.delete(post.id); else next.add(post.id);
+      return next;
+    });
+
+    if (countsTowardStats) {
+      adjustReactionCount(post.id, isReacted ? -1 : 1);
+    }
+
+    const action = isReacted ? unreactToPost(currentUserId, post.id) : reactToPost(currentUserId, post.id);
+    action.catch((reactionError) => {
+      console.error("Gridster feed: could not save reaction", reactionError);
+
+      // The optimistic update above didn't actually persist - revert it
+      // instead of leaving the UI silently lying about a saved reaction.
+      setReactedPostIds((current) => {
+        const next = new Set(current);
+        if (isReacted) next.add(post.id); else next.delete(post.id);
+        return next;
+      });
+
+      if (countsTowardStats) {
+        adjustReactionCount(post.id, isReacted ? 1 : -1);
+      }
+
+      showToast?.("Could not save your reaction. Please try again.");
+    });
+  };
+
+  const handleToggleSave = (post) => {
+    if (!currentUserId) {
+      return;
+    }
+
+    const isSaved = savedPostIds.has(post.id);
+    setSavedPostIds((current) => {
+      const next = new Set(current);
+      if (isSaved) next.delete(post.id); else next.add(post.id);
+      return next;
+    });
+
+    const action = isSaved ? unsavePost(currentUserId, post.id) : savePost(currentUserId, post.id);
+    action.catch((saveError) => {
+      console.error("Gridster feed: could not save post", saveError);
+
+      setSavedPostIds((current) => {
+        const next = new Set(current);
+        if (isSaved) next.add(post.id); else next.delete(post.id);
+        return next;
+      });
+
+      showToast?.("Could not save this post. Please try again.");
+    });
+  };
+
+  const handleProfileClick = (post, boost) => {
+    logPostClick(post.id, currentUserId, "profile").catch(() => {});
+
+    if (boost) {
+      recordBoostProfileClick(boost.boost_id, "feed");
+    }
+
+    if (post.user_id === currentUserId) {
+      showToast?.("That's you!");
+      return;
+    }
+
+    onOpenResidentProfile?.(post.user_id);
+  };
 
   const handleHide = (post) => {
     setSessionHiddenIds((current) => new Set(current).add(post.id));
@@ -2955,75 +3175,266 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, showToast }) {
 
   return (
     <>
-      {rankedPosts.map((post) => {
+      {feedEntries.map((entry, index) => {
+        const { post, boosted, boost } = entry;
         const authorProfile = profilesById.get(post.user_id);
         const authorName = authorProfile?.display_name || post.author_name || "A Gridster resident";
         const authorAvatarUrl = authorProfile?.avatar_url;
-
-        if (sessionHiddenIds.has(post.id)) {
-          return <HiddenPostNotice key={post.id} name={authorName} />;
-        }
+        const key = boosted ? `${post.id}-boost-${index}` : post.id;
 
         return (
-        <FeedPost
-          key={post.id}
-          header={(
-            <PostHeader
-              name={authorName}
-              avatarUrl={authorAvatarUrl}
-              label={GRIDSTER_POST_TYPE_LABELS[post.post_type] || "Post"}
-              timeLabel={new Date(post.created_at).toLocaleString()}
-              showToast={showToast}
-              onHide={() => handleHide(post)}
-              onMute={() => handleMute(post, authorName)}
-              onBlock={() => handleBlock(post, authorName)}
-              onReport={(reason) => handleReport(post, reason)}
-            />
-          )}
-          actions={<PostActions likes="0" comments="0" postId={post.id} showToast={showToast} />}
-        >
-          <div className="recent-post-body">
-            {post.content ? <p>{post.content}</p> : null}
-            {post.photo_url ? (
-              <div className="recent-post-photo">
-                <img src={post.photo_url} alt="" />
-              </div>
-            ) : null}
-            {post.link_url ? (
-              <a className="recent-post-link" href={post.link_url} target="_blank" rel="noreferrer">
-                {post.link_url}
-              </a>
-            ) : null}
-            {post.slurl ? (
-              <div className="recent-post-actions">
-                <button type="button" data-destination={post.region_name || post.content || "Gridster"} data-slurl={post.slurl}>
-                  Teleport
-                </button>
-                <TeleportStatusChip slurl={post.slurl} destinationName={post.region_name || post.content || "Gridster"} showToast={showToast} />
-              </div>
-            ) : null}
-          </div>
-        </FeedPost>
+          <FeedPostEntry
+            key={key}
+            post={post}
+            boosted={boosted}
+            boost={boost}
+            authorName={authorName}
+            authorAvatarUrl={authorAvatarUrl}
+            hidden={sessionHiddenIds.has(post.id)}
+            reacted={reactedPostIds.has(post.id)}
+            saved={savedPostIds.has(post.id)}
+            stats={engagementStatsByPostId.get(post.id)}
+            currentUserId={currentUserId}
+            onProfileClick={handleProfileClick}
+            onToggleReaction={handleToggleReaction}
+            onToggleSave={handleToggleSave}
+            onBoost={setBoostDialogPost}
+            onHide={handleHide}
+            onMute={handleMute}
+            onBlock={handleBlock}
+            onReport={handleReport}
+            showToast={showToast}
+          />
         );
       })}
+
+      {boostDialogPost ? (
+        <BoostPostDialog
+          post={boostDialogPost}
+          showToast={showToast}
+          onClose={() => setBoostDialogPost(null)}
+          onBoosted={async () => {
+            try {
+              const refreshed = await fetchActiveFeedBoosts([boostDialogPost.id]);
+              setActiveBoostsByPostId((current) => {
+                const next = new Map(current);
+                const boostRow = refreshed.get(boostDialogPost.id);
+                if (boostRow) next.set(boostDialogPost.id, boostRow);
+                return next;
+              });
+            } catch (refreshError) {
+              console.error("Gridster feed: could not refresh boost state", refreshError);
+            }
+          }}
+        />
+      ) : null}
     </>
   );
 }
 
+function FeedPostEntry({
+  post,
+  boosted,
+  boost,
+  authorName,
+  authorAvatarUrl,
+  hidden,
+  reacted,
+  saved,
+  stats,
+  currentUserId,
+  onProfileClick,
+  onToggleReaction,
+  onToggleSave,
+  onBoost,
+  onHide,
+  onMute,
+  onBlock,
+  onReport,
+  showToast,
+}) {
+  const cardRef = useRef(null);
+
+  // Visibility-threshold impression tracking for boosted cards only -
+  // 50% visible for 1s before counting, deduplicated server-side in
+  // record_boost_event. Organic (non-boosted) cards never call this.
+  useEffect(() => {
+    if (!boosted || !boost) {
+      return undefined;
+    }
+
+    rememberSessionShownBoostId(boost.boost_id);
+
+    const element = cardRef.current;
+
+    if (!element || typeof IntersectionObserver === "undefined") {
+      return undefined;
+    }
+
+    let fired = false;
+    let timeoutId = null;
+
+    const observer = new IntersectionObserver(
+      ([observerEntry]) => {
+        if (fired) return;
+
+        if (observerEntry.isIntersecting) {
+          timeoutId = window.setTimeout(() => {
+            if (!fired) {
+              fired = true;
+              recordBoostImpression(boost.boost_id, "feed");
+            }
+          }, 1000);
+        } else if (timeoutId) {
+          window.clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [boosted, boost]);
+
+  if (hidden) {
+    return <HiddenPostNotice name={authorName} />;
+  }
+
+  const canBoost = Boolean(currentUserId) && post.user_id === currentUserId && !boosted;
+
+  return (
+    <div ref={cardRef}>
+      <FeedPost
+        header={(
+          <PostHeader
+            name={authorName}
+            avatarUrl={authorAvatarUrl}
+            label={GRIDSTER_POST_TYPE_LABELS[post.post_type] || "Post"}
+            timeLabel={new Date(post.created_at).toLocaleString()}
+            showToast={showToast}
+            boosted={boosted}
+            onProfileClick={() => onProfileClick(post, boost)}
+            onHide={() => onHide(post)}
+            onMute={() => onMute(post, authorName)}
+            onBlock={() => onBlock(post, authorName)}
+            onReport={(reason) => onReport(post, reason)}
+          />
+        )}
+        actions={(
+          <PostActions
+            post={post}
+            currentUserId={currentUserId}
+            reacted={reacted}
+            saved={saved}
+            reactionCount={stats?.reaction_count || 0}
+            commentCount={stats?.comment_count || 0}
+            shareCount={stats?.share_count || 0}
+            onToggleReaction={() => onToggleReaction(post)}
+            onToggleSave={() => onToggleSave(post)}
+            showToast={showToast}
+          />
+        )}
+      >
+        <div className="recent-post-body">
+          {post.content ? <p>{post.content}</p> : null}
+          {post.photo_url ? (
+            <div className="recent-post-photo">
+              <img src={post.photo_url} alt="" />
+            </div>
+          ) : null}
+          {post.link_url ? (
+            <a className="recent-post-link" href={post.link_url} target="_blank" rel="noreferrer">
+              {post.link_url}
+            </a>
+          ) : null}
+          {post.slurl ? (
+            <div className="recent-post-actions">
+              <button
+                type="button"
+                data-destination={post.region_name || post.content || "Gridster"}
+                data-slurl={post.slurl}
+                data-post-id={post.id}
+                data-boost-id={boost?.boost_id || ""}
+              >
+                Teleport
+              </button>
+              <TeleportStatusChip slurl={post.slurl} destinationName={post.region_name || post.content || "Gridster"} showToast={showToast} />
+            </div>
+          ) : null}
+          {canBoost ? (
+            <button type="button" className="boost-post-button" onClick={() => onBoost(post)}>
+              ⚡ Boost Post
+            </button>
+          ) : null}
+        </div>
+      </FeedPost>
+    </div>
+  );
+}
+
+// Purely organic - computed from real reactions/comments/saves/shares/
+// clicks via computeOrganicTrendingTags (gridsterTrending.js). Boost
+// spend is never read here; this replaces the previous hardcoded
+// gridsterTrendingTopics array.
 function TrendingNow({ showToast }) {
+  const [tags, setTags] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      const posts = await fetchRecentPosts(50);
+      const stats = await fetchEngagementStats(posts.map((post) => post.id));
+
+      if (active) {
+        setTags(computeOrganicTrendingTags(posts, stats));
+      }
+    }
+
+    load()
+      .catch((loadError) => {
+        console.error("Gridster trending: could not compute trending topics", loadError);
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (!loading && !tags.length) {
+    return null;
+  }
+
   return (
     <section className="trending-card glass-card">
       <h3>Trending Now</h3>
       <div className="trending-pills">
-        {gridsterTrendingTopics.map(([tag, count]) => (
-          <button
-            className="trend-pill"
-            key={tag}
-            onClick={() => showToast?.(`Browsing ${tag} coming soon.`)}
-          >
-            {tag} <span>{count}</span>
-          </button>
-        ))}
+        {loading ? (
+          <p className="sidebar-widget-empty">Loading trending topics...</p>
+        ) : (
+          tags.map(([tag, count]) => (
+            <button
+              className="trend-pill"
+              key={tag}
+              onClick={() => showToast?.(`Browsing ${tag} coming soon.`)}
+            >
+              {tag} <span>{count}</span>
+            </button>
+          ))
+        )}
       </div>
     </section>
   );
@@ -3696,7 +4107,7 @@ function BetaPlaceholderNotice({ children }) {
   return <p className="beta-placeholder-notice">{children}</p>;
 }
 
-function PostHeader({ name, avatarUrl, label, timeLabel = "2h ago", showToast, onHide, onMute, onBlock, onReport }) {
+function PostHeader({ name, avatarUrl, label, timeLabel = "2h ago", showToast, boosted, onProfileClick, onHide, onMute, onBlock, onReport }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("Spam");
@@ -3708,12 +4119,15 @@ function PostHeader({ name, avatarUrl, label, timeLabel = "2h ago", showToast, o
 
   return (
     <div className="post-header">
-      <div className="post-avatar">
+      <button type="button" className="post-avatar post-avatar-button" onClick={onProfileClick}>
         {avatarUrl ? <img src={avatarUrl} alt="" /> : name.charAt(0).toUpperCase()}
-      </div>
+      </button>
       <div className="post-header-copy">
-        <strong>{name}</strong>
+        <button type="button" className="post-header-name-button" onClick={onProfileClick}>
+          <strong>{name}</strong>
+        </button>
         <span>{label} • {timeLabel}</span>
+        {boosted ? <BoostedLabel compact /> : null}
       </div>
       <div className="post-safety-control">
         <button
@@ -3816,41 +4230,133 @@ function FollowButton({ storageKey = "creator" }) {
   );
 }
 
-function PostActions({ likes, comments, postId = "gridster-post", showToast }) {
-  const initialLikes = Number.parseInt(String(likes).replace(/,/g, ""), 10);
-  const [liked, setLiked] = usePersistedGridsterFlag("likedPosts", postId);
+// Real, server-backed engagement (reactions/saves/comments/shares -
+// see src/lib/gridsterEngagement.js). reacted/saved/reactionCount/
+// commentCount come from the parent, which is the single place that
+// owns optimistic like/save state across the whole feed.
+function PostActions({ post, currentUserId, reacted, saved, reactionCount = 0, commentCount = 0, shareCount = 0, onToggleReaction, onToggleSave, showToast }) {
+  const postId = post.id;
   const [notForMe, setNotForMe] = usePersistedGridsterFlag("notForMePosts", postId);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [reposted, setReposted] = useState(false);
-  const likeCount = Number.isNaN(initialLikes) ? likes : initialLikes + (liked ? 1 : 0);
+  const [comments, setComments] = useState([]);
+  const [commentAuthors, setCommentAuthors] = useState(new Map());
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentDraft, setCommentDraft] = useState("");
+  const [commentCountLocal, setCommentCountLocal] = useState(commentCount);
+  const [shareCountLocal, setShareCountLocal] = useState(shareCount);
+  const [shareBusyType, setShareBusyType] = useState("");
+
+  const handleLikeClick = () => {
+    if (!currentUserId) {
+      showToast?.("Log in to like posts.");
+      return;
+    }
+
+    onToggleReaction?.();
+  };
+
+  const handleSaveClick = () => {
+    if (!currentUserId) {
+      showToast?.("Log in to save posts.");
+      return;
+    }
+
+    onToggleSave?.();
+  };
+
+  const toggleComments = () => {
+    const nextOpen = !commentsOpen;
+    setCommentsOpen(nextOpen);
+
+    if (nextOpen && !comments.length) {
+      setCommentsLoading(true);
+      fetchComments(postId)
+        .then(async (rows) => {
+          setComments(rows);
+          const authorMap = await fetchProfilesByUserIds(rows.map((row) => row.user_id));
+          setCommentAuthors(authorMap);
+        })
+        .catch((commentsError) => {
+          console.error("Gridster feed: could not load comments", commentsError);
+          showToast?.("Could not load comments.");
+        })
+        .finally(() => setCommentsLoading(false));
+    }
+  };
+
+  const handleSubmitComment = () => {
+    if (!currentUserId) {
+      showToast?.("Log in to comment.");
+      return;
+    }
+
+    const trimmed = commentDraft.trim();
+
+    if (!trimmed) {
+      return;
+    }
+
+    postComment(currentUserId, postId, trimmed)
+      .then((created) => {
+        setComments((current) => [...current, created]);
+        setCommentCountLocal((current) => current + 1);
+        setCommentDraft("");
+      })
+      .catch((commentError) => {
+        console.error("Gridster feed: could not post comment", commentError);
+        showToast?.(commentError.message || "Could not post this comment.");
+      });
+  };
+
+  const handleShare = (shareType, message) => {
+    setShareBusyType(shareType);
+
+    const finish = () => {
+      showToast?.(message);
+      setShareBusyType("");
+    };
+
+    if (!currentUserId) {
+      // Sharing itself (copy link, etc.) still works logged out - only
+      // the engagement-tracking write requires an account.
+      finish();
+      return;
+    }
+
+    logShare(currentUserId, postId, shareType)
+      .then(() => setShareCountLocal((current) => current + 1))
+      .catch((shareError) => console.error("Gridster feed: could not log share", shareError))
+      .finally(finish);
+  };
 
   return (
     <div className="post-actions">
       <div className="post-action-stats">
-        <span>💗 {likeCount}</span>
-        <span>💬 {comments}</span>
+        <span>💗 {reactionCount}</span>
+        <span>💬 {commentCountLocal}</span>
+        <span>↗ {shareCountLocal}</span>
       </div>
       <button
-        className={liked ? "like-toggle is-liked" : "like-toggle"}
-        aria-pressed={liked}
-        onClick={() => setLiked((current) => !current)}
+        className={reacted ? "like-toggle is-liked" : "like-toggle"}
+        aria-pressed={reacted}
+        onClick={handleLikeClick}
       >
-        {liked ? "♥ Liked" : "♡ Like"}
+        {reacted ? "♥ Liked" : "♡ Like"}
       </button>
       <button
         className={commentsOpen ? "comment-toggle is-open" : "comment-toggle"}
         aria-expanded={commentsOpen}
-        onClick={() => setCommentsOpen((current) => !current)}
+        onClick={toggleComments}
       >
         💬 Comment
       </button>
       <button
-        className={shareOpen || reposted ? "share-toggle is-open" : "share-toggle"}
+        className={shareOpen ? "share-toggle is-open" : "share-toggle"}
         aria-expanded={shareOpen}
         onClick={() => setShareOpen((current) => !current)}
       >
-        {reposted ? "Reposted" : "↗ Share"}
+        ↗ Share
       </button>
       <button
         className={notForMe ? "not-for-me-toggle is-tuned" : "not-for-me-toggle"}
@@ -3863,7 +4369,13 @@ function PostActions({ likes, comments, postId = "gridster-post", showToast }) {
       >
         {notForMe ? "Less Like This" : "👎 Not For Me"}
       </button>
-      <SaveButton label="🔖 Save" savedLabel="🔖 Saved" storageKey={postId} />
+      <ActionButton
+        className={saved ? "interactive-save-button is-saved" : "interactive-save-button"}
+        aria-pressed={saved}
+        onClick={handleSaveClick}
+      >
+        {saved ? "🔖 Saved" : "🔖 Save"}
+      </ActionButton>
 
       {shareOpen ? (
         <div className="share-preview-panel">
@@ -3873,18 +4385,18 @@ function PostActions({ likes, comments, postId = "gridster-post", showToast }) {
           </div>
 
           <div className="share-option-list">
-            <button
-              className={reposted ? "active" : ""}
-              onClick={() => {
-                setReposted(true);
-                showToast?.("Reposted to your grid.");
-              }}
-            >
+            <button disabled={Boolean(shareBusyType)} onClick={() => handleShare("repost", "Reposted to your grid.")}>
               Repost to My Grid
             </button>
-            <button onClick={() => showToast?.("Message share preview opened.")}>Send in Message</button>
-            <button onClick={() => showToast?.("Post link copied.")}>Copy Post Link</button>
-            <button onClick={() => showToast?.("SLURL copied.")}>Copy SLURL</button>
+            <button disabled={Boolean(shareBusyType)} onClick={() => handleShare("message", "Message share preview opened.")}>
+              Send in Message
+            </button>
+            <button disabled={Boolean(shareBusyType)} onClick={() => handleShare("copy_link", "Post link copied.")}>
+              Copy Post Link
+            </button>
+            <button disabled={Boolean(shareBusyType)} onClick={() => handleShare("copy_slurl", "SLURL copied.")}>
+              Copy SLURL
+            </button>
           </div>
 
           <textarea placeholder="Add a note before sharing..." />
@@ -3894,7 +4406,7 @@ function PostActions({ likes, comments, postId = "gridster-post", showToast }) {
             <button
               className="share-now-button"
               onClick={() => {
-                showToast?.("Shared to your grid.");
+                handleShare("repost", "Shared to your grid.");
                 setShareOpen(false);
               }}
             >
@@ -3907,24 +4419,44 @@ function PostActions({ likes, comments, postId = "gridster-post", showToast }) {
       {commentsOpen ? (
         <div className="comment-preview-panel">
           <div className="comment-preview-list">
-            {gridsterPostSampleComments.map(([initial, name, text, time]) => (
-              <article className="comment-preview-row" key={`${name}-${time}`}>
-                <div className="comment-avatar">{initial}</div>
-                <div className="comment-bubble">
-                  <div className="comment-meta">
-                    <strong>{name}</strong>
-                    <span>{time}</span>
-                  </div>
-                  <p>{text}</p>
-                </div>
-              </article>
-            ))}
+            {commentsLoading ? (
+              <p className="groups-directory-message">Loading comments...</p>
+            ) : comments.length ? (
+              comments.map((comment) => {
+                const author = commentAuthors.get(comment.user_id);
+                const authorName = author?.display_name || "A Gridster resident";
+
+                return (
+                  <article className="comment-preview-row" key={comment.id}>
+                    <div className="comment-avatar">{authorName.charAt(0).toUpperCase()}</div>
+                    <div className="comment-bubble">
+                      <div className="comment-meta">
+                        <strong>{authorName}</strong>
+                        <span>{new Date(comment.created_at).toLocaleString()}</span>
+                      </div>
+                      <p>{comment.body}</p>
+                    </div>
+                  </article>
+                );
+              })
+            ) : (
+              <p className="groups-directory-message">No comments yet. Be the first to say something.</p>
+            )}
           </div>
 
           <div className="comment-input-row">
-            <div className="comment-avatar comment-avatar-me">CJ</div>
-            <input placeholder="Write a comment..." />
-            <button onClick={() => showToast?.("Comment posted.")}>Send</button>
+            <div className="comment-avatar comment-avatar-me">You</div>
+            <input
+              placeholder="Write a comment..."
+              value={commentDraft}
+              onChange={(event) => setCommentDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  handleSubmitComment();
+                }
+              }}
+            />
+            <button onClick={handleSubmitComment}>Send</button>
           </div>
         </div>
       ) : null}

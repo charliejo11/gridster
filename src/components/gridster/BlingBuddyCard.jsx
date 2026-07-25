@@ -1,14 +1,11 @@
 import BlingBuddyArt from "./BlingBuddyArt";
+import { formatBits } from "./blingDepotItems";
 
 function rarityClassName(rarity) {
   return `rarity-${(rarity || "").toLowerCase().replace(/\s+/g, "-")}`;
 }
 
-function formatBits(value) {
-  return Number(value || 0).toLocaleString();
-}
-
-function BlingBuddyCard({ item, owned, equipped, busy, loading, canBuy, onBuy, onEquip }) {
+function BlingBuddyCard({ item, owned, equipped, busy, loading, canBuy, onBuy, onEquip, onPreview }) {
   const auraClassName = ["bling-buddy-card-aura", rarityClassName(item.rarity)].join(" ");
 
   return (
@@ -59,9 +56,15 @@ function BlingBuddyCard({ item, owned, equipped, busy, loading, canBuy, onBuy, o
       </div>
 
       <div className="bling-buddy-card-actions">
+        {onPreview ? (
+          <button type="button" onClick={() => onPreview(item)}>
+            Preview
+          </button>
+        ) : null}
+
         {!owned ? (
           <button type="button" disabled={busy || loading || !canBuy} onClick={() => onBuy(item)}>
-            {busy ? "Buying..." : "Buy with Bling Bits"}
+            {busy ? "Buying..." : `Buy for ${formatBits(item.price)} Bits`}
           </button>
         ) : null}
 

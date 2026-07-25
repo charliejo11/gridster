@@ -1,5 +1,6 @@
 import { supabase } from "./supabaseClient";
 import { GRIDSTER_MATURITY_RATING_LABELS, GRIDSTER_MATURITY_RATINGS } from "./gridsterPlaces";
+import { computeOrganicTrendingScore, computeBoostVisibilityBonus, computeFinalDiscoveryScore } from "./gridsterTrending";
 
 export const GRIDSTER_HIDDEN_POSTS_TABLE = "gridster_hidden_posts";
 export const GRIDSTER_CREATOR_ACTIONS_TABLE = "gridster_creator_actions";
@@ -273,6 +274,14 @@ const NEW_CREATOR_WINDOW_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 // content-type boosts, Friends, New Creators, Local trends), keeping newest
 // first as the tiebreaker so an empty/default preference set behaves exactly
 // like the plain reverse-chronological feed it replaces.
+//
+// organic_trending_score and boost_visibility_bonus (from
+// gridsterTrending.js) are attached to each post and only ever used
+// as a *tiebreaker* below the existing preference-based `score` -
+// they never override it, so behavior with no engagement stats/boosts
+// passed in is identical to before this existed. This is deliberately
+// NOT where "Trending" is decided (see computeOrganicTrendingTags) -
+// this is feed ordering, a different, boost-influenced surface.
 export function rankAndFilterPosts(posts, options = {}) {
   const {
     preferences = DEFAULT_FEED_PREFERENCES,
@@ -282,6 +291,8 @@ export function rankAndFilterPosts(posts, options = {}) {
     friendUserIds = new Set(),
     profilesById = new Map(),
     trendingTags = [],
+    engagementStatsByPostId = new Map(),
+    activeBoostsByPostId = new Map(),
   } = options;
 
   const allowedRatings = new Set(
@@ -343,13 +354,40 @@ export function rankAndFilterPosts(posts, options = {}) {
       if (hasTrendingTag) score += 1;
     }
 
-    return { post, score };
+    const { organicTrendingScore } = computeOrganicTrendingScore(post, engagementStatsByPostId.get(post.id));
+
+    return { post, score, organicTrendingScore };
   });
+
+  // The boost bonus is capped relative to the strongest organic score
+  // actually present in this candidate set, so it can nudge order
+  // among real posts but can never manufacture a winner out of a
+  // post with no genuine engagement.
+  const organicScoreCeiling = scored.reduce(
+    (max, entry) => Math.max(max, entry.organicTrendingScore),
+    0
+  );
+
+  for (const entry of scored) {
+    const hasActiveBoost = activeBoostsByPostId.has(entry.post.id);
+    const boostVisibilityBonus = computeBoostVisibilityBonus(hasActiveBoost, organicScoreCeiling);
+    entry.boostVisibilityBonus = boostVisibilityBonus;
+    entry.finalDiscoveryScore = computeFinalDiscoveryScore(entry.organicTrendingScore, boostVisibilityBonus);
+  }
 
   scored.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
+    // Tiebreaker only - never overrides the preference-based score
+    // above, so a boost can influence order among otherwise-equal
+    // candidates but not jump the whole ranking.
+    if (b.finalDiscoveryScore !== a.finalDiscoveryScore) return b.finalDiscoveryScore - a.finalDiscoveryScore;
     return new Date(b.post.created_at).getTime() - new Date(a.post.created_at).getTime();
   });
 
-  return scored.map((entry) => entry.post);
+  return scored.map((entry) => ({
+    ...entry.post,
+    organicTrendingScore: entry.organicTrendingScore,
+    boostVisibilityBonus: entry.boostVisibilityBonus,
+    finalDiscoveryScore: entry.finalDiscoveryScore,
+  }));
 }

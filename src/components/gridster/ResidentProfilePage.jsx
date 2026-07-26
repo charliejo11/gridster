@@ -201,6 +201,7 @@ function ResidentProfilePage({ userId, showToast }) {
     "resident-profile-card",
     "glass-card",
     blingProfile?.classNames?.glow,
+    profile.is_plus ? "gridster-plus-glow" : null,
   ].filter(Boolean).join(" ");
   const avatarClassName = [
     "resident-profile-avatar",
@@ -223,6 +224,7 @@ function ResidentProfilePage({ userId, showToast }) {
           <div className="resident-profile-copy">
             <div className="resident-profile-name-row">
               <h2>{profile.display_name}</h2>
+              {profile.is_plus ? <span className="gridster-plus-badge">♛ Plus</span> : null}
               {profile.sl_verified ? <span className="resident-verified-badge">✔ Verified Resident</span> : null}
             </div>
             <strong>{profile.sl_username}</strong>

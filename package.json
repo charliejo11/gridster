@@ -13,7 +13,8 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "stripe": "^22.3.2"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.43.0",

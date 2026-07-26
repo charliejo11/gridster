@@ -2,17 +2,25 @@ import { CORS_HEADERS as CREATE_CORS_HEADERS, handleCreateSlVerificationCode } f
 import { handleGetPendingSlVerificationCode } from "./routes/get-pending-sl-verification-code.js";
 import { handleMarkSlVerificationSent } from "./routes/mark-sl-verification-sent.js";
 import { CORS_HEADERS as VERIFY_CORS_HEADERS, handleVerifySlVerificationCode } from "./routes/verify-sl-verification-code.js";
+import { CORS_HEADERS as PLUS_CHECKOUT_CORS_HEADERS, handleCreatePlusCheckoutSession } from "./routes/create-plus-checkout-session.js";
+import { CORS_HEADERS as PLUS_PORTAL_CORS_HEADERS, handleCreatePlusPortalSession } from "./routes/create-plus-portal-session.js";
+import { handleStripeWebhook } from "./routes/stripe-webhook.js";
 
 const ROUTES = {
   "POST /api/create-sl-verification-code": handleCreateSlVerificationCode,
   "GET /api/get-pending-sl-verification-code": handleGetPendingSlVerificationCode,
   "POST /api/mark-sl-verification-sent": handleMarkSlVerificationSent,
   "POST /api/verify-sl-verification-code": handleVerifySlVerificationCode,
+  "POST /api/create-plus-checkout-session": handleCreatePlusCheckoutSession,
+  "POST /api/create-plus-portal-session": handleCreatePlusPortalSession,
+  "POST /api/stripe-webhook": handleStripeWebhook,
 };
 
 const OPTIONS_HEADERS_BY_PATH = {
   "/api/create-sl-verification-code": CREATE_CORS_HEADERS,
   "/api/verify-sl-verification-code": VERIFY_CORS_HEADERS,
+  "/api/create-plus-checkout-session": PLUS_CHECKOUT_CORS_HEADERS,
+  "/api/create-plus-portal-session": PLUS_PORTAL_CORS_HEADERS,
 };
 
 export default {

@@ -2988,6 +2988,46 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+.gridster-plus-modal-active {
+  color: #ffd26b !important;
+}
+
+.premium-card-active {
+  border-color: rgba(255, 210, 107, 0.55);
+  box-shadow: 0 0 24px rgba(255, 210, 107, 0.16);
+}
+
+.premium-card-active .crown {
+  filter: drop-shadow(0 0 8px rgba(255, 210, 107, 0.65));
+}
+
+@keyframes gridster-plus-glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 22px rgba(255, 210, 107, 0.22), inset 0 0 18px rgba(255, 210, 107, 0.05);
+  }
+  50% {
+    box-shadow: 0 0 34px rgba(255, 210, 107, 0.38), inset 0 0 24px rgba(255, 210, 107, 0.1);
+  }
+}
+
+.gridster-plus-glow {
+  border-color: rgba(255, 210, 107, 0.5) !important;
+  animation: gridster-plus-glow-pulse 3.2s ease-in-out infinite;
+}
+
+.gridster-plus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 999px;
+  padding: 3px 10px;
+  background: rgba(255, 210, 107, 0.18);
+  color: #ffd26b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .messenger-preview-overlay {
   position: fixed;
   inset: 0;

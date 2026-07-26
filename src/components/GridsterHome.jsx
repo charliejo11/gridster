@@ -30,6 +30,7 @@ import {
   unmuteCreator,
 } from "../lib/gridsterFeedPreferences";
 import {
+  GRIDSTER_PROFILE_UPDATED_EVENT,
   addFavoritePlace,
   computeGridsterProfileStrength,
   fetchFavoritePlaces,
@@ -271,6 +272,30 @@ function GridsterHome() {
     toastTimerRef.current = window.setTimeout(() => setToast(null), 3200);
   };
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const plusResult = params.get("plus");
+
+    if (!plusResult) {
+      return;
+    }
+
+    if (plusResult === "success") {
+      showToast("Welcome to Gridster Plus! ♛");
+      window.dispatchEvent(new Event(GRIDSTER_PROFILE_UPDATED_EVENT));
+    } else if (plusResult === "cancelled") {
+      showToast("Checkout cancelled — no charge made.");
+    }
+
+    params.delete("plus");
+    const cleanSearch = params.toString();
+    window.history.replaceState({}, "", window.location.pathname + (cleanSearch ? `?${cleanSearch}` : ""));
+  }, []);
+
   const handleTeleport = (destinationName, slurl) => {
     if (!destinationName || !slurl) {
       showToast("Teleport link coming soon.");
@@ -438,6 +463,7 @@ function GridsterHome() {
             onOpenComposer={openComposer}
             onOpenMyCreatorPages={openMyCreatorPages}
             showToast={showToast}
+            onAuthOpen={openAuth}
           >
             <ProfileFlairCard showToast={showToast} setActivePage={setActivePage} />
           </LeftSidebar>

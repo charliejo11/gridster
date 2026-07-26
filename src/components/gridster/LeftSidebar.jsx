@@ -48,6 +48,7 @@ function LeftSidebar({
   onOpenComposer,
   onOpenMyCreatorPages,
   showToast,
+  onAuthOpen,
   children,
 }) {
   const [showPlusModal, setShowPlusModal] = useState(false);
@@ -234,17 +235,28 @@ function LeftSidebar({
         <span className="bling-open-button">Open Shop</span>
       </a>
 
-      <section className="premium-card glass-card" onClick={() => setShowPlusModal(true)}>
+      <section className={`premium-card glass-card${profile?.is_plus ? " premium-card-active" : ""}`} onClick={() => setShowPlusModal(true)}>
         <div className="premium-card-art">
           <img src={GRIDSTER_PLUS_ARTWORK} alt="Gridster logo" />
         </div>
         <span className="crown">♛</span>
         <h3>Gridster Plus</h3>
-        <p>Unlock featured posts, bigger uploads, boosted events, and more sparkle.</p>
-        <button type="button">Upgrade Now</button>
+        <p>
+          {profile?.is_plus
+            ? "You're a Plus member. Manage your subscription anytime."
+            : "Unlock a profile glow, a crown badge, and a monthly Bling Bits bonus."}
+        </p>
+        <button type="button">{profile?.is_plus ? "Manage" : "Upgrade Now"}</button>
       </section>
 
-      {showPlusModal ? <GridsterPlusModal onClose={() => setShowPlusModal(false)} /> : null}
+      {showPlusModal ? (
+        <GridsterPlusModal
+          onClose={() => setShowPlusModal(false)}
+          currentUser={currentUser}
+          profile={profile}
+          onAuthOpen={onAuthOpen}
+        />
+      ) : null}
     </aside>
   );
 }

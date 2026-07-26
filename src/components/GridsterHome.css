@@ -2954,6 +2954,105 @@ button {
   font-weight: 900;
 }
 
+.gridster-plus-modal-section-label {
+  margin: 4px 0 8px;
+  color: #7a7796 !important;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.gridster-plus-modal-benefits-soon li {
+  color: #a6a2c4;
+  font-weight: 500;
+}
+
+.gridster-plus-modal-benefits-soon li span {
+  color: #6e6b8a;
+}
+
+.gridster-plus-billing-toggle {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0 6px;
+}
+
+.gridster-plus-billing-toggle button {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 10px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #d8d5ec;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gridster-plus-billing-toggle button.active {
+  border-color: rgba(255, 210, 107, 0.7);
+  box-shadow: 0 0 16px rgba(255, 210, 107, 0.18);
+  color: #ffffff;
+}
+
+.gridster-plus-billing-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gridster-plus-billing-price {
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.gridster-plus-billing-badge {
+  border-radius: 999px;
+  padding: 1px 8px;
+  background: rgba(255, 210, 107, 0.18);
+  color: #ffd26b;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.gridster-plus-founding-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  margin-top: 12px;
+  border: 1px solid rgba(255, 210, 107, 0.4);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, rgba(255, 210, 107, 0.14), rgba(148, 53, 255, 0.1));
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gridster-plus-founding-banner:hover {
+  border-color: rgba(255, 210, 107, 0.75);
+  box-shadow: 0 0 18px rgba(255, 210, 107, 0.2);
+}
+
+.gridster-plus-founding-title {
+  color: #ffd26b;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.gridster-plus-founding-copy {
+  color: #d8d5ec;
+  font-size: 11px;
+  font-weight: 600;
+}
+
 .gridster-plus-modal-message {
   color: #9ffff0 !important;
   font-weight: 800;

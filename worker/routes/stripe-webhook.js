@@ -24,14 +24,20 @@ async function syncSubscriptionToProfile(supabaseAdmin, userId, subscription) {
     ? new Date(subscription.current_period_end * 1000).toISOString()
     : null;
 
+  const update = {
+    is_plus: ACTIVE_STATUSES.has(subscription.status),
+    plus_status: subscription.status,
+    plus_current_period_end: periodEnd,
+    stripe_subscription_id: subscription.id,
+  };
+
+  if (subscription.metadata?.plus_price_tier) {
+    update.plus_price_tier = subscription.metadata.plus_price_tier;
+  }
+
   await supabaseAdmin
     .from("profiles")
-    .update({
-      is_plus: ACTIVE_STATUSES.has(subscription.status),
-      plus_status: subscription.status,
-      plus_current_period_end: periodEnd,
-      stripe_subscription_id: subscription.id,
-    })
+    .update(update)
     .eq("user_id", userId);
 }
 

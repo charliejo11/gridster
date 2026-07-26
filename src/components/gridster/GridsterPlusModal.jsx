@@ -1,13 +1,20 @@
 import { useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 
-const GRIDSTER_PLUS_BENEFITS = [
-  "Profile glow",
-  "Premium crown badge",
-  "Monthly Bling Bits bonus",
-  "Featured posts (coming soon)",
-  "Boosted events (coming soon)",
-  "Bigger uploads (coming soon)",
+const GRIDSTER_PLUS_LIVE_BENEFITS = ["Gold animated profile glow", "Exclusive ♛ Plus badge", "500 Bling Bits every paid month"];
+
+const GRIDSTER_PLUS_COMING_SOON_BENEFITS = [
+  "Exclusive profile frames & backgrounds",
+  "Plus-only Bling Depot items",
+  "Early access to new features",
+  "Featured posts",
+  "Boosted events",
+  "Bigger uploads",
+];
+
+const BILLING_PERIODS = [
+  { id: "monthly", label: "Monthly", price: "$4.99/mo" },
+  { id: "annual", label: "Annual", price: "$49.99/yr", badge: "2 months free" },
 ];
 
 function formatRenewalDate(isoString) {
@@ -26,7 +33,7 @@ function formatRenewalDate(isoString) {
   }
 }
 
-async function requestApiSession(path) {
+async function requestApiSession(path, body) {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
 
@@ -40,6 +47,7 @@ async function requestApiSession(path) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
+    body: body ? JSON.stringify(body) : undefined,
   });
   const result = await response.json().catch(() => ({}));
 
@@ -53,10 +61,11 @@ async function requestApiSession(path) {
 function GridsterPlusModal({ onClose, currentUser, profile, onAuthOpen }) {
   const [statusMessage, setStatusMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [billingPeriod, setBillingPeriod] = useState("monthly");
 
   const isPlusMember = Boolean(profile?.is_plus);
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (period = billingPeriod) => {
     if (!currentUser) {
       onClose?.();
       onAuthOpen?.("login");
@@ -67,7 +76,7 @@ function GridsterPlusModal({ onClose, currentUser, profile, onAuthOpen }) {
     setStatusMessage("");
 
     try {
-      const result = await requestApiSession("/api/create-plus-checkout-session");
+      const result = await requestApiSession("/api/create-plus-checkout-session", { billingPeriod: period });
 
       if (result.url) {
         window.location.href = result.url;
@@ -114,9 +123,19 @@ function GridsterPlusModal({ onClose, currentUser, profile, onAuthOpen }) {
         <p>Extra sparkle for creators, venues, stores, and residents who want more reach across the grid.</p>
 
         <ul className="gridster-plus-modal-benefits">
-          {GRIDSTER_PLUS_BENEFITS.map((benefit) => (
+          {GRIDSTER_PLUS_LIVE_BENEFITS.map((benefit) => (
             <li key={benefit}>
               <span>✓</span>
+              {benefit}
+            </li>
+          ))}
+        </ul>
+
+        <p className="gridster-plus-modal-section-label">Coming soon</p>
+        <ul className="gridster-plus-modal-benefits gridster-plus-modal-benefits-soon">
+          {GRIDSTER_PLUS_COMING_SOON_BENEFITS.map((benefit) => (
+            <li key={benefit}>
+              <span>○</span>
               {benefit}
             </li>
           ))}
@@ -128,6 +147,36 @@ function GridsterPlusModal({ onClose, currentUser, profile, onAuthOpen }) {
               ? ` — renews ${formatRenewalDate(profile.plus_current_period_end)}`
               : ""}.
           </p>
+        ) : (
+          <div className="gridster-plus-billing-toggle" role="radiogroup" aria-label="Billing period">
+            {BILLING_PERIODS.map((period) => (
+              <button
+                key={period.id}
+                type="button"
+                role="radio"
+                aria-checked={billingPeriod === period.id}
+                className={billingPeriod === period.id ? "active" : ""}
+                disabled={busy}
+                onClick={() => setBillingPeriod(period.id)}
+              >
+                <span className="gridster-plus-billing-label">{period.label}</span>
+                <span className="gridster-plus-billing-price">{period.price}</span>
+                {period.badge ? <span className="gridster-plus-billing-badge">{period.badge}</span> : null}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {!isPlusMember ? (
+          <button
+            type="button"
+            className="gridster-plus-founding-banner"
+            disabled={busy}
+            onClick={() => handleUpgrade("founding")}
+          >
+            <span className="gridster-plus-founding-title">🎉 Founding Member Launch Offer</span>
+            <span className="gridster-plus-founding-copy">Lock in $3.99/mo for life — limited spots</span>
+          </button>
         ) : null}
 
         {statusMessage ? <p className="gridster-plus-modal-message">{statusMessage}</p> : null}
@@ -143,7 +192,7 @@ function GridsterPlusModal({ onClose, currentUser, profile, onAuthOpen }) {
               {busy ? "Opening..." : "Manage Subscription"}
             </button>
           ) : (
-            <button type="button" className="gridster-plus-modal-upgrade" disabled={busy} onClick={handleUpgrade}>
+            <button type="button" className="gridster-plus-modal-upgrade" disabled={busy} onClick={() => handleUpgrade()}>
               {busy ? "Starting checkout..." : "Upgrade Now"}
             </button>
           )}

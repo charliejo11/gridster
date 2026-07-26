@@ -32,11 +32,44 @@ function getAppOrigin(request, env) {
   return new URL(request.url).origin;
 }
 
+const PRICE_ID_BY_BILLING_PERIOD = {
+  monthly: (env) => env.STRIPE_PLUS_PRICE_ID_MONTHLY,
+  annual: (env) => env.STRIPE_PLUS_PRICE_ID_ANNUAL,
+  founding: (env) => env.STRIPE_PLUS_PRICE_ID_FOUNDING,
+};
+
+const FOUNDING_MEMBER_CAP = 200;
+
+async function foundingSlotsAvailable(supabaseAdmin) {
+  const { count, error } = await supabaseAdmin
+    .from("profiles")
+    .select("user_id", { count: "exact", head: true })
+    .eq("plus_price_tier", "founding");
+
+  if (error) {
+    console.error("Failed to count founding member slots", error);
+    return false;
+  }
+
+  return (count ?? 0) < FOUNDING_MEMBER_CAP;
+}
+
 export async function handleCreatePlusCheckoutSession(request, env) {
   const supabaseAdmin = createSupabaseAdminClient(env);
   const stripe = createStripeClient(env);
 
-  if (!supabaseAdmin || !stripe || !env.STRIPE_PLUS_PRICE_ID) {
+  let payload = {};
+
+  try {
+    payload = await request.json();
+  } catch {
+    // no body is fine - defaults to monthly
+  }
+
+  const billingPeriod = PRICE_ID_BY_BILLING_PERIOD[payload.billingPeriod] ? payload.billingPeriod : "monthly";
+  const priceId = PRICE_ID_BY_BILLING_PERIOD[billingPeriod](env);
+
+  if (!supabaseAdmin || !stripe || !priceId) {
     return jsonResponse(500, { error: "Gridster Plus checkout is not configured yet." }, CORS_HEADERS);
   }
 
@@ -69,6 +102,14 @@ export async function handleCreatePlusCheckoutSession(request, env) {
     return jsonResponse(400, { error: "You're already a Gridster Plus member." }, CORS_HEADERS);
   }
 
+  if (billingPeriod === "founding" && !(await foundingSlotsAvailable(supabaseAdmin))) {
+    return jsonResponse(
+      400,
+      { error: "Founding member pricing is sold out. Grab the regular monthly or annual rate instead." },
+      CORS_HEADERS
+    );
+  }
+
   try {
     let customerId = profile?.stripe_customer_id || null;
 
@@ -91,11 +132,11 @@ export async function handleCreatePlusCheckoutSession(request, env) {
       mode: "subscription",
       customer: customerId,
       client_reference_id: user.id,
-      line_items: [{ price: env.STRIPE_PLUS_PRICE_ID, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appOrigin}/?plus=success`,
       cancel_url: `${appOrigin}/?plus=cancelled`,
       subscription_data: {
-        metadata: { supabase_user_id: user.id },
+        metadata: { supabase_user_id: user.id, plus_price_tier: billingPeriod },
       },
     });
 

@@ -27,3 +27,6 @@ dist-ssr
 # wrangler
 .wrangler
 .dev.vars*
+
+# supabase CLI local session/cache state
+supabase/.temp

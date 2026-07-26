@@ -4,6 +4,39 @@ import { createStripeClient } from "../shared/stripe.js";
 const PLUS_MONTHLY_BONUS_BITS = 500;
 const ACTIVE_STATUSES = new Set(["active", "trialing"]);
 
+// Stripe API versions from 2025-03-31 onward moved these fields:
+//   Invoice.subscription        -> Invoice.parent.subscription_details.subscription
+//   Subscription.current_period_end -> Subscription.items.data[0].current_period_end
+// We don't pin an apiVersion (see shared/stripe.js), so the account's
+// current default applies. Read both the old and new shapes so this
+// keeps working regardless of which version is active on the account.
+
+function extractId(value) {
+  if (!value) {
+    return null;
+  }
+
+  return typeof value === "string" ? value : value.id ?? null;
+}
+
+function extractInvoiceSubscriptionId(invoice) {
+  const legacy = extractId(invoice.subscription);
+
+  if (legacy) {
+    return legacy;
+  }
+
+  return extractId(invoice.parent?.subscription_details?.subscription);
+}
+
+function extractCurrentPeriodEnd(subscription) {
+  if (subscription.current_period_end) {
+    return subscription.current_period_end;
+  }
+
+  return subscription.items?.data?.[0]?.current_period_end ?? null;
+}
+
 async function findProfileByCustomerId(supabaseAdmin, customerId) {
   const { data, error } = await supabaseAdmin
     .from("profiles")
@@ -12,17 +45,26 @@ async function findProfileByCustomerId(supabaseAdmin, customerId) {
     .maybeSingle();
 
   if (error) {
-    console.error("Failed to look up profile by Stripe customer id", error);
+    console.error("Failed to look up profile by Stripe customer id", customerId, error);
     return null;
   }
+
+  console.log("Profile lookup by customer id", { customerId, found: Boolean(data), userId: data?.user_id ?? null });
 
   return data;
 }
 
 async function syncSubscriptionToProfile(supabaseAdmin, userId, subscription) {
-  const periodEnd = subscription.current_period_end
-    ? new Date(subscription.current_period_end * 1000).toISOString()
-    : null;
+  const rawPeriodEnd = extractCurrentPeriodEnd(subscription);
+  const periodEnd = rawPeriodEnd ? new Date(rawPeriodEnd * 1000).toISOString() : null;
+
+  console.log("Subscription current_period_end extraction", {
+    subscriptionId: subscription.id,
+    topLevelValue: subscription.current_period_end ?? null,
+    firstItemValue: subscription.items?.data?.[0]?.current_period_end ?? null,
+    resolved: rawPeriodEnd,
+    resolvedIso: periodEnd,
+  });
 
   const update = {
     is_plus: ACTIVE_STATUSES.has(subscription.status),
@@ -35,10 +77,14 @@ async function syncSubscriptionToProfile(supabaseAdmin, userId, subscription) {
     update.plus_price_tier = subscription.metadata.plus_price_tier;
   }
 
-  await supabaseAdmin
+  const { error } = await supabaseAdmin
     .from("profiles")
     .update(update)
     .eq("user_id", userId);
+
+  if (error) {
+    console.error("Failed to sync subscription to profile", userId, error);
+  }
 }
 
 async function handleCheckoutCompleted(stripe, supabaseAdmin, session) {
@@ -59,7 +105,7 @@ async function handleCheckoutCompleted(stripe, supabaseAdmin, session) {
 
 async function handleSubscriptionUpdated(supabaseAdmin, subscription) {
   const userId = subscription.metadata?.supabase_user_id
-    || (await findProfileByCustomerId(supabaseAdmin, subscription.customer))?.user_id;
+    || (await findProfileByCustomerId(supabaseAdmin, extractId(subscription.customer)))?.user_id;
 
   if (!userId) {
     console.error("Subscription update with no resolvable Gridster user", subscription.id);
@@ -70,7 +116,7 @@ async function handleSubscriptionUpdated(supabaseAdmin, subscription) {
 }
 
 async function handleSubscriptionDeleted(supabaseAdmin, subscription) {
-  const profile = await findProfileByCustomerId(supabaseAdmin, subscription.customer);
+  const profile = await findProfileByCustomerId(supabaseAdmin, extractId(subscription.customer));
 
   if (!profile) {
     return;
@@ -83,26 +129,48 @@ async function handleSubscriptionDeleted(supabaseAdmin, subscription) {
 }
 
 async function handleInvoicePaid(supabaseAdmin, invoice) {
-  if (!invoice.subscription) {
+  const customerId = extractId(invoice.customer);
+  const subscriptionId = extractInvoiceSubscriptionId(invoice);
+
+  console.log("invoice.paid fields", {
+    invoiceId: invoice.id,
+    rawCustomer: invoice.customer,
+    rawSubscription: invoice.subscription,
+    parentSubscriptionDetails: invoice.parent?.subscription_details ?? null,
+    resolvedCustomerId: customerId,
+    resolvedSubscriptionId: subscriptionId,
+  });
+
+  if (!subscriptionId) {
+    console.log("invoice.paid has no resolvable subscription id - not a Plus renewal, skipping bonus", invoice.id);
     return;
   }
 
-  const profile = await findProfileByCustomerId(supabaseAdmin, invoice.customer);
+  const profile = await findProfileByCustomerId(supabaseAdmin, customerId);
 
   if (!profile) {
-    console.error("Paid invoice with no resolvable Gridster user", invoice.id);
+    console.error("Paid invoice with no resolvable Gridster user", invoice.id, customerId);
     return;
   }
 
-  const { error } = await supabaseAdmin.rpc("grant_plus_monthly_bonus", {
+  console.log("Calling grant_plus_monthly_bonus", {
+    targetUserId: profile.user_id,
+    invoiceId: invoice.id,
+    bonusAmount: PLUS_MONTHLY_BONUS_BITS,
+  });
+
+  const { data, error } = await supabaseAdmin.rpc("grant_plus_monthly_bonus", {
     target_user_id: profile.user_id,
     invoice_id: invoice.id,
     bonus_amount: PLUS_MONTHLY_BONUS_BITS,
   });
 
   if (error) {
-    console.error("Failed to grant Plus monthly bonus", error);
+    console.error("Failed to grant Plus monthly bonus", invoice.id, error);
+    return;
   }
+
+  console.log("grant_plus_monthly_bonus result", invoice.id, data);
 }
 
 export async function handleStripeWebhook(request, env) {
@@ -125,6 +193,8 @@ export async function handleStripeWebhook(request, env) {
     return jsonResponse(400, { error: "Invalid signature." });
   }
 
+  console.log("Stripe webhook event received", event.type, event.id);
+
   try {
     switch (event.type) {
       case "checkout.session.completed":
@@ -140,6 +210,7 @@ export async function handleStripeWebhook(request, env) {
         await handleInvoicePaid(supabaseAdmin, event.data.object);
         break;
       default:
+        console.log("Unhandled Stripe webhook event type", event.type);
         break;
     }
   } catch (error) {

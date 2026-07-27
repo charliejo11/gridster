@@ -128,6 +128,67 @@ async function handleSubscriptionDeleted(supabaseAdmin, subscription) {
     .eq("user_id", profile.user_id);
 }
 
+// Revokes Plus on a refund/dispute without touching the underlying Stripe
+// subscription - that's a deliberate, separate decision left to whoever
+// issues the refund. This means if the subscription is refunded but not
+// also cancelled, the next successful invoice.paid will legitimately
+// re-grant Plus (they paid again, they get access again) - not a bug,
+// just worth knowing rather than a hidden gap.
+
+async function handleChargeRefunded(supabaseAdmin, charge) {
+  // charge.refunded is only true once the charge is refunded in full - a
+  // partial/goodwill refund leaves it false, and we deliberately do not
+  // revoke Plus for a partial refund since the customer is still
+  // substantially paying for continued access.
+  if (!charge.refunded) {
+    console.log("charge.refunded was a partial refund - not revoking Plus", charge.id);
+    return;
+  }
+
+  const profile = await findProfileByCustomerId(supabaseAdmin, extractId(charge.customer));
+
+  if (!profile) {
+    console.log("Refunded charge with no resolvable Gridster user", charge.id);
+    return;
+  }
+
+  const { error } = await supabaseAdmin
+    .from("profiles")
+    .update({ is_plus: false, plus_status: "refunded" })
+    .eq("user_id", profile.user_id);
+
+  if (error) {
+    console.error("Failed to revoke Plus after full refund", profile.user_id, charge.id, error);
+    return;
+  }
+
+  console.log("Revoked Plus after full refund", profile.user_id, charge.id);
+}
+
+async function handleChargeDisputeCreated(stripe, supabaseAdmin, dispute) {
+  // The dispute object itself doesn't carry the customer id - only the
+  // charge id, so the charge has to be fetched to resolve who this is.
+  const charge = await stripe.charges.retrieve(extractId(dispute.charge));
+  const profile = await findProfileByCustomerId(supabaseAdmin, extractId(charge.customer));
+
+  if (!profile) {
+    console.log("Disputed charge with no resolvable Gridster user", dispute.id, charge.id);
+    return;
+  }
+
+  const { error } = await supabaseAdmin
+    .from("profiles")
+    .update({ is_plus: false, plus_status: "disputed" })
+    .eq("user_id", profile.user_id);
+
+  if (error) {
+    console.error("Failed to revoke Plus after dispute", profile.user_id, dispute.id, error);
+    return;
+  }
+
+  console.log("Revoked Plus after dispute", profile.user_id, dispute.id);
+}
+
 async function handleInvoicePaid(supabaseAdmin, invoice) {
   const customerId = extractId(invoice.customer);
   const subscriptionId = extractInvoiceSubscriptionId(invoice);
@@ -208,6 +269,12 @@ export async function handleStripeWebhook(request, env) {
         break;
       case "invoice.paid":
         await handleInvoicePaid(supabaseAdmin, event.data.object);
+        break;
+      case "charge.refunded":
+        await handleChargeRefunded(supabaseAdmin, event.data.object);
+        break;
+      case "charge.dispute.created":
+        await handleChargeDisputeCreated(stripe, supabaseAdmin, event.data.object);
         break;
       default:
         console.log("Unhandled Stripe webhook event type", event.type);

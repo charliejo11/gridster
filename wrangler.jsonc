@@ -10,5 +10,10 @@
   },
   "observability": {
     "enabled": true
+  },
+  "triggers": {
+    // Hourly sweep to expire Linden-paid Gridster Plus once
+    // plus_current_period_end passes - see worker/routes/expire-linden-plus-memberships.js.
+    "crons": ["0 * * * *"]
   }
 }

@@ -179,6 +179,18 @@ function GridsterPlusModal({ onClose, currentUser, profile, onAuthOpen }) {
           </button>
         ) : null}
 
+        <div className="gridster-plus-linden-panel">
+          <p className="gridster-plus-linden-title">Pay in Second Life — L$1,750 for 30 days</p>
+          <p className="gridster-plus-linden-copy">
+            Prefer to pay with Linden dollars? Visit the Gridster Plus kiosk in-world and pay L$1,750 to activate 30
+            days of Plus, the Plus badge, gold profile glow, and 500 Bling Bits. This can't be paid from the website —
+            it's an in-world purchase only.
+            {profile?.sl_verified
+              ? ""
+              : " Verify your Second Life avatar on Gridster first so the kiosk can find your account."}
+          </p>
+        </div>
+
         {statusMessage ? <p className="gridster-plus-modal-message">{statusMessage}</p> : null}
 
         <div className="gridster-plus-modal-actions">

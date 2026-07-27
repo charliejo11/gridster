@@ -188,22 +188,9 @@ export const gridsterLiveNowEvents = [
   ["Ocean Breeze", "Beach set • Sunset social", "Join"],
 ];
 
-export const gridsterPostSampleComments = [
-  ["R", "RavenHex", "This venue looks amazing. Saving this SLURL.", "8m"],
-  ["N", "NovaVixen", "The neon lighting is everything.", "3m"],
-];
-
 export const gridsterComposerActions = ["▣ Photo", "◇ Event", "⌖ SLURL", "✎ Blog", "♙ Outfit", "🛍 Marketplace Find"];
 
 export const gridsterComposerTemplates = ["Event Notice", "New Blog Post", "Store Release", "Photo Spot"];
-
-export const gridsterTrendingTopics = [
-  ["#SanctuaryRocks", "2.4K posts"],
-  ["#CyberRave", "1.8K posts"],
-  ["#BloggerDrop", "891 posts"],
-  ["#WeekendEvents", "3.2K posts"],
-  ["#PhotoSpots", "1.5K posts"],
-];
 
 export const gridsterWelcomeFeatures = ["Post", "Discover", "Teleport"];
 
@@ -295,23 +282,6 @@ export const gridsterVerificationRequirements = [
     "No impersonation or misleading branding",
     "Respect ratings, creator credits, and community rules",
   ];
-
-export const gridsterBlingBoostFields = [
-    ["Boost Type", "Post / Event / Store / Profile / Community Hub"],
-    ["Select Content", "Metal Night Stage photo post"],
-    ["Target Audience", "Residents / Bloggers / DJs / Shoppers / Communities / Everyone"],
-    ["Rating Visibility", "General / Moderate / Adult"],
-    ["Boost Duration", "24 Hours / 3 Days / 7 Days"],
-    ["Bling Bits Budget", "250 - 1,200 Bling Bits"],
-  ];
-
-export const gridsterBlingBoostPackages = [
-    ["✦", "Spark Boost", "24 hours", "250 Bling Bits"],
-    ["◆", "Glow Boost", "3 days", "600 Bling Bits"],
-    ["◇", "Spotlight Boost", "7 days", "1,200 Bling Bits"],
-    ["◈", "Event Rush", "Best for live events", "500 Bling Bits"],
-  ];
-
 
 export const gridsterSettingsCards = [
     {

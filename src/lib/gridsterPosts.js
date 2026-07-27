@@ -3,13 +3,14 @@ import { GRIDSTER_MATURITY_RATINGS, normalizeSlurlInput } from "./gridsterPlaces
 
 export const GRIDSTER_POSTS_TABLE = "gridster_posts";
 
-export const GRIDSTER_POST_TYPES = ["general", "photo", "blog", "store"];
+export const GRIDSTER_POST_TYPES = ["general", "photo", "blog", "store", "event"];
 
 export const GRIDSTER_POST_TYPE_LABELS = {
   general: "Post",
   photo: "Photo",
   blog: "Blog",
   store: "Store",
+  event: "Event",
 };
 
 function normalizeUrl(value) {
@@ -38,6 +39,10 @@ export function normalizeGridsterPostForm(form) {
     slurl: normalizeSlurlInput(form.slurl),
     tags: normalizeTags(form.tags),
     maturity_rating: GRIDSTER_MATURITY_RATINGS.includes(form.maturity_rating) ? form.maturity_rating : "general",
+    // Only meaningful when post_type = "event" - links this post to the
+    // real gridster_events row Event Push boosting checks eligibility
+    // against (approval + a real future starts_at).
+    linked_event_id: form.linked_event_id || null,
   };
 }
 

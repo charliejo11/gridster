@@ -21,6 +21,8 @@ import {
 import ActionButton from "./ActionButton";
 import TeleportStatusChip from "./TeleportStatusChip";
 import Widget from "./Widget";
+import BoostedLabel from "./BoostedLabel";
+import { fetchActiveSpotlightBoosts, recordBoostImpression, recordBoostTeleportClick } from "../../lib/gridsterBoosts";
 
 function buildTeleportUrl(destination) {
   if (!destination) {
@@ -79,6 +81,7 @@ function RightSidebar({
   const [notifications, setNotifications] = useState([]);
   const [featuredPlaces, setFeaturedPlaces] = useState([]);
   const [featuredLoading, setFeaturedLoading] = useState(true);
+  const [spotlightBoosts, setSpotlightBoosts] = useState([]);
 
   useEffect(() => {
     let active = true;
@@ -142,8 +145,48 @@ function RightSidebar({
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    // Frequency cap per viewer: fetch a small pool of active
+    // Spotlight boosts, cap at one slot per creator so no single
+    // creator fills every slot, then rotate which ones this viewer
+    // sees by shuffling the pool on each mount.
+    fetchActiveSpotlightBoosts(6)
+      .then((entries) => {
+        if (!active) return;
+
+        const seenCreators = new Set();
+        const capped = [];
+
+        for (const entry of [...entries].sort(() => Math.random() - 0.5)) {
+          if (seenCreators.has(entry.post.user_id)) continue;
+          seenCreators.add(entry.post.user_id);
+          capped.push(entry);
+          if (capped.length >= 3) break;
+        }
+
+        setSpotlightBoosts(capped);
+      })
+      .catch((spotlightError) => {
+        console.error("Gridster sidebar: could not load spotlight boosts", spotlightError);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <aside className="right-panel">
+      {spotlightBoosts.length > 0 ? (
+        <Widget title="Boosted on Gridster" onAction={() => showToast?.("Full boosted list coming soon.")}>
+          {spotlightBoosts.map(({ boost, post }) => (
+            <SpotlightBoostCard key={boost.boost_id} boost={boost} post={post} />
+          ))}
+        </Widget>
+      ) : null}
+
       <Widget title="Trending Events" onAction={() => showToast?.("Full events list coming soon.")}>
         {events.map(([title, time], index) => (
           <MiniEvent key={title} title={title} time={time} index={index} showToast={showToast} />
@@ -347,6 +390,42 @@ function FeaturedPlaceCard({ featured, currentUserId, showToast }) {
         Teleport
       </ActionButton>
       <TeleportStatusChip slurl={place.slurl} destinationName={place.title} showToast={showToast} />
+    </div>
+  );
+}
+
+function SpotlightBoostCard({ boost, post }) {
+  useEffect(() => {
+    // Only once per mount - this widget doesn't re-render per scroll,
+    // so this already respects the "don't count every rerender" rule.
+    recordBoostImpression(boost.boost_id, "spotlight");
+  }, [boost.boost_id]);
+
+  return (
+    <div className="place-card spotlight-boost-card">
+      {post.photo_url ? (
+        <div className="place-thumb small">
+          <img src={post.photo_url} alt="" />
+        </div>
+      ) : (
+        <div className="place-thumb small featured-place-thumb-fallback">
+          {(post.author_name || "G").charAt(0).toUpperCase()}
+        </div>
+      )}
+      <div>
+        <strong>{post.author_name || "A Gridster resident"}</strong>
+        <small>{post.content ? post.content.slice(0, 60) : "Boosted post"}</small>
+      </div>
+      <BoostedLabel compact />
+      {post.slurl ? (
+        <ActionButton
+          data-destination={post.region_name || post.content || "Gridster"}
+          data-slurl={post.slurl}
+          onClick={() => recordBoostTeleportClick(boost.boost_id, "spotlight")}
+        >
+          Teleport
+        </ActionButton>
+      ) : null}
     </div>
   );
 }

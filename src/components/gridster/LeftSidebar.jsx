@@ -207,6 +207,16 @@ function LeftSidebar({
           </button>
         ))}
 
+        {profile ? (
+          <button
+            className={activePage === "MyBoosts" ? "active" : ""}
+            onClick={() => setActivePage("MyBoosts")}
+          >
+            <span>⚡</span>
+            My Boosts
+          </button>
+        ) : null}
+
         {profile?.is_admin ? (
           <button
             className={activePage === "FeaturedAdmin" ? "active" : ""}
@@ -214,6 +224,16 @@ function LeftSidebar({
           >
             <span>🛡</span>
             Manage Featured
+          </button>
+        ) : null}
+
+        {profile?.is_admin ? (
+          <button
+            className={activePage === "BoostAdmin" ? "active" : ""}
+            onClick={() => setActivePage("BoostAdmin")}
+          >
+            <span>🛡</span>
+            Manage Boosts
           </button>
         ) : null}
       </section>

@@ -40,6 +40,7 @@ const EMPTY_EVENT_FORM = {
   region_name: "",
   event_type: "live_dj",
   when_label: "",
+  starts_at: "",
   maturity_rating: "general",
 };
 const EMPTY_PLACE_FORM = {
@@ -208,7 +209,28 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
 
     try {
       if (activeTab === "event") {
-        await createGridsterEvent(user.id, eventForm);
+        const createdEvent = await createGridsterEvent(user.id, eventForm);
+
+        // Best-effort mirror into the Home feed as a real, boostable post -
+        // without this, there is no post_type='event' row for Event Push
+        // boosting to ever find, matching the existing SLURL mirror pattern.
+        try {
+          await createGridsterPost(user.id, {
+            post_type: "event",
+            content: eventForm.description
+              ? `${eventForm.title} — ${eventForm.description}`
+              : eventForm.title,
+            photo_url: eventForm.photo_url,
+            region_name: eventForm.region_name,
+            slurl: eventForm.slurl,
+            maturity_rating: eventForm.maturity_rating,
+            linked_event_id: createdEvent.id,
+            author_name: displayName,
+          });
+        } catch (postMirrorError) {
+          console.error("Gridster composer: could not mirror event to Home feed", postMirrorError);
+        }
+
         showToast?.("Event posted.");
       } else if (activeTab === "slurl") {
         await createGridsterPlace(user.id, placeForm);
@@ -486,13 +508,25 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
               </label>
 
               <label>
-                <span>When</span>
+                <span>When (display text)</span>
                 <input
                   type="text"
                   value={eventForm.when_label}
                   onChange={(event) => updateEventField("when_label", event.target.value)}
                   placeholder="Tonight 9PM SLT"
                 />
+              </label>
+
+              <label>
+                <span>Start Date &amp; Time</span>
+                <input
+                  type="datetime-local"
+                  value={eventForm.starts_at}
+                  onChange={(event) => updateEventField("starts_at", event.target.value)}
+                />
+                <span className="profile-upload-hint">
+                  Optional, but required if you want to use Event Push boosting later.
+                </span>
               </label>
 
               <label>

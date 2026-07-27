@@ -122,6 +122,11 @@ export function normalizeGridsterEventForm(form) {
     region_name: String(form.region_name || "").trim(),
     event_type: GRIDSTER_EVENT_TYPES.includes(form.event_type) ? form.event_type : "live_dj",
     when_label: String(form.when_label || "").trim(),
+    // Real, checkable start time - when_label stays the free-text display
+    // string (e.g. "Tonight 9PM SLT"), starts_at is what Event Push
+    // boosting actually checks. Sent from a <input type="datetime-local">
+    // in the composer, interpreted in the browser's local time.
+    starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : null,
     maturity_rating: GRIDSTER_MATURITY_RATINGS.includes(form.maturity_rating)
       ? form.maturity_rating
       : "general",

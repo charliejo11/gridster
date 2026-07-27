@@ -30,3 +30,15 @@ dist-ssr
 
 # supabase CLI local session/cache state
 supabase/.temp
+
+# Blender working files - keep these here, never in public/. Anything in
+# public/ gets uploaded as a public static asset on every `wrangler deploy`
+# regardless of git tracking status, so .gitignore alone can't protect a
+# file sitting inside public/ - it has to not be there in the first place.
+# (A .blend, .blend1, and .obj file were accidentally deployed to
+# production this way before this rule existed.)
+/blender-scratch/*
+!/blender-scratch/README.md
+public/**/*.blend
+public/**/*.blend1
+public/**/*.obj

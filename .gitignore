@@ -42,3 +42,7 @@ supabase/.temp
 public/**/*.blend
 public/**/*.blend1
 public/**/*.obj
+
+# Assets for not-yet-reviewed/approved work, staged here instead of
+# public/ for the same reason as blender-scratch above.
+/pending-review/

@@ -215,7 +215,6 @@ export const gridsterProfileSummary = {
   tags: ["Nightlife", "Fashion", "Photography", "Events"],
 };
 
-export const gridsterProfileFlairBadges = ["✨ Blogger", "🎧 DJ", "📸 Photographer", "💎 Bling Boosted"];
 
 export const gridsterProfileSections = [
     ["Recent Posts", "Latest photos, event posts, blog updates, and nightlife moments.", "View Posts"],

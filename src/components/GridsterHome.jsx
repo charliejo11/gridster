@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { getBlingBalanceSummary, getEquippedCosmeticsForUser } from "../lib/blingDepot";
+import { getBlingDepotItemFromCosmetic } from "./gridster/blingDepotItems";
 import {
   GRIDSTER_MESSAGE_EVENT,
   fetchConversations,
@@ -79,7 +80,6 @@ import {
   gridsterLiveNow,
   gridsterLiveNowEvents,
   gridsterMarketplaceFinds,
-  gridsterProfileFlairBadges,
   gridsterSidebarGroups,
   gridsterSuggestedCreators,
   gridsterTeleportCenterDestinations,
@@ -4046,29 +4046,68 @@ function ProfileSummary() {
 
 function ProfileFlairCard({ variant = "sidebar", showToast, setActivePage }) {
   const className = variant === "wide" ? "profile-flair-card profile-flair-card-wide glass-card" : "profile-flair-card glass-card";
+  const [badges, setBadges] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      const user = data?.user ?? null;
+
+      if (!active || !user) {
+        return;
+      }
+
+      getEquippedCosmeticsForUser(user.id)
+        .then((equipped) => {
+          if (!active) {
+            return;
+          }
+
+          const equippedBadges = (equipped || [])
+            .filter((cosmetic) => cosmetic.item_type === "badge")
+            .map(getBlingDepotItemFromCosmetic)
+            .filter(Boolean);
+          setBadges(equippedBadges);
+        })
+        .catch(() => {});
+    }).catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const hasBadges = badges.length > 0;
 
   return (
     <section className={className}>
       <div className="flair-card-header">
         <span>Badge System</span>
         <h3>Profile Flair</h3>
-        <p>Show off your grid personality.</p>
+        <p>{hasBadges ? "Your equipped badges." : "Show off your grid personality."}</p>
       </div>
 
-      <div className="flair-badges">
-        {gridsterProfileFlairBadges.map((badge) => (
-          <button
-            className="flair-badge"
-            key={badge}
-            onClick={() => showToast?.(`${badge} is unlocked with Bling Bits in Bling Depot.`)}
-          >
-            {badge}
-          </button>
-        ))}
-      </div>
+      {hasBadges ? (
+        <div className="flair-badges">
+          {badges.map((badge) => (
+            <button
+              className="flair-badge"
+              key={badge.id}
+              onClick={() => showToast?.(badge.name)}
+              title={badge.description || badge.name}
+            >
+              {badge.icon} {badge.name}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="flair-note">You haven't equipped any badges yet. Unlock some with Bling Bits.</p>
+      )}
 
-      <p className="flair-note">Unlock more flair with Bling Bits.</p>
-      <button className="flair-action" onClick={() => setActivePage?.("BlingBoost")}>Customize Flair</button>
+      <button className="flair-action" onClick={() => setActivePage?.("BlingBoost")}>
+        {hasBadges ? "Manage Flair" : "Unlock Flair"}
+      </button>
     </section>
   );
 }

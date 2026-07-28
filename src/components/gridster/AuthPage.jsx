@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import { fetchGridsterProfile } from "../../lib/gridsterProfiles";
 
 function getAuthMode(mode) {
   return mode === "signup" ? "signup" : "login";
 }
 
-function AuthPage({ initialMode = "login", onProfileOpen }) {
+function AuthPage({ initialMode = "login", onProfileOpen, onNavigate, returnTo }) {
   const [mode, setMode] = useState(() => getAuthMode(initialMode));
   const [newPassword, setNewPassword] = useState("");
   const [slUsername, setSlUsername] = useState("");
@@ -21,6 +22,10 @@ function AuthPage({ initialMode = "login", onProfileOpen }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [profile, setProfile] = useState(null);
+  const [profileLoadState, setProfileLoadState] = useState("idle");
+  const [profileError, setProfileError] = useState("");
+  const [profileRetryToken, setProfileRetryToken] = useState(0);
   const isSignupMode = mode === "signup";
 
   useEffect(() => {
@@ -45,6 +50,52 @@ function AuthPage({ initialMode = "login", onProfileOpen }) {
 
     return () => listener?.subscription?.unsubscribe();
   }, []);
+
+  // Fetches the real profile after login so we can route on the actual
+  // sl_verified column instead of session-only local state.
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      setProfileLoadState("idle");
+      return undefined;
+    }
+
+    let active = true;
+    setProfileLoadState("loading");
+    setProfileError("");
+
+    fetchGridsterProfile(user.id)
+      .then((nextProfile) => {
+        if (!active) return;
+        setProfile(nextProfile);
+        setProfileLoadState("ready");
+      })
+      .catch((error) => {
+        if (!active) return;
+        setProfileLoadState("error");
+        setProfileError(error?.message || "Could not load your profile.");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [user?.id, profileRetryToken]);
+
+  // Only navigates once the profile fetch is actually settled (never while
+  // still null-because-loading) and only ever toward a verified destination.
+  // Unverified users are intentionally left on this page: it's the only
+  // place with a working SL-verification form today (VerificationCenterPage
+  // just shows a status badge, it can't actually complete verification).
+  useEffect(() => {
+    if (profileLoadState !== "ready" || !onNavigate) {
+      return;
+    }
+
+    if (profile?.sl_verified) {
+      const safeReturnTo = returnTo && returnTo !== "Auth" && returnTo !== "VerificationCenter" ? returnTo : "Home";
+      onNavigate(safeReturnTo);
+    }
+  }, [profileLoadState, profile, onNavigate, returnTo]);
 
   const handleGenerateCode = async (e) => {
     e.preventDefault();
@@ -120,6 +171,7 @@ function AuthPage({ initialMode = "login", onProfileOpen }) {
       setVerificationMessage(result.message || "Second Life avatar verified.");
       setVerificationError("");
       setAvatarVerified(true);
+      setProfile((prev) => ({ ...(prev ?? {}), sl_verified: true }));
     } catch (error) {
       setAvatarVerified(false);
       setVerificationError(error.message || "Could not verify that code.");
@@ -248,6 +300,55 @@ function AuthPage({ initialMode = "login", onProfileOpen }) {
           </form>
 
           {message ? <p className="auth-message">{message}</p> : null}
+        </div>
+      </section>
+    );
+  }
+
+  const isAwaitingProfile =
+    user &&
+    (profileLoadState === "idle" ||
+      profileLoadState === "loading" ||
+      (profileLoadState === "ready" && profile?.sl_verified));
+
+  if (isAwaitingProfile) {
+    return (
+      <section className="auth-page">
+        <div className="auth-card glass-card auth-login-card">
+          <div className="auth-card-heading">
+            <span>Gridster Account</span>
+            <h3>{profileLoadState === "ready" ? "Verified — taking you in..." : "Signing you in..."}</h3>
+          </div>
+          <p className="auth-message">Checking your Second Life verification status...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (user && profileLoadState === "error") {
+    return (
+      <section className="auth-page">
+        <div className="auth-card glass-card auth-login-card">
+          <div className="auth-card-heading">
+            <span>Gridster Account</span>
+            <h3>Logged In</h3>
+          </div>
+          <p className="auth-user-email">{user.email}</p>
+          <p className="auth-message auth-error-message" role="alert">
+            {profileError || "Could not load your profile."}
+          </p>
+          <div className="auth-actions">
+            <button
+              type="button"
+              className="auth-login-button"
+              onClick={() => setProfileRetryToken((current) => current + 1)}
+            >
+              Retry
+            </button>
+            <button className="auth-logout-button" type="button" onClick={handleLogout} disabled={loading}>
+              {loading ? "Signing out..." : "Log Out"}
+            </button>
+          </div>
         </div>
       </section>
     );

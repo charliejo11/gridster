@@ -204,6 +204,7 @@ function GridsterHome() {
   }
 
   const [authMode, setAuthMode] = useState("login");
+  const [authReturnTo, setAuthReturnTo] = useState(null);
   const [toast, setToast] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
@@ -386,6 +387,7 @@ function GridsterHome() {
 
   const openAuth = (mode = "login") => {
     setAuthMode(mode === "signup" ? "signup" : "login");
+    setAuthReturnTo(activePage !== "Auth" && activePage !== "VerificationCenter" ? activePage : null);
     setActivePage("Auth");
     setShowLanding(false);
     setShowNotifications(false);
@@ -485,6 +487,7 @@ function GridsterHome() {
           activePage={activePage}
           galleryItems={gridsterGalleryItems}
           authMode={authMode}
+          authReturnTo={authReturnTo}
           selectedProfileName={selectedProfileName}
           selectedGroupId={selectedGroupId}
           selectedResidentUserId={selectedResidentUserId}
@@ -528,7 +531,7 @@ function GridsterHome() {
   );
 }
 
-function CenterContent({ activePage, galleryItems, authMode, selectedProfileName, selectedGroupId, selectedResidentUserId, selectedMessageFriendId, selectedCreatorPageId, initialTeleportCategory, postsRefreshToken, setActivePage, onOpenProfile, onOpenGroup, onOpenResidentProfile, onOpenMessages, onOpenCreatorPage, onOpenMyCreatorPages, onOpenTeleportDiscovery, onOpenComposer, onAuthOpen, showToast }) {
+function CenterContent({ activePage, galleryItems, authMode, authReturnTo, selectedProfileName, selectedGroupId, selectedResidentUserId, selectedMessageFriendId, selectedCreatorPageId, initialTeleportCategory, postsRefreshToken, setActivePage, onOpenProfile, onOpenGroup, onOpenResidentProfile, onOpenMessages, onOpenCreatorPage, onOpenMyCreatorPages, onOpenTeleportDiscovery, onOpenComposer, onAuthOpen, showToast }) {
   if (activePage === "Home") {
     return (
       <>
@@ -953,7 +956,14 @@ function CenterContent({ activePage, galleryItems, authMode, selectedProfileName
   }
 
   if (activePage === "Auth") {
-    return <AuthPage initialMode={authMode} onProfileOpen={() => setActivePage("Profile")} />;
+    return (
+      <AuthPage
+        initialMode={authMode}
+        onProfileOpen={() => setActivePage("Profile")}
+        onNavigate={setActivePage}
+        returnTo={authReturnTo}
+      />
+    );
   }
 
   if (activePage === "Settings") {

@@ -15,6 +15,8 @@ import {
   respondToFriendRequest,
   sendFriendRequest,
 } from "../../lib/gridsterFriends";
+import { fetchFollowCounts, fetchIsFollowing, followUser, unfollowUser } from "../../lib/gridsterFollows";
+import { fetchPostCountForUser } from "../../lib/gridsterPosts";
 import TeleportStatusChip from "./TeleportStatusChip";
 
 function getInitials(profile) {
@@ -33,6 +35,9 @@ function ResidentProfilePage({ userId, showToast }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [friendship, setFriendship] = useState({ status: "none", request: null });
   const [friendActionBusy, setFriendActionBusy] = useState(false);
+  const [stats, setStats] = useState({ followers: 0, following: 0, posts: 0 });
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followActionBusy, setFollowActionBusy] = useState(false);
 
   const refreshFriendship = (nextCurrentUser) => {
     if (!nextCurrentUser || !userId) {
@@ -42,6 +47,29 @@ function ResidentProfilePage({ userId, showToast }) {
 
     fetchFriendshipStatus(nextCurrentUser.id, userId)
       .then(setFriendship)
+      .catch(() => {});
+  };
+
+  const refreshStats = () => {
+    if (!userId) {
+      return;
+    }
+
+    Promise.all([fetchFollowCounts(userId), fetchPostCountForUser(userId)])
+      .then(([followCounts, posts]) => {
+        setStats({ followers: followCounts.followers, following: followCounts.following, posts });
+      })
+      .catch(() => {});
+  };
+
+  const refreshIsFollowing = (nextCurrentUser) => {
+    if (!nextCurrentUser || !userId) {
+      setIsFollowing(false);
+      return;
+    }
+
+    fetchIsFollowing(nextCurrentUser.id, userId)
+      .then(setIsFollowing)
       .catch(() => {});
   };
 
@@ -55,11 +83,13 @@ function ResidentProfilePage({ userId, showToast }) {
 
       setCurrentUser(data?.user ?? null);
       refreshFriendship(data?.user ?? null);
+      refreshIsFollowing(data?.user ?? null);
     }).catch(() => {});
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUser(session?.user ?? null);
       refreshFriendship(session?.user ?? null);
+      refreshIsFollowing(session?.user ?? null);
     });
 
     return () => {
@@ -84,6 +114,7 @@ function ResidentProfilePage({ userId, showToast }) {
         }
 
         setProfile(nextProfile);
+        refreshStats();
 
         // Equipped cosmetics and favorite places are separate, best-effort
         // loads - a failure here (e.g. a column/table not existing yet) must
@@ -123,6 +154,7 @@ function ResidentProfilePage({ userId, showToast }) {
     return () => {
       active = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const handleSendFriendRequest = async () => {
@@ -177,6 +209,31 @@ function ResidentProfilePage({ userId, showToast }) {
       showToast?.(cancelError.message || "Could not cancel that friend request.");
     } finally {
       setFriendActionBusy(false);
+    }
+  };
+
+  const handleToggleFollow = async () => {
+    if (!currentUser) {
+      showToast?.("Log in to follow residents.");
+      return;
+    }
+
+    setFollowActionBusy(true);
+
+    try {
+      if (isFollowing) {
+        await unfollowUser(currentUser.id, userId);
+        setIsFollowing(false);
+      } else {
+        await followUser(currentUser.id, userId);
+        setIsFollowing(true);
+      }
+
+      refreshStats();
+    } catch (followError) {
+      showToast?.(followError.message || "Could not update follow status.");
+    } finally {
+      setFollowActionBusy(false);
     }
   };
 
@@ -235,6 +292,10 @@ function ResidentProfilePage({ userId, showToast }) {
 
           {currentUser && currentUser.id !== userId ? (
             <div className="resident-profile-friend-action">
+              <button type="button" disabled={followActionBusy} onClick={handleToggleFollow}>
+                {followActionBusy ? "..." : isFollowing ? "Following" : "+ Follow"}
+              </button>
+
               {friendship.status === "friends" ? (
                 <span className="friend-status-pill">✔ Friends</span>
               ) : friendship.status === "pending_sent" ? (
@@ -257,6 +318,19 @@ function ResidentProfilePage({ userId, showToast }) {
               )}
             </div>
           ) : null}
+        </div>
+
+        <div className="profile-stats resident-profile-stats">
+          {[
+            ["Followers", stats.followers],
+            ["Following", stats.following],
+            ["Posts", stats.posts],
+          ].map(([label, value]) => (
+            <div key={label}>
+              <strong>{value.toLocaleString()}</strong>
+              <span>{label}</span>
+            </div>
+          ))}
         </div>
 
         {profile.available_for?.length ? (

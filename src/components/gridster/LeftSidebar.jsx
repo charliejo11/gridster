@@ -10,6 +10,8 @@ import {
   computeGridsterProfileStrength,
   fetchGridsterProfile,
 } from "../../lib/gridsterProfiles";
+import { GRIDSTER_FOLLOWS_UPDATED_EVENT, fetchFollowCounts } from "../../lib/gridsterFollows";
+import { fetchPostCountForUser } from "../../lib/gridsterPosts";
 import GridsterPlusModal from "./GridsterPlusModal";
 
 function initialsFromName(name) {
@@ -54,6 +56,7 @@ function LeftSidebar({
   const [showPlusModal, setShowPlusModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [stats, setStats] = useState({ followers: 0, following: 0, posts: 0 });
 
   useEffect(() => {
     let active = true;
@@ -61,6 +64,7 @@ function LeftSidebar({
     const refreshProfile = (nextUser) => {
       if (!nextUser) {
         setProfile(null);
+        setStats({ followers: 0, following: 0, posts: 0 });
         return;
       }
 
@@ -68,6 +72,14 @@ function LeftSidebar({
         .then((nextProfile) => {
           if (active) {
             setProfile(nextProfile);
+          }
+        })
+        .catch(() => {});
+
+      Promise.all([fetchFollowCounts(nextUser.id), fetchPostCountForUser(nextUser.id)])
+        .then(([followCounts, posts]) => {
+          if (active) {
+            setStats({ followers: followCounts.followers, following: followCounts.following, posts });
           }
         })
         .catch(() => {});
@@ -90,11 +102,13 @@ function LeftSidebar({
     };
 
     window.addEventListener(GRIDSTER_PROFILE_UPDATED_EVENT, handleProfileUpdated);
+    window.addEventListener(GRIDSTER_FOLLOWS_UPDATED_EVENT, handleProfileUpdated);
 
     return () => {
       active = false;
       listener?.subscription?.unsubscribe();
       window.removeEventListener(GRIDSTER_PROFILE_UPDATED_EVENT, handleProfileUpdated);
+      window.removeEventListener(GRIDSTER_FOLLOWS_UPDATED_EVENT, handleProfileUpdated);
     };
   }, []);
 
@@ -155,9 +169,13 @@ function LeftSidebar({
         </p>
 
         <div className="profile-stats">
-          {gridsterLeftSidebarProfile.stats.map(([value, label]) => (
+          {[
+            ["Followers", stats.followers],
+            ["Following", stats.following],
+            ["Posts", stats.posts],
+          ].map(([label, value]) => (
             <div key={label}>
-              <strong>{value}</strong>
+              <strong>{value.toLocaleString()}</strong>
               <span>{label}</span>
             </div>
           ))}

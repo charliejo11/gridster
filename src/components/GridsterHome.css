@@ -15319,7 +15319,13 @@ button.join-toggle.is-joined {
 .resident-profile-friend-action {
   display: flex;
   align-items: flex-start;
+  gap: 8px;
   margin-left: auto;
+}
+
+.resident-profile-stats {
+  max-width: 360px;
+  margin: 0 0 4px;
 }
 
 .resident-profile-friend-action button {

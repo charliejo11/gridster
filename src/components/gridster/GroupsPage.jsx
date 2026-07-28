@@ -17,7 +17,7 @@ import TeleportStatusChip from "./TeleportStatusChip";
 const EMPTY_GROUP_FORM = {
   name: "",
   description: "",
-  category: "clubs",
+  category: "community",
   region_name: "",
   slurl: "",
   photo_url: "",

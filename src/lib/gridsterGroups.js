@@ -9,26 +9,59 @@ export const GRIDSTER_GROUP_INVITES_TABLE = "gridster_group_invites";
 
 export { GRIDSTER_MATURITY_RATINGS, GRIDSTER_MATURITY_RATING_LABELS };
 
+// The current, selectable set of group categories - shown in the create
+// form dropdown and as filter tabs. Keep this in sync with the CHECK
+// constraint on gridster_groups.category (supabase/migrations/
+// 20260729060000_expand_group_categories.sql), which also allows the
+// legacy values below for groups already saved under the old list.
 export const GRIDSTER_GROUP_CATEGORIES = [
-  "clubs",
-  "stores",
-  "rp_sims",
+  "community",
+  "help_support",
+  "news_updates",
+  "social",
+  "clubs_venues",
+  "music_djs",
+  "shopping",
+  "creators",
+  "photography",
+  "roleplay",
+  "events",
+  "fashion",
+  "gaming",
   "fandoms",
-  "bloggers",
-  "photographers",
-  "adult_communities",
-  "music_scenes",
+  "other",
 ];
 
-export const GRIDSTER_GROUP_CATEGORY_LABELS = {
+// Legacy categories: no longer offered as choices for new groups, but
+// existing groups still have these saved and need a real label to
+// display rather than falling back to the raw slug.
+const GRIDSTER_LEGACY_GROUP_CATEGORY_LABELS = {
   clubs: "Clubs",
   stores: "Stores",
   rp_sims: "RP Sims",
-  fandoms: "Fandoms",
   bloggers: "Bloggers",
   photographers: "Photographers",
   adult_communities: "Adult Communities",
   music_scenes: "Music Scenes",
+};
+
+export const GRIDSTER_GROUP_CATEGORY_LABELS = {
+  ...GRIDSTER_LEGACY_GROUP_CATEGORY_LABELS,
+  community: "Community",
+  help_support: "Help & Support",
+  news_updates: "News & Updates",
+  social: "Social",
+  clubs_venues: "Clubs & Venues",
+  music_djs: "Music & DJs",
+  shopping: "Shopping",
+  creators: "Creators",
+  photography: "Photography",
+  roleplay: "Roleplay",
+  events: "Events",
+  fashion: "Fashion",
+  gaming: "Gaming",
+  fandoms: "Fandoms",
+  other: "Other",
 };
 
 export const GRIDSTER_GROUP_POST_TYPES = ["post", "event", "announcement"];
@@ -53,7 +86,7 @@ export function normalizeGroupForm(form) {
   return {
     name: String(form.name || "").trim(),
     description: String(form.description || "").trim(),
-    category: GRIDSTER_GROUP_CATEGORIES.includes(form.category) ? form.category : "clubs",
+    category: GRIDSTER_GROUP_CATEGORIES.includes(form.category) ? form.category : "community",
     region_name: String(form.region_name || "").trim(),
     slurl: String(form.slurl || "").trim(),
     photo_url: normalizeUrl(form.photo_url),

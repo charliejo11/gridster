@@ -14,6 +14,7 @@ import {
   joinGroup,
   leaveGroup,
 } from "../../lib/gridsterGroups";
+import { uploadGridsterGroupPhoto } from "../../lib/gridsterMediaUploads";
 import TeleportStatusChip from "./TeleportStatusChip";
 
 const EMPTY_POST_FORM = {
@@ -42,6 +43,7 @@ function GroupDetailPage({ groupId, onAuthOpen, onOpenResidentProfile, showToast
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_POST_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [showInvitePanel, setShowInvitePanel] = useState(false);
   const [inviteCandidates, setInviteCandidates] = useState([]);
   const [invitedIds, setInvitedIds] = useState(new Set());
@@ -204,6 +206,27 @@ function GroupDetailPage({ groupId, onAuthOpen, onOpenResidentProfile, showToast
     setForm((current) => ({ ...current, [field]: value }));
   };
 
+  const handlePhotoFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file || !user) {
+      return;
+    }
+
+    setUploadingPhoto(true);
+    setError("");
+
+    try {
+      const publicUrl = await uploadGridsterGroupPhoto(user.id, file);
+      updateField("photo_url", publicUrl);
+    } catch (uploadError) {
+      setError(uploadError.message || "Could not upload that image.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const handleSubmitPost = async (event) => {
     event.preventDefault();
 
@@ -350,15 +373,28 @@ function GroupDetailPage({ groupId, onAuthOpen, onOpenResidentProfile, showToast
             />
           </label>
 
-          <label>
-            <span>Photo URL (optional)</span>
-            <input
-              type="text"
-              value={form.photo_url}
-              onChange={(event) => updateField("photo_url", event.target.value)}
-              placeholder="https://..."
-            />
-          </label>
+          <div className="profile-field">
+            <label>
+              <span>Photo URL (optional)</span>
+              <input
+                type="text"
+                value={form.photo_url}
+                onChange={(event) => updateField("photo_url", event.target.value)}
+                placeholder="https://..."
+              />
+            </label>
+            <label className="profile-upload-button">
+              {uploadingPhoto ? "Uploading..." : "Upload from Computer"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                hidden
+                disabled={uploadingPhoto}
+                onChange={handlePhotoFileChange}
+              />
+            </label>
+            <p className="profile-upload-hint">PNG, JPEG, WEBP, or GIF. Max 8MB.</p>
+          </div>
 
           {form.post_type === "event" ? (
             <>

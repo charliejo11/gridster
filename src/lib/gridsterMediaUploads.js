@@ -39,3 +39,36 @@ export async function uploadGridsterPostPhoto(userId, file) {
 
   return data.publicUrl;
 }
+
+export const GRIDSTER_GROUP_PHOTOS_BUCKET = "group-photos";
+export const GRIDSTER_MAX_GROUP_PHOTO_BYTES = 8 * 1024 * 1024;
+export const GRIDSTER_ALLOWED_GROUP_PHOTO_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+
+export function validateGridsterGroupPhoto(file) {
+  if (!GRIDSTER_ALLOWED_GROUP_PHOTO_TYPES.includes(file.type)) {
+    throw new Error("Please choose a PNG, JPEG, WEBP, or GIF image.");
+  }
+
+  if (file.size > GRIDSTER_MAX_GROUP_PHOTO_BYTES) {
+    throw new Error("Images must be 8MB or smaller.");
+  }
+}
+
+export async function uploadGridsterGroupPhoto(userId, file) {
+  validateGridsterGroupPhoto(file);
+
+  const extension = POST_PHOTO_EXTENSIONS_BY_TYPE[file.type] || "jpg";
+  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(GRIDSTER_GROUP_PHOTOS_BUCKET)
+    .upload(path, file, { contentType: file.type });
+
+  if (uploadError) {
+    throw new Error(uploadError.message || "Could not upload that image. Please try again.");
+  }
+
+  const { data } = supabase.storage.from(GRIDSTER_GROUP_PHOTOS_BUCKET).getPublicUrl(path);
+
+  return data.publicUrl;
+}

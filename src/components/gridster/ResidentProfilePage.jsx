@@ -26,7 +26,7 @@ function getInitials(profile) {
   return initials.toUpperCase();
 }
 
-function ResidentProfilePage({ userId, showToast }) {
+function ResidentProfilePage({ userId, onOpenFollowList, showToast }) {
   const [profile, setProfile] = useState(null);
   const [equippedCosmetics, setEquippedCosmetics] = useState([]);
   const [favoritePlaces, setFavoritePlaces] = useState([]);
@@ -292,8 +292,16 @@ function ResidentProfilePage({ userId, showToast }) {
 
           {currentUser && currentUser.id !== userId ? (
             <div className="resident-profile-friend-action">
-              <button type="button" disabled={followActionBusy} onClick={handleToggleFollow}>
-                {followActionBusy ? "..." : isFollowing ? "Following" : "+ Follow"}
+              <button
+                type="button"
+                className={isFollowing ? "follow-toggle-button is-following" : "follow-toggle-button"}
+                disabled={followActionBusy}
+                onClick={handleToggleFollow}
+              >
+                <span className="follow-label-default">
+                  {followActionBusy ? "..." : isFollowing ? "Following" : "+ Follow"}
+                </span>
+                {isFollowing ? <span className="follow-label-hover">Unfollow</span> : null}
               </button>
 
               {friendship.status === "friends" ? (
@@ -322,15 +330,27 @@ function ResidentProfilePage({ userId, showToast }) {
 
         <div className="profile-stats resident-profile-stats">
           {[
-            ["Followers", stats.followers],
-            ["Following", stats.following],
-            ["Posts", stats.posts],
-          ].map(([label, value]) => (
-            <div key={label}>
-              <strong>{value.toLocaleString()}</strong>
-              <span>{label}</span>
-            </div>
-          ))}
+            ["Followers", stats.followers, "followers"],
+            ["Following", stats.following, "following"],
+            ["Posts", stats.posts, null],
+          ].map(([label, value, mode]) =>
+            mode ? (
+              <button
+                type="button"
+                key={label}
+                className="profile-stat-button"
+                onClick={() => onOpenFollowList?.(userId, mode)}
+              >
+                <strong>{value.toLocaleString()}</strong>
+                <span>{label}</span>
+              </button>
+            ) : (
+              <div key={label}>
+                <strong>{value.toLocaleString()}</strong>
+                <span>{label}</span>
+              </div>
+            )
+          )}
         </div>
 
         {profile.available_for?.length ? (

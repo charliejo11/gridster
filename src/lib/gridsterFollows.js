@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient";
+import { fetchProfilesByUserIds } from "./gridsterProfiles";
 
 export const GRIDSTER_FOLLOWS_TABLE = "gridster_follows";
 export const GRIDSTER_FOLLOWS_UPDATED_EVENT = "gridster:follows-updated";
@@ -31,6 +32,48 @@ export async function fetchFollowCounts(userId) {
     followers: followersResult.count ?? 0,
     following: followingResult.count ?? 0,
   };
+}
+
+export async function fetchFollowers(userId) {
+  if (!userId) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from(GRIDSTER_FOLLOWS_TABLE)
+    .select("follower_id, created_at")
+    .eq("followed_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  const followerIds = (data || []).map((row) => row.follower_id);
+  const profilesById = await fetchProfilesByUserIds(followerIds);
+
+  return followerIds.map((id) => profilesById.get(id)).filter(Boolean);
+}
+
+export async function fetchFollowing(userId) {
+  if (!userId) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from(GRIDSTER_FOLLOWS_TABLE)
+    .select("followed_id, created_at")
+    .eq("follower_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  const followedIds = (data || []).map((row) => row.followed_id);
+  const profilesById = await fetchProfilesByUserIds(followedIds);
+
+  return followedIds.map((id) => profilesById.get(id)).filter(Boolean);
 }
 
 export async function fetchIsFollowing(followerId, followedId) {

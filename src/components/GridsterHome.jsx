@@ -124,6 +124,7 @@ import FeaturedAdminPage from "./gridster/FeaturedAdminPage";
 import GroupsPage from "./gridster/GroupsPage";
 import GroupDetailPage from "./gridster/GroupDetailPage";
 import ResidentProfilePage from "./gridster/ResidentProfilePage";
+import FollowListPage from "./gridster/FollowListPage";
 import ResidentDirectoryPage from "./gridster/ResidentDirectoryPage";
 import CreatorPagesDirectory from "./gridster/CreatorPagesDirectory";
 import CreatorPageDetail from "./gridster/CreatorPageDetail";
@@ -211,6 +212,7 @@ function GridsterHome() {
   const [selectedProfileName, setSelectedProfileName] = useState("CharlieJo");
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [selectedResidentUserId, setSelectedResidentUserId] = useState(null);
+  const [selectedFollowList, setSelectedFollowList] = useState({ userId: null, mode: "followers" });
   const [selectedMessageFriendId, setSelectedMessageFriendId] = useState(null);
   const [selectedCreatorPageId, setSelectedCreatorPageId] = useState(null);
   const [initialTeleportCategory, setInitialTeleportCategory] = useState(null);
@@ -340,6 +342,13 @@ function GridsterHome() {
     setActivePage("ResidentProfile");
   };
 
+  const openFollowList = (userId, mode) => {
+    setSelectedFollowList({ userId, mode: mode === "following" ? "following" : "followers" });
+    setShowNotifications(false);
+    setShowThemeMenu(false);
+    setActivePage("FollowList");
+  };
+
   const openMessages = (friendUserId) => {
     setSelectedMessageFriendId(friendUserId ?? null);
     setShowNotifications(false);
@@ -464,6 +473,7 @@ function GridsterHome() {
             setActivePage={handleSidebarNavigate}
             onOpenComposer={openComposer}
             onOpenMyCreatorPages={openMyCreatorPages}
+            onOpenFollowList={openFollowList}
             showToast={showToast}
             onAuthOpen={openAuth}
           >
@@ -491,6 +501,7 @@ function GridsterHome() {
           selectedProfileName={selectedProfileName}
           selectedGroupId={selectedGroupId}
           selectedResidentUserId={selectedResidentUserId}
+          selectedFollowList={selectedFollowList}
           selectedMessageFriendId={selectedMessageFriendId}
           selectedCreatorPageId={selectedCreatorPageId}
           initialTeleportCategory={initialTeleportCategory}
@@ -499,6 +510,7 @@ function GridsterHome() {
           onOpenProfile={openProfile}
           onOpenGroup={openGroup}
           onOpenResidentProfile={openResidentProfile}
+          onOpenFollowList={openFollowList}
           onOpenMessages={openMessages}
           onOpenCreatorPage={openCreatorPage}
           onOpenMyCreatorPages={openMyCreatorPages}
@@ -531,7 +543,7 @@ function GridsterHome() {
   );
 }
 
-function CenterContent({ activePage, galleryItems, authMode, authReturnTo, selectedProfileName, selectedGroupId, selectedResidentUserId, selectedMessageFriendId, selectedCreatorPageId, initialTeleportCategory, postsRefreshToken, setActivePage, onOpenProfile, onOpenGroup, onOpenResidentProfile, onOpenMessages, onOpenCreatorPage, onOpenMyCreatorPages, onOpenTeleportDiscovery, onOpenComposer, onAuthOpen, showToast }) {
+function CenterContent({ activePage, galleryItems, authMode, authReturnTo, selectedProfileName, selectedGroupId, selectedResidentUserId, selectedFollowList, selectedMessageFriendId, selectedCreatorPageId, initialTeleportCategory, postsRefreshToken, setActivePage, onOpenProfile, onOpenGroup, onOpenResidentProfile, onOpenFollowList, onOpenMessages, onOpenCreatorPage, onOpenMyCreatorPages, onOpenTeleportDiscovery, onOpenComposer, onAuthOpen, showToast }) {
   if (activePage === "Home") {
     return (
       <>
@@ -781,7 +793,27 @@ function CenterContent({ activePage, galleryItems, authMode, authReturnTo, selec
   if (activePage === "ResidentProfile") {
     return (
       <PageShell title="Resident Profile" subtitle="A real Gridster profile — verified status, cosmetics, and more.">
-        <ResidentProfilePage userId={selectedResidentUserId} showToast={showToast} />
+        <ResidentProfilePage
+          userId={selectedResidentUserId}
+          onOpenFollowList={onOpenFollowList}
+          showToast={showToast}
+        />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "FollowList") {
+    return (
+      <PageShell
+        title={selectedFollowList?.mode === "following" ? "Following" : "Followers"}
+        subtitle="Real Gridster residents, pulled from actual follow relationships."
+      >
+        <FollowListPage
+          userId={selectedFollowList?.userId}
+          mode={selectedFollowList?.mode}
+          onOpenResidentProfile={onOpenResidentProfile}
+          showToast={showToast}
+        />
       </PageShell>
     );
   }

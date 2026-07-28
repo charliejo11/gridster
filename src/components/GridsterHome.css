@@ -2404,10 +2404,23 @@ button {
   padding: 0 6px 2px;
 }
 
-.profile-stats div {
+.profile-stats div,
+.profile-stats button {
   padding: 8px 4px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.04);
+}
+
+.profile-stats button {
+  border: 0;
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.profile-stats button:hover {
+  background: rgba(255, 255, 255, 0.09);
 }
 
 .profile-stats strong,
@@ -15352,6 +15365,24 @@ button.join-toggle.is-joined {
 .friend-request-response {
   display: flex;
   gap: 8px;
+}
+
+.follow-toggle-button .follow-label-hover {
+  display: none;
+}
+
+.follow-toggle-button.is-following:hover .follow-label-default {
+  display: none;
+}
+
+.follow-toggle-button.is-following:hover .follow-label-hover {
+  display: inline;
+}
+
+.follow-toggle-button.is-following:hover {
+  border-color: rgba(255, 92, 122, 0.55) !important;
+  background: rgba(255, 92, 122, 0.14) !important;
+  color: #ffb4c2;
 }
 
 .friend-status-pill {

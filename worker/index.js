@@ -7,6 +7,7 @@ import { CORS_HEADERS as PLUS_PORTAL_CORS_HEADERS, handleCreatePlusPortalSession
 import { handleStripeWebhook } from "./routes/stripe-webhook.js";
 import { CORS_HEADERS as PLUS_LINDEN_CORS_HEADERS, handlePlusLindenPayment } from "./routes/plus-linden-payment.js";
 import { expireLindenPlusMemberships } from "./routes/expire-linden-plus-memberships.js";
+import { sendEventReminders } from "./routes/send-event-reminders.js";
 
 const ROUTES = {
   "POST /api/create-sl-verification-code": handleCreateSlVerificationCode,
@@ -56,5 +57,6 @@ export default {
   // Stripe-billed rows.
   async scheduled(event, env, ctx) {
     ctx.waitUntil(expireLindenPlusMemberships(env));
+    ctx.waitUntil(sendEventReminders(env));
   },
 };

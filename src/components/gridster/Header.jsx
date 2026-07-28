@@ -3,13 +3,21 @@ import { supabase } from "../../lib/supabaseClient";
 import { BLING_BALANCE_EVENT, getBlingBalanceSummary, notifyBlingBalanceChanged } from "../../lib/blingDepot";
 import { claimDailyLoginBonus, claimProfileCompleteBonus, claimSlVerifiedBonus } from "../../lib/gridsterBonuses";
 import { GRIDSTER_PROFILE_UPDATED_EVENT, fetchGridsterProfile } from "../../lib/gridsterProfiles";
+import { GRIDSTER_FRIEND_REQUEST_UPDATED_EVENT, respondToFriendRequest } from "../../lib/gridsterFriends";
+import { respondToGroupInvite } from "../../lib/gridsterGroups";
+import { respondToEventInvite } from "../../lib/gridsterPlaces";
 import {
-  GRIDSTER_FRIEND_REQUEST_UPDATED_EVENT,
-  fetchFriendNotifications,
-  formatFriendNotificationTime,
-  markFriendNotificationsSeen,
-  respondToFriendRequest,
-} from "../../lib/gridsterFriends";
+  GRIDSTER_NOTIFICATIONS_EVENT,
+  fetchRecentNotifications,
+  fetchUnreadNotificationCount,
+  formatNotificationTime,
+  getNotificationCopy,
+  markAllNotificationsRead,
+  markNotificationRead,
+  clearAllNotifications,
+  deleteNotification,
+  subscribeToNotifications,
+} from "../../lib/gridsterNotifications";
 
 function initialsFromName(name) {
   const trimmed = String(name || "").trim();
@@ -43,13 +51,17 @@ function Header({
   showThemeMenu,
   setShowThemeMenu,
   onAuthOpen,
+  onOpenResidentProfile,
+  onOpenGroup,
+  onOpenMessages,
   themeOptions,
   activeThemeLabel,
 }) {
   const [blingSummary, setBlingSummary] = useState({ balance: null, isAdmin: false });
   const [currentUser, setCurrentUser] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [friendNotifications, setFriendNotifications] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [respondingRequestId, setRespondingRequestId] = useState("");
 
   useEffect(() => {
@@ -80,16 +92,25 @@ function Header({
         .catch(() => {});
     };
 
-    const refreshFriendNotifications = (nextUser) => {
+    const refreshNotifications = (nextUser) => {
       if (!nextUser) {
-        setFriendNotifications([]);
+        setNotifications([]);
+        setUnreadCount(0);
         return;
       }
 
-      fetchFriendNotifications(nextUser.id)
+      fetchRecentNotifications(nextUser.id)
         .then((nextNotifications) => {
           if (active) {
-            setFriendNotifications(nextNotifications);
+            setNotifications(nextNotifications);
+          }
+        })
+        .catch(() => {});
+
+      fetchUnreadNotificationCount(nextUser.id)
+        .then((count) => {
+          if (active) {
+            setUnreadCount(count);
           }
         })
         .catch(() => {});
@@ -128,7 +149,7 @@ function Header({
       if (active) {
         setCurrentUser(data?.user ?? null);
         refreshProfile(data?.user ?? null);
-        refreshFriendNotifications(data?.user ?? null);
+        refreshNotifications(data?.user ?? null);
         claimEligibleBonuses(data?.user ?? null);
       }
     }).catch(() => {});
@@ -138,7 +159,7 @@ function Header({
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUser(session?.user ?? null);
       refreshProfile(session?.user ?? null);
-      refreshFriendNotifications(session?.user ?? null);
+      refreshNotifications(session?.user ?? null);
       refreshBalance();
       claimEligibleBonuses(session?.user ?? null);
     });
@@ -147,22 +168,48 @@ function Header({
       supabase.auth.getUser().then(({ data }) => refreshProfile(data?.user ?? null)).catch(() => {});
     };
 
-    const handleFriendRequestUpdated = () => {
-      supabase.auth.getUser().then(({ data }) => refreshFriendNotifications(data?.user ?? null)).catch(() => {});
+    const handleNotificationsChanged = () => {
+      supabase.auth.getUser().then(({ data }) => refreshNotifications(data?.user ?? null)).catch(() => {});
     };
 
     window.addEventListener(BLING_BALANCE_EVENT, refreshBalance);
     window.addEventListener(GRIDSTER_PROFILE_UPDATED_EVENT, handleProfileUpdated);
-    window.addEventListener(GRIDSTER_FRIEND_REQUEST_UPDATED_EVENT, handleFriendRequestUpdated);
+    window.addEventListener(GRIDSTER_FRIEND_REQUEST_UPDATED_EVENT, handleNotificationsChanged);
+    window.addEventListener(GRIDSTER_NOTIFICATIONS_EVENT, handleNotificationsChanged);
 
     return () => {
       active = false;
       listener?.subscription?.unsubscribe();
       window.removeEventListener(BLING_BALANCE_EVENT, refreshBalance);
-      window.removeEventListener(GRIDSTER_FRIEND_REQUEST_UPDATED_EVENT, handleFriendRequestUpdated);
+      window.removeEventListener(GRIDSTER_FRIEND_REQUEST_UPDATED_EVENT, handleNotificationsChanged);
+      window.removeEventListener(GRIDSTER_NOTIFICATIONS_EVENT, handleNotificationsChanged);
       window.removeEventListener(GRIDSTER_PROFILE_UPDATED_EVENT, handleProfileUpdated);
     };
   }, []);
+
+  // Realtime: separate effect because it needs currentUser, which the auth
+  // effect above sets asynchronously - can't subscribe before it exists.
+  useEffect(() => {
+    if (!currentUser) {
+      return undefined;
+    }
+
+    const channel = subscribeToNotifications(currentUser.id, {
+      onInsert: () => {
+        fetchRecentNotifications(currentUser.id).then(setNotifications).catch(() => {});
+        fetchUnreadNotificationCount(currentUser.id).then(setUnreadCount).catch(() => {});
+      },
+      onUpdate: () => {
+        fetchUnreadNotificationCount(currentUser.id).then(setUnreadCount).catch(() => {});
+      },
+    });
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [currentUser?.id]);
 
   const handleAuthButtonClick = () => {
     if (currentUser) {
@@ -206,21 +253,68 @@ function Header({
 
   const handleMarkAllRead = () => {
     if (currentUser) {
-      markFriendNotificationsSeen(currentUser.id)
-        .then(() => setFriendNotifications((current) => current.map((item) => ({ ...item, unread: false }))))
+      markAllNotificationsRead(currentUser.id)
+        .then(() => {
+          setNotifications((current) => current.map((item) => ({ ...item, is_read: true })));
+          setUnreadCount(0);
+        })
         .catch(() => {});
     }
 
     showToast?.("All notifications marked as read.");
+  };
+
+  const handleClearAll = () => {
+    if (!currentUser) {
+      return;
+    }
+
+    if (!window.confirm("Clear all notifications? This cannot be undone.")) {
+      return;
+    }
+
+    clearAllNotifications(currentUser.id)
+      .then(() => {
+        setNotifications([]);
+        setUnreadCount(0);
+      })
+      .catch(() => showToast?.("Could not clear notifications."));
+  };
+
+  const handleToggleRead = (notification, event) => {
+    event.stopPropagation();
+    const nextRead = !notification.is_read;
+
+    markNotificationRead(notification.id, nextRead)
+      .then(() => {
+        setNotifications((current) =>
+          current.map((item) => (item.id === notification.id ? { ...item, is_read: nextRead } : item))
+        );
+        setUnreadCount((current) => Math.max(0, current + (nextRead ? -1 : 1)));
+      })
+      .catch(() => showToast?.("Could not update that notification."));
+  };
+
+  const handleRemove = (notification, event) => {
+    event.stopPropagation();
+
+    deleteNotification(notification.id)
+      .then(() => {
+        setNotifications((current) => current.filter((item) => item.id !== notification.id));
+        if (!notification.is_read) {
+          setUnreadCount((current) => Math.max(0, current - 1));
+        }
+      })
+      .catch(() => showToast?.("Could not remove that notification."));
+  };
+
+  const handleViewAllNotifications = () => {
+    setActivePage("Notifications");
     setShowNotifications(false);
   };
 
-  const handleViewAlerts = () => {
-    setActivePage("Messages");
-    setShowNotifications(false);
-  };
-
-  const handleRespondToRequest = (requestId, accept) => {
+  const handleRespondToRequest = (requestId, accept, event) => {
+    event?.stopPropagation();
     setRespondingRequestId(requestId);
 
     respondToFriendRequest(requestId, accept)
@@ -228,14 +322,85 @@ function Header({
         showToast?.(accept ? "Friend request accepted." : "Friend request declined.");
 
         if (currentUser) {
-          fetchFriendNotifications(currentUser.id).then(setFriendNotifications).catch(() => {});
+          fetchRecentNotifications(currentUser.id).then(setNotifications).catch(() => {});
         }
       })
       .catch((error) => showToast?.(error.message || "Could not update that friend request."))
       .finally(() => setRespondingRequestId(""));
   };
 
-  const unreadNotificationCount = friendNotifications.filter((item) => item.unread).length;
+  const handleRespondToGroupInvite = (notification, accept, event) => {
+    event.stopPropagation();
+    setRespondingRequestId(notification.id);
+
+    respondToGroupInvite(notification.related_request_id, accept, profile?.display_name)
+      .then(() => {
+        showToast?.(accept ? "Joined the group." : "Invite declined.");
+
+        if (currentUser) {
+          fetchRecentNotifications(currentUser.id).then(setNotifications).catch(() => {});
+        }
+      })
+      .catch((error) => showToast?.(error.message || "Could not update that group invite."))
+      .finally(() => setRespondingRequestId(""));
+  };
+
+  const handleRespondToEventInvite = (notification, accept, event) => {
+    event.stopPropagation();
+    setRespondingRequestId(notification.id);
+
+    respondToEventInvite(notification.related_request_id, accept)
+      .then(() => {
+        showToast?.(accept ? "You're going!" : "Invite declined.");
+
+        if (currentUser) {
+          fetchRecentNotifications(currentUser.id).then(setNotifications).catch(() => {});
+        }
+      })
+      .catch((error) => showToast?.(error.message || "Could not update that event invite."))
+      .finally(() => setRespondingRequestId(""));
+  };
+
+  const handleNotificationClick = (notification) => {
+    setShowNotifications(false);
+
+    if (!notification.is_read) {
+      markNotificationRead(notification.id, true).catch(() => {});
+      setUnreadCount((current) => Math.max(0, current - 1));
+    }
+
+    switch (notification.notification_type) {
+      case "post_liked":
+      case "post_commented":
+      case "mention":
+        setActivePage("Home");
+        break;
+      case "new_message":
+        onOpenMessages?.(notification.related_user_id);
+        break;
+      case "friend_request_received":
+      case "friend_request_accepted":
+      case "follow_received":
+        onOpenResidentProfile?.(notification.actor_user_id);
+        break;
+      case "group_invite":
+      case "group_activity":
+        onOpenGroup?.(notification.related_group_id);
+        break;
+      case "event_invite":
+      case "event_reminder":
+        setActivePage("Events");
+        break;
+      case "bling_bits_bonus":
+      case "bling_bits_purchase":
+        setActivePage("BlingBoost");
+        break;
+      default:
+        break;
+    }
+  };
+
+  const unreadNotificationCount = unreadCount;
 
   return (
     <header className="topbar">
@@ -344,41 +509,121 @@ function Header({
               </div>
 
               <div className="notification-list-preview">
-                {friendNotifications.length === 0 ? (
+                {notifications.length === 0 ? (
                   <p className="sidebar-widget-empty">No notifications yet.</p>
                 ) : (
-                  friendNotifications.map((notification, index) => (
-                    <article className="notification-preview-row" key={notification.id}>
-                      <span className={`notification-preview-icon notice-${index % 5}`}>
-                        {initialsFromName(notification.person?.display_name || notification.person?.sl_username)}
-                      </span>
+                  notifications.map((notification, index) => (
+                    <article
+                      className={notification.is_read ? "notification-preview-row" : "notification-preview-row is-unread"}
+                      key={notification.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleNotificationClick(notification)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          handleNotificationClick(notification);
+                        }
+                      }}
+                    >
+                      <button
+                        type="button"
+                        className={`notification-preview-icon notice-${index % 5}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (notification.actor_user_id) {
+                            setShowNotifications(false);
+                            onOpenResidentProfile?.(notification.actor_user_id);
+                          }
+                        }}
+                        aria-label={notification.actorName || "Gridster"}
+                      >
+                        {notification.actorAvatarUrl ? (
+                          <img src={notification.actorAvatarUrl} alt="" />
+                        ) : (
+                          initialsFromName(notification.actorName || "Gridster")
+                        )}
+                      </button>
                       <div>
-                        <strong>
-                          {notification.person?.display_name || notification.person?.sl_username || "A resident"}{" "}
-                          {notification.type === "friend_request_received" ? "sent you a friend request" : "accepted your friend request"}
-                        </strong>
-                        <small>{formatFriendNotificationTime(notification.time)}</small>
+                        <strong>{getNotificationCopy(notification)}</strong>
+                        <small>{formatNotificationTime(notification.created_at)}</small>
 
-                        {notification.type === "friend_request_received" ? (
+                        {notification.notification_type === "friend_request_received" ? (
                           <div className="notification-inline-actions">
                             <button
                               type="button"
-                              disabled={respondingRequestId === notification.requestId}
-                              onClick={() => handleRespondToRequest(notification.requestId, true)}
+                              disabled={respondingRequestId === notification.related_request_id}
+                              onClick={(event) => handleRespondToRequest(notification.related_request_id, true, event)}
                             >
                               Accept
                             </button>
                             <button
                               type="button"
-                              disabled={respondingRequestId === notification.requestId}
-                              onClick={() => handleRespondToRequest(notification.requestId, false)}
+                              disabled={respondingRequestId === notification.related_request_id}
+                              onClick={(event) => handleRespondToRequest(notification.related_request_id, false, event)}
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        ) : null}
+
+                        {notification.notification_type === "group_invite" ? (
+                          <div className="notification-inline-actions">
+                            <button
+                              type="button"
+                              disabled={respondingRequestId === notification.id}
+                              onClick={(event) => handleRespondToGroupInvite(notification, true, event)}
+                            >
+                              Accept
+                            </button>
+                            <button
+                              type="button"
+                              disabled={respondingRequestId === notification.id}
+                              onClick={(event) => handleRespondToGroupInvite(notification, false, event)}
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        ) : null}
+
+                        {notification.notification_type === "event_invite" ? (
+                          <div className="notification-inline-actions">
+                            <button
+                              type="button"
+                              disabled={respondingRequestId === notification.id}
+                              onClick={(event) => handleRespondToEventInvite(notification, true, event)}
+                            >
+                              I&apos;m going
+                            </button>
+                            <button
+                              type="button"
+                              disabled={respondingRequestId === notification.id}
+                              onClick={(event) => handleRespondToEventInvite(notification, false, event)}
                             >
                               Decline
                             </button>
                           </div>
                         ) : null}
                       </div>
-                      {notification.unread ? <em aria-label="Unread notification"></em> : null}
+
+                      <div className="notification-preview-row-actions">
+                        <button
+                          type="button"
+                          className="notification-toggle-button"
+                          onClick={(event) => handleToggleRead(notification, event)}
+                          aria-label={notification.is_read ? "Mark as unread" : "Mark as read"}
+                        >
+                          {notification.is_read ? "○" : "●"}
+                        </button>
+                        <button
+                          type="button"
+                          className="notification-remove-button"
+                          onClick={(event) => handleRemove(notification, event)}
+                          aria-label="Remove notification"
+                        >
+                          ×
+                        </button>
+                      </div>
                     </article>
                   ))
                 )}
@@ -388,8 +633,11 @@ function Header({
                 <button onClick={handleMarkAllRead}>
                   Mark all read
                 </button>
-                <button onClick={handleViewAlerts}>
-                  View alerts
+                <button onClick={handleClearAll}>
+                  Clear all
+                </button>
+                <button onClick={handleViewAllNotifications}>
+                  View all notifications
                 </button>
               </div>
             </div>

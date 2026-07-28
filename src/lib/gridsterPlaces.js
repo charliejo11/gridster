@@ -1,8 +1,10 @@
 import { supabase } from "./supabaseClient";
 import { GRIDSTER_FAVORITE_PLACES_TABLE } from "./gridsterProfiles";
+import { createNotification } from "./gridsterNotifications";
 
 export const GRIDSTER_PLACES_TABLE = "gridster_places";
 export const GRIDSTER_EVENTS_TABLE = "gridster_events";
+export const GRIDSTER_EVENT_INVITES_TABLE = "gridster_event_invites";
 
 export const GRIDSTER_PLACE_CATEGORIES = [
   "clubs",
@@ -298,4 +300,96 @@ export async function deleteGridsterEvent(eventId, userId) {
   if (error) {
     throw error;
   }
+}
+
+export async function rsvpToEvent(eventId, userId) {
+  const { data, error } = await supabase
+    .from(GRIDSTER_EVENT_INVITES_TABLE)
+    .upsert(
+      { event_id: eventId, invitee_user_id: userId, inviter_user_id: null, status: "going", responded_at: new Date().toISOString() },
+      { onConflict: "event_id,invitee_user_id" }
+    )
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function inviteToEvent(eventId, inviterUserId, inviteeUserId) {
+  const { data, error } = await supabase
+    .from(GRIDSTER_EVENT_INVITES_TABLE)
+    .insert({ event_id: eventId, inviter_user_id: inviterUserId, invitee_user_id: inviteeUserId })
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  createNotification({
+    p_recipient_user_id: inviteeUserId,
+    p_actor_user_id: inviterUserId,
+    p_notification_type: "event_invite",
+    p_related_event_id: eventId,
+    p_related_user_id: inviterUserId,
+    p_related_request_id: data.id,
+  });
+
+  return data;
+}
+
+export async function respondToEventInvite(inviteId, accept) {
+  const { data, error } = await supabase
+    .from(GRIDSTER_EVENT_INVITES_TABLE)
+    .update({ status: accept ? "going" : "declined", responded_at: new Date().toISOString() })
+    .eq("id", inviteId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function fetchMyEventRsvpStatuses(userId, eventIds) {
+  if (!userId || !eventIds?.length) {
+    return new Map();
+  }
+
+  const { data, error } = await supabase
+    .from(GRIDSTER_EVENT_INVITES_TABLE)
+    .select("event_id, status")
+    .eq("invitee_user_id", userId)
+    .in("event_id", eventIds);
+
+  if (error) {
+    throw error;
+  }
+
+  return new Map((data || []).map((row) => [row.event_id, row.status]));
+}
+
+export async function fetchEventInviteStatus(eventId, userId) {
+  if (!eventId || !userId) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from(GRIDSTER_EVENT_INVITES_TABLE)
+    .select("*")
+    .eq("event_id", eventId)
+    .eq("invitee_user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }

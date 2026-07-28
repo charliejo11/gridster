@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient";
+import { createNotification } from "./gridsterNotifications";
 
 export const GRIDSTER_FRIEND_REQUESTS_TABLE = "gridster_friend_requests";
 export const GRIDSTER_FRIEND_REQUEST_UPDATED_EVENT = "gridster:friend-request-updated";
@@ -113,6 +114,14 @@ export async function sendFriendRequest(currentUserId, targetUserId) {
 
   notifyFriendRequestUpdated();
 
+  createNotification({
+    p_recipient_user_id: targetUserId,
+    p_actor_user_id: currentUserId,
+    p_notification_type: "friend_request_received",
+    p_related_user_id: currentUserId,
+    p_related_request_id: data.id,
+  });
+
   return data;
 }
 
@@ -133,6 +142,16 @@ export async function respondToFriendRequest(requestId, accept) {
   }
 
   notifyFriendRequestUpdated();
+
+  if (accept) {
+    createNotification({
+      p_recipient_user_id: data.sender_id,
+      p_actor_user_id: data.recipient_id,
+      p_notification_type: "friend_request_accepted",
+      p_related_user_id: data.recipient_id,
+      p_related_request_id: requestId,
+    });
+  }
 
   return data;
 }

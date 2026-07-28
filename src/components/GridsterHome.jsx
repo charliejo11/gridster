@@ -48,6 +48,9 @@ import {
   fetchFeaturedPhotoSpots,
   fetchGridsterEvents,
   fetchGridsterPlaces,
+  fetchMyEventRsvpStatuses,
+  inviteToEvent,
+  rsvpToEvent,
 } from "../lib/gridsterPlaces";
 import { GRIDSTER_GROUP_CATEGORY_LABELS, fetchGroups } from "../lib/gridsterGroups";
 import { GRIDSTER_POST_TYPE_LABELS, fetchPostsByIds, fetchRecentPosts } from "../lib/gridsterPosts";
@@ -125,6 +128,7 @@ import GroupsPage from "./gridster/GroupsPage";
 import GroupDetailPage from "./gridster/GroupDetailPage";
 import ResidentProfilePage from "./gridster/ResidentProfilePage";
 import FollowListPage from "./gridster/FollowListPage";
+import NotificationsPage from "./gridster/NotificationsPage";
 import ResidentDirectoryPage from "./gridster/ResidentDirectoryPage";
 import CreatorPagesDirectory from "./gridster/CreatorPagesDirectory";
 import CreatorPageDetail from "./gridster/CreatorPageDetail";
@@ -462,6 +466,9 @@ function GridsterHome() {
         showThemeMenu={showThemeMenu}
         setShowThemeMenu={setShowThemeMenu}
         onAuthOpen={() => openAuth("login")}
+        onOpenResidentProfile={openResidentProfile}
+        onOpenGroup={openGroup}
+        onOpenMessages={openMessages}
         themeOptions={gridsterThemeOptions}
         activeThemeLabel={activeThemeLabel}
       />
@@ -812,6 +819,20 @@ function CenterContent({ activePage, galleryItems, authMode, authReturnTo, selec
           userId={selectedFollowList?.userId}
           mode={selectedFollowList?.mode}
           onOpenResidentProfile={onOpenResidentProfile}
+          showToast={showToast}
+        />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "Notifications") {
+    return (
+      <PageShell title="Notifications" subtitle="Everything happening around your Gridster activity.">
+        <NotificationsPage
+          onOpenResidentProfile={onOpenResidentProfile}
+          onOpenGroup={onOpenGroup}
+          onOpenMessages={onOpenMessages}
+          setActivePage={setActivePage}
           showToast={showToast}
         />
       </PageShell>
@@ -1281,14 +1302,42 @@ function EventsPageContent({ onOpenComposer, showToast }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
+  const [rsvpStatuses, setRsvpStatuses] = useState(new Map());
+  const [rsvpBusyId, setRsvpBusyId] = useState("");
+  const [inviteOpenEventId, setInviteOpenEventId] = useState("");
+  const [inviteFriends, setInviteFriends] = useState([]);
+  const [invitedUserIds, setInvitedUserIds] = useState(new Set());
+  const [inviteBusyId, setInviteBusyId] = useState("");
 
   useEffect(() => {
     let active = true;
 
+    supabase.auth.getUser().then(({ data }) => {
+      if (active) {
+        setCurrentUser(data?.user ?? null);
+      }
+    }).catch(() => {});
+
     fetchGridsterEvents()
-      .then((nextEvents) => {
-        if (active) {
-          setEvents(nextEvents || []);
+      .then(async (nextEvents) => {
+        if (!active) {
+          return;
+        }
+
+        setEvents(nextEvents || []);
+
+        const { data } = await supabase.auth.getUser();
+        const user = data?.user ?? null;
+
+        if (user && (nextEvents || []).length) {
+          fetchMyEventRsvpStatuses(user.id, nextEvents.map((event) => event.id))
+            .then((statuses) => {
+              if (active) {
+                setRsvpStatuses(statuses);
+              }
+            })
+            .catch(() => {});
         }
       })
       .catch((fetchError) => {
@@ -1306,6 +1355,52 @@ function EventsPageContent({ onOpenComposer, showToast }) {
       active = false;
     };
   }, []);
+
+  const handleRsvp = (eventId) => {
+    if (!currentUser) {
+      showToast?.("Log in to RSVP.");
+      return;
+    }
+
+    setRsvpBusyId(eventId);
+
+    rsvpToEvent(eventId, currentUser.id)
+      .then(() => {
+        setRsvpStatuses((current) => new Map(current).set(eventId, "going"));
+        showToast?.("You're going!");
+      })
+      .catch((rsvpError) => showToast?.(rsvpError.message || "Could not RSVP to that event."))
+      .finally(() => setRsvpBusyId(""));
+  };
+
+  const handleToggleInvitePanel = async (eventId) => {
+    if (!currentUser) {
+      showToast?.("Log in to invite friends.");
+      return;
+    }
+
+    setInviteOpenEventId((current) => (current === eventId ? "" : eventId));
+
+    if (!inviteFriends.length) {
+      try {
+        setInviteFriends(await fetchFriends(currentUser.id));
+      } catch (loadError) {
+        showToast?.(loadError.message || "Could not load your friends list.");
+      }
+    }
+  };
+
+  const handleInviteFriendToEvent = (eventId, friendUserId) => {
+    setInviteBusyId(friendUserId);
+
+    inviteToEvent(eventId, currentUser.id, friendUserId)
+      .then(() => {
+        setInvitedUserIds((current) => new Set(current).add(`${eventId}:${friendUserId}`));
+        showToast?.("Invite sent.");
+      })
+      .catch((inviteError) => showToast?.(inviteError.message || "Could not send that invite."))
+      .finally(() => setInviteBusyId(""));
+  };
 
   if (loading) {
     return <p className="tonight-message">Loading events...</p>;
@@ -1365,7 +1460,47 @@ function EventsPageContent({ onOpenComposer, showToast }) {
               Teleport
             </button>
             <TeleportStatusChip slurl={eventItem.slurl} destinationName={eventItem.title} showToast={showToast} />
+            <button
+              type="button"
+              disabled={rsvpBusyId === eventItem.id || rsvpStatuses.get(eventItem.id) === "going"}
+              onClick={() => handleRsvp(eventItem.id)}
+            >
+              {rsvpStatuses.get(eventItem.id) === "going"
+                ? "✔ Going"
+                : rsvpBusyId === eventItem.id
+                  ? "..."
+                  : "I'm going"}
+            </button>
+            <button type="button" onClick={() => handleToggleInvitePanel(eventItem.id)}>
+              Invite
+            </button>
           </div>
+
+          {inviteOpenEventId === eventItem.id ? (
+            <div className="group-invite-panel event-invite-panel">
+              {inviteFriends.length === 0 ? (
+                <p className="groups-directory-message">Add some friends first to invite them to events.</p>
+              ) : (
+                <div className="group-member-list">
+                  {inviteFriends.map((friend) => {
+                    const key = `${eventItem.id}:${friend.user_id}`;
+                    return (
+                      <div className="group-member-row" key={friend.user_id}>
+                        <span>{friend.display_name || friend.sl_username || "Resident"}</span>
+                        <button
+                          type="button"
+                          disabled={inviteBusyId === friend.user_id || invitedUserIds.has(key)}
+                          onClick={() => handleInviteFriendToEvent(eventItem.id, friend.user_id)}
+                        >
+                          {invitedUserIds.has(key) ? "Invited" : inviteBusyId === friend.user_id ? "..." : "Invite"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : null}
         </article>
       ))}
     </div>
@@ -3101,7 +3236,9 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, onOpenResidentProfile, 
       adjustReactionCount(post.id, isReacted ? -1 : 1);
     }
 
-    const action = isReacted ? unreactToPost(currentUserId, post.id) : reactToPost(currentUserId, post.id);
+    const action = isReacted
+      ? unreactToPost(currentUserId, post.id)
+      : reactToPost(currentUserId, post.id, post.user_id);
     action.catch((reactionError) => {
       console.error("Gridster feed: could not save reaction", reactionError);
 
@@ -4404,7 +4541,7 @@ function PostActions({ post, currentUserId, reacted, saved, reactionCount = 0, c
       return;
     }
 
-    postComment(currentUserId, postId, trimmed)
+    postComment(currentUserId, postId, trimmed, post.user_id)
       .then((created) => {
         setComments((current) => [...current, created]);
         setCommentCountLocal((current) => current + 1);

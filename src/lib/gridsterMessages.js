@@ -1,5 +1,6 @@
 import { supabase } from "./supabaseClient";
 import { fetchFriendshipStatus, fetchFriends } from "./gridsterFriends";
+import { createNotification, markMessageNotificationsRead } from "./gridsterNotifications";
 
 export const GRIDSTER_MESSAGES_TABLE = "gridster_messages";
 export const GRIDSTER_MESSAGE_EVENT = "gridster:message-sent";
@@ -35,6 +36,14 @@ export async function sendMessage(senderId, recipientId, content) {
 
   notifyMessageSent();
 
+  createNotification({
+    p_recipient_user_id: recipientId,
+    p_actor_user_id: senderId,
+    p_notification_type: "new_message",
+    p_related_message_id: data.id,
+    p_related_user_id: senderId,
+  });
+
   return data;
 }
 
@@ -67,6 +76,8 @@ export async function markThreadRead(userId, otherUserId) {
   }
 
   notifyMessageSent();
+
+  markMessageNotificationsRead(userId, otherUserId).catch(() => {});
 }
 
 export async function fetchConversations(userId) {

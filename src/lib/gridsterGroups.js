@@ -1,9 +1,11 @@
 import { supabase } from "./supabaseClient";
 import { GRIDSTER_MATURITY_RATING_LABELS, GRIDSTER_MATURITY_RATINGS } from "./gridsterPlaces";
+import { createNotification } from "./gridsterNotifications";
 
 export const GRIDSTER_GROUPS_TABLE = "gridster_groups";
 export const GRIDSTER_GROUP_MEMBERS_TABLE = "gridster_group_members";
 export const GRIDSTER_GROUP_POSTS_TABLE = "gridster_group_posts";
+export const GRIDSTER_GROUP_INVITES_TABLE = "gridster_group_invites";
 
 export { GRIDSTER_MATURITY_RATINGS, GRIDSTER_MATURITY_RATING_LABELS };
 
@@ -151,6 +153,88 @@ export async function joinGroup(groupId, userId, displayName) {
   }
 
   return data;
+}
+
+export async function inviteToGroup(groupId, inviterUserId, inviteeUserId) {
+  const { data: existing } = await supabase
+    .from(GRIDSTER_GROUP_INVITES_TABLE)
+    .select("*")
+    .eq("group_id", groupId)
+    .eq("invitee_user_id", inviteeUserId)
+    .maybeSingle();
+
+  if (existing && existing.status === "declined") {
+    const { error: deleteError } = await supabase
+      .from(GRIDSTER_GROUP_INVITES_TABLE)
+      .delete()
+      .eq("id", existing.id)
+      .eq("inviter_user_id", inviterUserId);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+  } else if (existing) {
+    throw new Error("This resident already has a pending or accepted invite to this group.");
+  }
+
+  const { data, error } = await supabase
+    .from(GRIDSTER_GROUP_INVITES_TABLE)
+    .insert({ group_id: groupId, inviter_user_id: inviterUserId, invitee_user_id: inviteeUserId })
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  createNotification({
+    p_recipient_user_id: inviteeUserId,
+    p_actor_user_id: inviterUserId,
+    p_notification_type: "group_invite",
+    p_related_group_id: groupId,
+    p_related_user_id: inviterUserId,
+    p_related_request_id: data.id,
+  });
+
+  return data;
+}
+
+export async function respondToGroupInvite(inviteId, accept, displayName) {
+  const { data, error } = await supabase
+    .from(GRIDSTER_GROUP_INVITES_TABLE)
+    .update({ status: accept ? "accepted" : "declined", responded_at: new Date().toISOString() })
+    .eq("id", inviteId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  if (accept) {
+    await joinGroup(data.group_id, data.invitee_user_id, displayName);
+  }
+
+  return data;
+}
+
+export async function fetchPendingGroupInvites(userId) {
+  if (!userId) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from(GRIDSTER_GROUP_INVITES_TABLE)
+    .select("*")
+    .eq("invitee_user_id", userId)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
 }
 
 export async function leaveGroup(groupId, userId) {

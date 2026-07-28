@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { fetchGridsterProfile } from "../../lib/gridsterProfiles";
+import { fetchFriends } from "../../lib/gridsterFriends";
 import {
   GRIDSTER_GROUP_CATEGORY_LABELS,
   GRIDSTER_MATURITY_RATING_LABELS,
@@ -9,6 +10,7 @@ import {
   fetchGroupMembers,
   fetchGroupMembership,
   fetchGroupPosts,
+  inviteToGroup,
   joinGroup,
   leaveGroup,
 } from "../../lib/gridsterGroups";
@@ -40,6 +42,10 @@ function GroupDetailPage({ groupId, onAuthOpen, onOpenResidentProfile, showToast
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_POST_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [showInvitePanel, setShowInvitePanel] = useState(false);
+  const [inviteCandidates, setInviteCandidates] = useState([]);
+  const [invitedIds, setInvitedIds] = useState(new Set());
+  const [inviteBusyId, setInviteBusyId] = useState("");
 
   const isOwner = user?.id === group?.owner_user_id;
 
@@ -152,6 +158,39 @@ function GroupDetailPage({ groupId, onAuthOpen, onOpenResidentProfile, showToast
     }
   };
 
+  const handleOpenInvitePanel = async () => {
+    if (!user) {
+      onAuthOpen?.("login");
+      return;
+    }
+
+    setShowInvitePanel((current) => !current);
+
+    if (!inviteCandidates.length) {
+      try {
+        const friends = await fetchFriends(user.id);
+        const memberIds = new Set(members.map((member) => member.user_id));
+        setInviteCandidates(friends.filter((friend) => !memberIds.has(friend.user_id)));
+      } catch (loadError) {
+        showToast?.(loadError.message || "Could not load your friends list.");
+      }
+    }
+  };
+
+  const handleInviteFriend = async (friendUserId) => {
+    setInviteBusyId(friendUserId);
+
+    try {
+      await inviteToGroup(groupId, user.id, friendUserId);
+      setInvitedIds((current) => new Set(current).add(friendUserId));
+      showToast?.("Invite sent.");
+    } catch (inviteError) {
+      showToast?.(inviteError.message || "Could not send that invite.");
+    } finally {
+      setInviteBusyId("");
+    }
+  };
+
   const handleOpenForm = () => {
     if (!isMember) {
       showToast?.("Join this group to post.");
@@ -225,6 +264,11 @@ function GroupDetailPage({ groupId, onAuthOpen, onOpenResidentProfile, showToast
             <button type="button" disabled={membershipBusy} onClick={handleToggleMembership}>
               {isMember ? "Joined" : "Join"}
             </button>
+            {isMember ? (
+              <button type="button" onClick={handleOpenInvitePanel}>
+                Invite
+              </button>
+            ) : null}
             {group.slurl ? (
               <button type="button" data-destination={group.name} data-slurl={group.slurl}>
                 Teleport
@@ -234,6 +278,36 @@ function GroupDetailPage({ groupId, onAuthOpen, onOpenResidentProfile, showToast
           </div>
         </div>
       </article>
+
+      {showInvitePanel ? (
+        <section className="group-invite-panel glass-card">
+          <h3>Invite a friend</h3>
+          {inviteCandidates.length === 0 ? (
+            <p className="groups-directory-message">All your friends are already in this group, or you have no friends yet.</p>
+          ) : (
+            <div className="group-member-list">
+              {inviteCandidates.map((friend) => (
+                <div className="group-member-row" key={friend.user_id}>
+                  <button
+                    type="button"
+                    className="group-member-name-button"
+                    onClick={() => onOpenResidentProfile?.(friend.user_id)}
+                  >
+                    {friend.display_name || friend.sl_username || "Resident"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={inviteBusyId === friend.user_id || invitedIds.has(friend.user_id)}
+                    onClick={() => handleInviteFriend(friend.user_id)}
+                  >
+                    {invitedIds.has(friend.user_id) ? "Invited" : inviteBusyId === friend.user_id ? "..." : "Invite"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
 
       {error ? <p className="groups-directory-message groups-directory-error" role="alert">{error}</p> : null}
       {message ? <p className="groups-directory-message groups-directory-success">{message}</p> : null}

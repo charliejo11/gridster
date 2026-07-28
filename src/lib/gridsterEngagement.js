@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient";
+import { createNotification } from "./gridsterNotifications";
 
 // Real, server-tracked engagement for gridster_posts. Replaces the
 // previous localStorage-only "likedPosts"/"savedPosts" flags and the
@@ -57,13 +58,22 @@ export async function fetchMyReactedPostIds(userId, postIds) {
   return new Set((data || []).map((row) => row.post_id));
 }
 
-export async function reactToPost(userId, postId) {
+export async function reactToPost(userId, postId, authorUserId) {
   const { error } = await supabase
     .from(GRIDSTER_POST_REACTIONS_TABLE)
     .insert({ user_id: userId, post_id: postId });
 
   if (error && error.code !== "23505") {
     throw error;
+  }
+
+  if (authorUserId) {
+    createNotification({
+      p_recipient_user_id: authorUserId,
+      p_actor_user_id: userId,
+      p_notification_type: "post_liked",
+      p_related_post_id: postId,
+    });
   }
 }
 
@@ -141,7 +151,7 @@ export async function fetchComments(postId) {
   return data || [];
 }
 
-export async function postComment(userId, postId, body) {
+export async function postComment(userId, postId, body, authorUserId) {
   const trimmed = String(body || "").trim();
 
   if (!trimmed) {
@@ -156,6 +166,17 @@ export async function postComment(userId, postId, body) {
 
   if (error) {
     throw error;
+  }
+
+  if (authorUserId) {
+    createNotification({
+      p_recipient_user_id: authorUserId,
+      p_actor_user_id: userId,
+      p_notification_type: "post_commented",
+      p_related_post_id: postId,
+      p_related_comment_id: data.id,
+      p_message: trimmed.slice(0, 140),
+    });
   }
 
   return data;

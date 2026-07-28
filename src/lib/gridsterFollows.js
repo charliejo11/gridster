@@ -1,5 +1,6 @@
 import { supabase } from "./supabaseClient";
 import { fetchProfilesByUserIds } from "./gridsterProfiles";
+import { createNotification } from "./gridsterNotifications";
 
 export const GRIDSTER_FOLLOWS_TABLE = "gridster_follows";
 export const GRIDSTER_FOLLOWS_UPDATED_EVENT = "gridster:follows-updated";
@@ -105,6 +106,13 @@ export async function followUser(followerId, followedId) {
   }
 
   notifyFollowsUpdated();
+
+  createNotification({
+    p_recipient_user_id: followedId,
+    p_actor_user_id: followerId,
+    p_notification_type: "follow_received",
+    p_related_user_id: followerId,
+  });
 }
 
 export async function unfollowUser(followerId, followedId) {

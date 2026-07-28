@@ -215,6 +215,7 @@ function GridsterHome() {
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [selectedProfileName, setSelectedProfileName] = useState("CharlieJo");
   const [selectedGroupId, setSelectedGroupId] = useState(null);
+  const [groupScrollTarget, setGroupScrollTarget] = useState(null);
   const [selectedResidentUserId, setSelectedResidentUserId] = useState(null);
   const [selectedFollowList, setSelectedFollowList] = useState({ userId: null, mode: "followers" });
   const [selectedMessageFriendId, setSelectedMessageFriendId] = useState(null);
@@ -334,10 +335,44 @@ function GridsterHome() {
 
   const openGroup = (groupId) => {
     setSelectedGroupId(groupId);
+    setGroupScrollTarget(null);
     setShowNotifications(false);
     setShowThemeMenu(false);
     setActivePage("GroupDetail");
   };
+
+  const openGroupPost = (groupId, postId, commentId) => {
+    setSelectedGroupId(groupId);
+    setGroupScrollTarget(postId ? { postId, commentId: commentId || null } : null);
+    setShowNotifications(false);
+    setShowThemeMenu(false);
+    setActivePage("GroupDetail");
+  };
+
+  // "Copy Link" on a group post writes ?group=<id>&post=<id>[&comment=<id>] -
+  // resolve it into the same open-group-and-scroll-to-post flow on load.
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const linkedGroupId = params.get("group");
+    const linkedPostId = params.get("post");
+
+    if (!linkedGroupId || !linkedPostId) {
+      return;
+    }
+
+    openGroupPost(linkedGroupId, linkedPostId, params.get("comment"));
+
+    params.delete("group");
+    params.delete("post");
+    params.delete("comment");
+    const cleanSearch = params.toString();
+    window.history.replaceState({}, "", window.location.pathname + (cleanSearch ? `?${cleanSearch}` : ""));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openResidentProfile = (userId) => {
     setSelectedResidentUserId(userId);
@@ -468,6 +503,7 @@ function GridsterHome() {
         onAuthOpen={() => openAuth("login")}
         onOpenResidentProfile={openResidentProfile}
         onOpenGroup={openGroup}
+        onOpenGroupPost={openGroupPost}
         onOpenMessages={openMessages}
         themeOptions={gridsterThemeOptions}
         activeThemeLabel={activeThemeLabel}
@@ -507,6 +543,7 @@ function GridsterHome() {
           authReturnTo={authReturnTo}
           selectedProfileName={selectedProfileName}
           selectedGroupId={selectedGroupId}
+          groupScrollTarget={groupScrollTarget}
           selectedResidentUserId={selectedResidentUserId}
           selectedFollowList={selectedFollowList}
           selectedMessageFriendId={selectedMessageFriendId}
@@ -516,6 +553,7 @@ function GridsterHome() {
           setActivePage={setActivePage}
           onOpenProfile={openProfile}
           onOpenGroup={openGroup}
+          onOpenGroupPost={openGroupPost}
           onOpenResidentProfile={openResidentProfile}
           onOpenFollowList={openFollowList}
           onOpenMessages={openMessages}
@@ -550,7 +588,7 @@ function GridsterHome() {
   );
 }
 
-function CenterContent({ activePage, galleryItems, authMode, authReturnTo, selectedProfileName, selectedGroupId, selectedResidentUserId, selectedFollowList, selectedMessageFriendId, selectedCreatorPageId, initialTeleportCategory, postsRefreshToken, setActivePage, onOpenProfile, onOpenGroup, onOpenResidentProfile, onOpenFollowList, onOpenMessages, onOpenCreatorPage, onOpenMyCreatorPages, onOpenTeleportDiscovery, onOpenComposer, onAuthOpen, showToast }) {
+function CenterContent({ activePage, galleryItems, authMode, authReturnTo, selectedProfileName, selectedGroupId, groupScrollTarget, selectedResidentUserId, selectedFollowList, selectedMessageFriendId, selectedCreatorPageId, initialTeleportCategory, postsRefreshToken, setActivePage, onOpenProfile, onOpenGroup, onOpenGroupPost, onOpenResidentProfile, onOpenFollowList, onOpenMessages, onOpenCreatorPage, onOpenMyCreatorPages, onOpenTeleportDiscovery, onOpenComposer, onAuthOpen, showToast }) {
   if (activePage === "Home") {
     return (
       <>
@@ -789,6 +827,7 @@ function CenterContent({ activePage, galleryItems, authMode, authReturnTo, selec
       <PageShell title="Group" subtitle="Posts, events, announcements, photos, and members for this community.">
         <GroupDetailPage
           groupId={selectedGroupId}
+          scrollTarget={groupScrollTarget}
           onAuthOpen={onAuthOpen}
           onOpenResidentProfile={onOpenResidentProfile}
           showToast={showToast}
@@ -831,6 +870,7 @@ function CenterContent({ activePage, galleryItems, authMode, authReturnTo, selec
         <NotificationsPage
           onOpenResidentProfile={onOpenResidentProfile}
           onOpenGroup={onOpenGroup}
+          onOpenGroupPost={onOpenGroupPost}
           onOpenMessages={onOpenMessages}
           setActivePage={setActivePage}
           showToast={showToast}

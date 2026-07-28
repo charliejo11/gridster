@@ -6,6 +6,7 @@ export const GRIDSTER_GROUPS_TABLE = "gridster_groups";
 export const GRIDSTER_GROUP_MEMBERS_TABLE = "gridster_group_members";
 export const GRIDSTER_GROUP_POSTS_TABLE = "gridster_group_posts";
 export const GRIDSTER_GROUP_INVITES_TABLE = "gridster_group_invites";
+export const GRIDSTER_GROUP_JOIN_REQUESTS_TABLE = "gridster_group_join_requests";
 
 export { GRIDSTER_MATURITY_RATINGS, GRIDSTER_MATURITY_RATING_LABELS };
 
@@ -91,6 +92,7 @@ export function normalizeGroupForm(form) {
     slurl: String(form.slurl || "").trim(),
     photo_url: normalizeUrl(form.photo_url),
     maturity_rating: GRIDSTER_MATURITY_RATINGS.includes(form.maturity_rating) ? form.maturity_rating : "general",
+    privacy: form.privacy === "private" ? "private" : "public",
   };
 }
 
@@ -172,6 +174,24 @@ export async function fetchGroupMembership(groupId, userId) {
   }
 
   return Boolean(data);
+}
+
+// Richer version for the group page itself, which needs to know role/
+// status to gate the composer and moderator menu - fetchGroupMembership
+// above stays a plain boolean since that's all the groups directory needs.
+export async function fetchGroupMembershipDetails(groupId, userId) {
+  const { data, error } = await supabase
+    .from(GRIDSTER_GROUP_MEMBERS_TABLE)
+    .select("*")
+    .eq("group_id", groupId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
 
 export async function joinGroup(groupId, userId, displayName) {
@@ -334,5 +354,108 @@ export async function deleteGroupPost(postId, userId) {
 
   if (error) {
     throw error;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Private-group join requests
+// ---------------------------------------------------------------------------
+
+export async function requestToJoinGroup(groupId, userId) {
+  const { data, error } = await supabase
+    .from(GRIDSTER_GROUP_JOIN_REQUESTS_TABLE)
+    .insert({ group_id: groupId, user_id: userId })
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  const { data: group } = await supabase
+    .from(GRIDSTER_GROUPS_TABLE)
+    .select("owner_user_id")
+    .eq("id", groupId)
+    .maybeSingle();
+
+  if (group?.owner_user_id) {
+    createNotification({
+      p_recipient_user_id: group.owner_user_id,
+      p_actor_user_id: userId,
+      p_notification_type: "group_join_request",
+      p_related_group_id: groupId,
+      p_related_request_id: data.id,
+    });
+  }
+
+  return data;
+}
+
+export async function fetchMyGroupJoinRequestStatus(groupId, userId) {
+  const { data, error } = await supabase
+    .from(GRIDSTER_GROUP_JOIN_REQUESTS_TABLE)
+    .select("*")
+    .eq("group_id", groupId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function fetchPendingGroupJoinRequests(groupId) {
+  const { data, error } = await supabase
+    .from(GRIDSTER_GROUP_JOIN_REQUESTS_TABLE)
+    .select("*")
+    .eq("group_id", groupId)
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+}
+
+export async function respondToGroupJoinRequest(requestId, approve) {
+  const { error } = await supabase.rpc("respond_to_group_join_request", {
+    target_request_id: requestId,
+    approve,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Could not update that request.");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Moderator member management (RPCs - server validates role, not the frontend)
+// ---------------------------------------------------------------------------
+
+export async function setGroupMemberRole(groupId, userId, newRole) {
+  const { error } = await supabase.rpc("set_group_member_role", {
+    target_group_id: groupId,
+    target_user_id: userId,
+    new_role: newRole,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Could not update that member's role.");
+  }
+}
+
+export async function moderatorUpdateGroupMemberStatus(groupId, userId, newStatus) {
+  const { error } = await supabase.rpc("moderator_update_group_member_status", {
+    target_group_id: groupId,
+    target_user_id: userId,
+    new_status: newStatus,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Could not update that member.");
   }
 }

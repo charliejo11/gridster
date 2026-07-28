@@ -286,6 +286,22 @@ export function getNotificationCopy(notification) {
       return `Your Bling Depot purchase is ready${notification.title ? ` — ${notification.title}` : ""}.`;
     case "account_announcement":
       return notification.title || "Gridster announcement";
+    case "group_post_liked":
+      return `${actorPhrase} liked your post in ${notification.groupName || "a group"}.`;
+    case "group_post_commented":
+      return notification.message
+        ? `${actorPhrase} commented on your group post: "${notification.message}"`
+        : `${actorPhrase} commented on your post in ${notification.groupName || "a group"}.`;
+    case "group_comment_reply":
+      return notification.message
+        ? `${actorName} replied to your comment: "${notification.message}"`
+        : `${actorName} replied to your comment in ${notification.groupName || "a group"}.`;
+    case "group_post_pinned":
+      return `An admin pinned your post in ${notification.groupName || "a group"}.`;
+    case "group_join_request":
+      return `${actorName} requested to join ${notification.groupName || "your group"}.`;
+    case "group_join_approved":
+      return `Your request to join ${notification.groupName || "the group"} was approved.`;
     default:
       return notification.title || "New notification";
   }

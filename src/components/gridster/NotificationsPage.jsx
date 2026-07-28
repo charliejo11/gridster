@@ -27,7 +27,7 @@ function initialsFromName(name) {
     .join("");
 }
 
-function NotificationsPage({ onOpenResidentProfile, onOpenGroup, onOpenMessages, setActivePage, showToast }) {
+function NotificationsPage({ onOpenResidentProfile, onOpenGroup, onOpenGroupPost, onOpenMessages, setActivePage, showToast }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -186,8 +186,14 @@ function NotificationsPage({ onOpenResidentProfile, onOpenGroup, onOpenMessages,
     switch (notification.notification_type) {
       case "post_liked":
       case "post_commented":
-      case "mention":
         setActivePage?.("Home");
+        break;
+      case "mention":
+        if (notification.related_group_post_id) {
+          onOpenGroupPost?.(notification.related_group_id, notification.related_group_post_id, notification.related_group_comment_id);
+        } else {
+          setActivePage?.("Home");
+        }
         break;
       case "new_message":
         onOpenMessages?.(notification.related_user_id);
@@ -199,7 +205,15 @@ function NotificationsPage({ onOpenResidentProfile, onOpenGroup, onOpenMessages,
         break;
       case "group_invite":
       case "group_activity":
+      case "group_join_request":
+      case "group_join_approved":
         onOpenGroup?.(notification.related_group_id);
+        break;
+      case "group_post_liked":
+      case "group_post_commented":
+      case "group_comment_reply":
+      case "group_post_pinned":
+        onOpenGroupPost?.(notification.related_group_id, notification.related_group_post_id, notification.related_group_comment_id);
         break;
       case "event_invite":
       case "event_reminder":

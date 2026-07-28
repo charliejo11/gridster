@@ -23,6 +23,7 @@ const EMPTY_GROUP_FORM = {
   slurl: "",
   photo_url: "",
   maturity_rating: "general",
+  privacy: "public",
 };
 
 const CATEGORY_TABS = [
@@ -324,6 +325,17 @@ function GroupsPage({ onOpenGroup, onAuthOpen, showToast }) {
                   {GRIDSTER_MATURITY_RATING_LABELS[rating]}
                 </option>
               ))}
+            </select>
+          </label>
+
+          <label>
+            <span>Privacy</span>
+            <select
+              value={form.privacy}
+              onChange={(event) => updateField("privacy", event.target.value)}
+            >
+              <option value="public">Public — anyone can view and join</option>
+              <option value="private">Private — content and posting require an approved membership</option>
             </select>
           </label>
 

@@ -188,7 +188,7 @@ export async function fetchProfilesByUserIds(userIds) {
 
   const { data, error } = await supabase
     .from(GRIDSTER_PROFILE_TABLE)
-    .select("user_id, display_name, sl_username, avatar_url, created_at")
+    .select("user_id, display_name, sl_username, avatar_url, sl_verified, created_at")
     .in("user_id", uniqueIds);
 
   if (error) {

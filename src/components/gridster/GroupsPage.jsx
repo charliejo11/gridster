@@ -9,8 +9,10 @@ import {
   createGroup,
   fetchGroupMembership,
   fetchGroups,
+  fetchMyGroupJoinRequestStatus,
   joinGroup,
   leaveGroup,
+  requestToJoinGroup,
 } from "../../lib/gridsterGroups";
 import { uploadGridsterGroupPhoto } from "../../lib/gridsterMediaUploads";
 import TeleportStatusChip from "./TeleportStatusChip";
@@ -40,6 +42,7 @@ function GroupsPage({ onOpenGroup, onAuthOpen, showToast }) {
   const [displayName, setDisplayName] = useState("");
   const [groups, setGroups] = useState([]);
   const [memberships, setMemberships] = useState(new Set());
+  const [joinRequestGroupIds, setJoinRequestGroupIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
   const [message, setMessage] = useState("");
@@ -70,6 +73,25 @@ function GroupsPage({ onOpenGroup, onAuthOpen, showToast }) {
     setMemberships(new Set(checks.filter(([, isMember]) => isMember).map(([groupId]) => groupId)));
   };
 
+  const refreshJoinRequests = async (nextUser, groupList) => {
+    if (!nextUser) {
+      setJoinRequestGroupIds(new Set());
+      return;
+    }
+
+    const privateGroups = (groupList || []).filter((group) => group.privacy === "private");
+
+    const checks = await Promise.all(
+      privateGroups.map((group) =>
+        fetchMyGroupJoinRequestStatus(group.id, nextUser.id).then((request) => [group.id, request])
+      )
+    );
+
+    setJoinRequestGroupIds(
+      new Set(checks.filter(([, request]) => request?.status === "pending").map(([groupId]) => groupId))
+    );
+  };
+
   useEffect(() => {
     let active = true;
 
@@ -86,6 +108,10 @@ function GroupsPage({ onOpenGroup, onAuthOpen, showToast }) {
 
         if (active) {
           await refreshMemberships(nextUser, nextGroups);
+        }
+
+        if (active) {
+          await refreshJoinRequests(nextUser, nextGroups);
         }
 
         if (nextUser && active) {
@@ -211,6 +237,16 @@ function GroupsPage({ onOpenGroup, onAuthOpen, showToast }) {
       if (memberships.has(group.id)) {
         await leaveGroup(group.id, user.id);
         showToast?.(`Left ${group.name}.`);
+      } else if (group.privacy === "private") {
+        if (joinRequestGroupIds.has(group.id)) {
+          showToast?.("Your request to join is already pending.");
+          return;
+        }
+
+        await requestToJoinGroup(group.id, user.id);
+        setJoinRequestGroupIds((prev) => new Set(prev).add(group.id));
+        showToast?.(`Request sent to join ${group.name}. The owner will review it.`);
+        return;
       } else {
         await joinGroup(group.id, user.id, displayName);
         showToast?.(`Joined ${group.name}.`);
@@ -403,7 +439,13 @@ function GroupsPage({ onOpenGroup, onAuthOpen, showToast }) {
 
               <div className="group-directory-actions">
                 <button type="button" disabled={busy} onClick={() => handleToggleMembership(group)}>
-                  {isMember ? "Joined" : "Join"}
+                  {isMember
+                    ? "Joined"
+                    : group.privacy === "private"
+                      ? joinRequestGroupIds.has(group.id)
+                        ? "Requested"
+                        : "Request to Join"
+                      : "Join"}
                 </button>
                 {group.slurl ? (
                   <button type="button" data-destination={group.name} data-slurl={group.slurl}>

@@ -31,6 +31,14 @@ export async function sendMessage(senderId, recipientId, content) {
     .single();
 
   if (error) {
+    // The friends-only and no-block checks are enforced server-side (RLS),
+    // not just by fetchFriendshipStatus above - a row-level security
+    // violation here means one of those conditions isn't actually true,
+    // regardless of which one.
+    if (error.code === "42501" || /row-level security/i.test(error.message || "")) {
+      throw new Error("You can't message this resident right now.");
+    }
+
     throw error;
   }
 

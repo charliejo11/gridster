@@ -1,0 +1,78 @@
+name: Scheduled Database Backup
+
+# DIY logical backup - no paid Supabase add-on required. Dumps schema,
+# data, and roles from production via `supabase db dump` (the same
+# command used manually earlier - see the commit that added this
+# workflow) and stores the result as a GitHub Actions artifact.
+#
+# SETUP (one-time, must be done by a human - never share this value
+# with an AI assistant or commit it to the repo):
+#   1. Supabase Dashboard -> gridster project -> Project Settings ->
+#      Database -> Connection string -> copy the URI (session pooler
+#      or direct connection both work).
+#   2. GitHub repo -> Settings -> Secrets and variables -> Actions ->
+#      New repository secret -> name it SUPABASE_DB_URL, paste the
+#      connection string as the value.
+# Until that secret exists, every run of this workflow will fail at
+# the dump step - that's expected, not a bug in the workflow itself.
+#
+# RESTORE: these are plain pg_dump SQL files (schema.sql creates
+# tables/policies/functions, data.sql is INSERT statements, roles.sql
+# is cluster roles). Restoring means running them against a target
+# Postgres database with psql, in that order, NOT `supabase db push`
+# (these aren't migrations). Point at a NEW/empty database for a
+# disaster-recovery drill - never at production - until you've
+# actually verified a restore works end to end.
+#
+# RETENTION: GitHub Actions artifacts expire after `retention-days`
+# (90 here, close to the platform max on most plans). This is a
+# recent-backups safety net, not indefinite archival - if you need
+# backups older than that, download an artifact periodically and
+# store it somewhere longer-lived.
+
+on:
+  schedule:
+    - cron: "0 8 * * *" # daily, 08:00 UTC
+  workflow_dispatch: {} # lets you trigger a backup on demand from the Actions tab
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Dump production database (schema, data, roles)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::SUPABASE_DB_URL secret is not set - see the setup instructions at the top of this workflow file."
+            exit 1
+          fi
+
+          mkdir -p backup-output
+          npx --yes supabase db dump --db-url "$SUPABASE_DB_URL" --role-only -f backup-output/roles.sql
+          npx --yes supabase db dump --db-url "$SUPABASE_DB_URL" -f backup-output/schema.sql
+          npx --yes supabase db dump --db-url "$SUPABASE_DB_URL" --data-only -f backup-output/data.sql
+
+      - name: Verify dumps are non-empty
+        run: |
+          for f in roles.sql schema.sql data.sql; do
+            if [ ! -s "backup-output/$f" ]; then
+              echo "::error::backup-output/$f is empty - treating the backup as failed rather than uploading a useless artifact."
+              exit 1
+            fi
+          done
+
+      - name: Compress
+        run: tar -czf gridster-prod-backup.tar.gz -C backup-output .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gridster-prod-backup-${{ github.run_id }}
+          path: gridster-prod-backup.tar.gz
+          retention-days: 90

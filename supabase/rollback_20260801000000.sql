@@ -1,12 +1,15 @@
 -- =========================================================
--- ROLLBACK for 20260801000000_fix_messaging_groups_friends_photochallenge_findings.sql
--- AND 20260802000000_fix_join_request_visibility_regression.sql
+-- ROLLBACK for:
+--   20260801000000_fix_messaging_groups_friends_photochallenge_findings.sql
+--   20260802000000_fix_join_request_visibility_regression.sql
+--   20260803000000_fix_rpc_grants_notification_forgery_follow_blocking.sql
 --
--- Restores every policy/function these two migrations touched to their
+-- Restores every policy/function these migrations touched to their
 -- exact prior definitions (pulled from the migrations that originally
--- created them: 20260710000000, 20260713000000, 20260714000000,
--- 20260727000000, 20260708000000, 20260729020000, 20260731000000,
--- 20260731030000, 20260731050000, 20260731060000). This is a manual,
+-- created them: 20260706000000, 20260710000000, 20260713000000,
+-- 20260714000000, 20260726000000, 20260727000000, 20260728000000,
+-- 20260708000000, 20260729020000, 20260731000000, 20260731030000,
+-- 20260731040000, 20260731050000, 20260731060000). This is a manual,
 -- NOT auto-applied script - run it by hand (e.g. via the Supabase SQL
 -- editor or `psql "$DB_URL" -f supabase/rollback_20260801000000.sql`)
 -- only if these need to be undone on a specific environment.
@@ -15,8 +18,11 @@
 -- lives outside supabase/migrations/ so it is never picked up as a
 -- pending migration.
 --
--- Run 0 first if 20260802000000 also needs undoing (it's the more
--- recent change, so revert it first).
+-- Each section is labeled with which migration it undoes and is
+-- self-contained - run the whole file to undo all three, or just the
+-- relevant section to undo one. If undoing 20260801000000, also undo
+-- 20260802000000 and 20260803000000 in the same pass (they depend on
+-- it and reintroduce different bugs if left half-applied).
 --
 -- ---------------------------------------------------------
 -- 0. Undo 20260802000000: restore the join-request policy to its
@@ -329,3 +335,142 @@ end;
 $$;
 
 drop table if exists public.gridster_photo_entry_bonus_claims;
+
+-- ---------------------------------------------------------
+-- Undo 20260803000000: restore PUBLIC/authenticated execute on the two
+-- Linden/Stripe RPCs, revert create_or_group_notification's
+-- null-actor check, and drop the blocking check on follows.
+-- NOTE: restoring execute on credit_gridster_plus_linden_payment /
+-- grant_plus_monthly_bonus reopens the free-Plus/free-Bling-Bits
+-- exploit this migration closed. Only do this if you have a specific
+-- reason to and understand that risk.
+-- ---------------------------------------------------------
+
+grant execute on function public.credit_gridster_plus_linden_payment(text, integer, text, text, integer) to authenticated;
+grant execute on function public.grant_plus_monthly_bonus(uuid, text, integer) to authenticated;
+
+create or replace function public.create_or_group_notification(
+  p_recipient_user_id uuid,
+  p_actor_user_id uuid,
+  p_notification_type text,
+  p_related_post_id uuid default null,
+  p_related_comment_id uuid default null,
+  p_related_message_id uuid default null,
+  p_related_event_id uuid default null,
+  p_related_group_id uuid default null,
+  p_related_group_post_id uuid default null,
+  p_related_group_comment_id uuid default null,
+  p_related_user_id uuid default null,
+  p_related_request_id uuid default null,
+  p_related_transaction_id uuid default null,
+  p_amount integer default null,
+  p_title text default null,
+  p_message text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  is_groupable boolean;
+  computed_group_key text;
+  existing_id uuid;
+  result_id uuid;
+begin
+  if p_recipient_user_id is null or p_notification_type is null then
+    raise exception 'recipient and notification_type are required';
+  end if;
+
+  if p_actor_user_id is not null and p_actor_user_id <> auth.uid() then
+    raise exception 'actor_user_id must match the authenticated user';
+  end if;
+
+  if p_actor_user_id is not null and p_actor_user_id = p_recipient_user_id then
+    return null;
+  end if;
+
+  if p_notification_type = 'new_message' then
+    p_message := null;
+  end if;
+
+  is_groupable := p_notification_type in ('post_liked', 'post_commented', 'new_message', 'group_post_liked', 'group_post_commented');
+
+  if is_groupable then
+    computed_group_key := p_notification_type || ':' || p_recipient_user_id::text || ':' ||
+      case p_notification_type
+        when 'new_message' then coalesce(p_actor_user_id::text, '')
+        when 'group_post_liked' then coalesce(p_related_group_post_id::text, '')
+        when 'group_post_commented' then coalesce(p_related_group_post_id::text, '')
+        else coalesce(p_related_post_id::text, '')
+      end;
+
+    perform pg_advisory_xact_lock(hashtext(computed_group_key));
+
+    select id into existing_id
+    from public.gridster_notifications
+    where recipient_user_id = p_recipient_user_id
+      and group_key = computed_group_key
+      and is_read = false
+    order by created_at desc
+    limit 1
+    for update;
+
+    if existing_id is not null then
+      update public.gridster_notifications
+      set actor_user_id = coalesce(p_actor_user_id, actor_user_id),
+          grouped_actor_ids = case
+            when p_actor_user_id is null or p_actor_user_id = any(grouped_actor_ids) then grouped_actor_ids
+            else (array[p_actor_user_id] || grouped_actor_ids)[1:6]
+          end,
+          actor_count = case
+            when p_actor_user_id is null or p_actor_user_id = any(grouped_actor_ids) then actor_count
+            else actor_count + 1
+          end,
+          title = coalesce(p_title, title),
+          message = coalesce(p_message, message),
+          amount = coalesce(p_amount, amount),
+          related_comment_id = coalesce(p_related_comment_id, related_comment_id),
+          related_message_id = coalesce(p_related_message_id, related_message_id),
+          related_group_comment_id = coalesce(p_related_group_comment_id, related_group_comment_id),
+          created_at = now(),
+          updated_at = now()
+      where id = existing_id
+      returning id into result_id;
+
+      return result_id;
+    end if;
+  end if;
+
+  insert into public.gridster_notifications (
+    recipient_user_id, actor_user_id, notification_type, group_key,
+    related_post_id, related_comment_id, related_message_id, related_event_id,
+    related_group_id, related_group_post_id, related_group_comment_id,
+    related_user_id, related_request_id, related_transaction_id,
+    amount, title, message, grouped_actor_ids, actor_count
+  )
+  values (
+    p_recipient_user_id, p_actor_user_id, p_notification_type, computed_group_key,
+    p_related_post_id, p_related_comment_id, p_related_message_id, p_related_event_id,
+    p_related_group_id, p_related_group_post_id, p_related_group_comment_id,
+    p_related_user_id, p_related_request_id, p_related_transaction_id,
+    p_amount, p_title, p_message,
+    case when p_actor_user_id is null then '{}'::uuid[] else array[p_actor_user_id] end,
+    1
+  )
+  returning id into result_id;
+
+  return result_id;
+end;
+$$;
+
+grant execute on function public.create_or_group_notification(
+  uuid, uuid, text, uuid, uuid, uuid, uuid, uuid, uuid, uuid, uuid, uuid, uuid, integer, text, text
+) to authenticated, service_role;
+
+drop policy if exists "Users can follow as themselves" on public.gridster_follows;
+create policy "Users can follow as themselves"
+on public.gridster_follows
+for insert
+to authenticated
+with check (auth.uid() = follower_id);

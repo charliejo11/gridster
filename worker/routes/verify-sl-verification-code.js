@@ -21,7 +21,7 @@ async function markExpired(supabaseAdmin, id) {
 }
 
 export async function handleVerifySlVerificationCode(request, env) {
-  let payload = {};
+  let payload;
 
   try {
     payload = await request.json();

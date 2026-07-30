@@ -58,7 +58,7 @@ async function insertVerificationCode(supabaseAdmin, slUsername, userId) {
 }
 
 export async function handleCreateSlVerificationCode(request, env) {
-  let payload = {};
+  let payload;
 
   try {
     payload = await request.json();

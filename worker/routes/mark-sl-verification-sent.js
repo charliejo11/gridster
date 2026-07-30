@@ -9,7 +9,7 @@ export async function handleMarkSlVerificationSent(request, env) {
     return jsonResponse(authorization.status, { error: authorization.error }, NO_STORE_HEADERS);
   }
 
-  let payload = {};
+  let payload;
 
   try {
     payload = await request.json();

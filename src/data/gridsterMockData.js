@@ -133,6 +133,7 @@ export const gridsterLeftSidebarProfile = {
 export const gridsterLeftSidebarNavItems = [
   ["✦", "Home", "Home"],
   ["✧", "Groups", "Groups"],
+  ["🎮", "Games", "Games"],
   ["◇", "Grid Nights", "GridNights"],
   ["⌘", "Places", "TeleportDiscovery"],
   ["☾", "Tonight in SL", "TonightInSL"],

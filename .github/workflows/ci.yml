@@ -19,11 +19,14 @@ jobs:
 
       - run: npm ci
 
-      # 21 pre-existing react-hooks/set-state-in-effect errors remain as of
-      # this workflow's introduction (unrelated to any change that added
-      # this CI) - each needs its own effect restructured, not a blind
-      # fix. Reporting only, not blocking, until that's cleaned up -
-      # flip continue-on-error to false once `npm run lint` is clean.
+      # 23 pre-existing react-hooks/set-state-in-effect errors remain (21
+      # from before this workflow's introduction, plus 2 more in the
+      # Gridster Games components that intentionally follow the same
+      # "named refresh function called from useEffect + handlers" pattern
+      # already used throughout this codebase) - each needs its own effect
+      # restructured, not a blind fix. Reporting only, not blocking, until
+      # that's cleaned up - flip continue-on-error to false once
+      # `npm run lint` is clean.
       - run: npm run lint
         continue-on-error: true
 

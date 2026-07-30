@@ -125,6 +125,7 @@ import TonightInSL from "./gridster/TonightInSL";
 import BookingBoard from "./gridster/BookingBoard";
 import FeaturedAdminPage from "./gridster/FeaturedAdminPage";
 import GroupsPage from "./gridster/GroupsPage";
+import GamesLandingPage from "./gridster/games/GamesLandingPage";
 import GroupDetailPage from "./gridster/GroupDetailPage";
 import ResidentProfilePage from "./gridster/ResidentProfilePage";
 import FollowListPage from "./gridster/FollowListPage";
@@ -794,6 +795,14 @@ function CenterContent({ activePage, galleryItems, authMode, authReturnTo, selec
       <PageShell title="Groups" subtitle="Join clubs, creator circles, RP hubs, blogger networks, and community crews.">
         <GroupsPage onOpenGroup={onOpenGroup} onAuthOpen={onAuthOpen} showToast={showToast} />
         <CommunityStandards setActivePage={setActivePage} />
+      </PageShell>
+    );
+  }
+
+  if (activePage === "Games") {
+    return (
+      <PageShell title="Gridster Games" subtitle="Daily Spin, Trivia, and Photo Challenge Battles - play, level up, and win Bling Bits.">
+        <GamesLandingPage onAuthOpen={onAuthOpen} showToast={showToast} />
       </PageShell>
     );
   }

@@ -136,6 +136,7 @@ import CreatorPagesDirectory from "./gridster/CreatorPagesDirectory";
 import CreatorPageDetail from "./gridster/CreatorPageDetail";
 import MyCreatorPagesPage from "./gridster/MyCreatorPagesPage";
 import GridsterComposerModal from "./gridster/GridsterComposerModal";
+import PostMedia from "./gridster/PostMedia";
 import TeleportStatusChip from "./gridster/TeleportStatusChip";
 import SponsorsPage from "./gridster/SponsorsPage";
 import BoostedLabel from "./gridster/BoostedLabel";
@@ -3607,7 +3608,7 @@ function FeedPostEntry({
           {post.content ? <p>{post.content}</p> : null}
           {post.photo_url ? (
             <div className="recent-post-photo">
-              <img src={post.photo_url} alt="" />
+              <PostMedia url={post.photo_url} />
             </div>
           ) : null}
           {post.link_url ? (

@@ -23,6 +23,7 @@ import TeleportStatusChip from "./TeleportStatusChip";
 import Widget from "./Widget";
 import BoostedLabel from "./BoostedLabel";
 import { fetchActiveSpotlightBoosts, recordBoostImpression, recordBoostTeleportClick } from "../../lib/gridsterBoosts";
+import PostMedia from "./PostMedia";
 
 function buildTeleportUrl(destination) {
   if (!destination) {
@@ -405,7 +406,7 @@ function SpotlightBoostCard({ boost, post }) {
     <div className="place-card spotlight-boost-card">
       {post.photo_url ? (
         <div className="place-thumb small">
-          <img src={post.photo_url} alt="" />
+          <PostMedia url={post.photo_url} controls={false} />
         </div>
       ) : (
         <div className="place-thumb small featured-place-thumb-fallback">

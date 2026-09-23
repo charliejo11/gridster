@@ -1,7 +1,18 @@
 import { useState } from "react";
+import { supabase } from "../../lib/supabaseClient";
 import GridsterPlusModal from "./GridsterPlusModal";
+import { resolveLandingPricingAction } from "./landingPricing";
 
 const GRIDSTER_PLUS_ARTWORK = "/gridster-logo.png";
+
+async function isLandingVisitorLoggedIn() {
+  try {
+    const { data } = await supabase.auth.getSession();
+    return Boolean(data?.session?.user);
+  } catch {
+    return false;
+  }
+}
 
 function LandingPage({ onEnter, onNavigate }) {
   const [showPlusModal, setShowPlusModal] = useState(false);
@@ -27,12 +38,14 @@ function LandingPage({ onEnter, onNavigate }) {
       subtitle: "For residents getting started.",
       features: ["Basic profile", "Post photos and updates", "Save landmarks", "Join groups"],
       button: "Start Free",
+      action: "free",
     },
     {
       title: "Plus",
       subtitle: "For bloggers, DJs, creators, and active residents.",
       features: ["Larger uploads", "Profile flair", "Bling Bits bonuses", "Boosted posts", "Advanced discovery"],
       button: "Go Plus",
+      action: "plus",
       popular: true,
     },
     {
@@ -40,6 +53,7 @@ function LandingPage({ onEnter, onNavigate }) {
       subtitle: "For stores, venues, sims, and communities.",
       features: ["Featured event tools", "Store and venue promotion", "Analytics dashboard", "Blogger calls", "Community hub tools"],
       button: "Build Your Hub",
+      action: "plus",
     },
   ];
   const ratingCards = [
@@ -83,6 +97,25 @@ function LandingPage({ onEnter, onNavigate }) {
 
   const showFeatures = () => {
     document.getElementById("landing-features")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handlePricingClick = async (plan) => {
+    const isLoggedIn = plan?.action === "free" ? await isLandingVisitorLoggedIn() : false;
+    const action = resolveLandingPricingAction(plan, { isLoggedIn });
+
+    if (action === "plus") {
+      setShowPlusModal(true);
+      return;
+    }
+
+    if (action === "home") {
+      onNavigate?.("Home");
+      return;
+    }
+
+    if (action === "signup") {
+      onNavigate?.("Auth", "signup");
+    }
   };
 
   return (
@@ -194,7 +227,7 @@ function LandingPage({ onEnter, onNavigate }) {
               </ul>
               <button
                 type="button"
-                onClick={plan.popular ? () => setShowPlusModal(true) : undefined}
+                onClick={plan.action || plan.popular ? () => handlePricingClick(plan) : undefined}
               >
                 {plan.button}
               </button>

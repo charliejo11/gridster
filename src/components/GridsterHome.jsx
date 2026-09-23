@@ -4813,7 +4813,6 @@ function GridsterFooter({ showToast, setActivePage }) {
         <a onClick={() => setActivePage?.("TermsOfService")}>Terms of Service</a>
         <a onClick={() => setActivePage?.("BlingBoost")}>Premium</a>
         <a onClick={() => setActivePage?.("Sponsors")}>Sponsors</a>
-        <a onClick={() => showToast?.("Support coming soon.")}>Support</a>
       </nav>
 
       <div className="footer-signal">

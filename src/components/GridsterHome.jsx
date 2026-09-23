@@ -50,6 +50,7 @@ import {
   fetchGridsterPlaces,
   fetchMyEventRsvpStatuses,
   inviteToEvent,
+  normalizeSlurlInput,
   rsvpToEvent,
 } from "../lib/gridsterPlaces";
 import { GRIDSTER_GROUP_CATEGORY_LABELS, fetchGroups } from "../lib/gridsterGroups";
@@ -306,17 +307,23 @@ function GridsterHome() {
   }, []);
 
   const handleTeleport = (destinationName, slurl) => {
-    if (!destinationName || !slurl) {
+    // Re-normalize on open so a stored SLURL that still has raw spaces in
+    // the region (saved before encoding, or not passed through the form
+    // helper) is percent-encoded before the browser opens it. Already
+    // truncated values cannot be recovered here.
+    const normalizedSlurl = normalizeSlurlInput(slurl);
+
+    if (!destinationName || !normalizedSlurl) {
       showToast("Teleport link coming soon.");
       return;
     }
 
-    if (!/^(https?:|secondlife:)\/\//i.test(slurl)) {
+    if (!/^(https?:|secondlife:)\/\//i.test(normalizedSlurl)) {
       showToast("This SLURL looks broken — try re-saving it.");
       return;
     }
 
-    window.open(slurl, "_blank", "noopener,noreferrer");
+    window.open(normalizedSlurl, "_blank", "noopener,noreferrer");
     showToast(`Teleport ready: ${destinationName}`);
   };
 

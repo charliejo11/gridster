@@ -79,13 +79,33 @@ function normalizeUrl(value) {
 // a SLURL copied from there (e.g. "Monday, July 20, 2026 7:21 PM
 // https://maps.secondlife.com/...") saves a link the Teleport button can
 // never open. Extract just the URL if one is embedded in the pasted text.
+//
+// Region names commonly contain spaces ("GEL Community 21"). Matching only
+// \S+ truncates those at the first space. A location SLURL ends in /x/y/z,
+// so spaces are part of the region until those coordinates. Raw spaces are
+// percent-encoded; an already-encoded region has no raw spaces and is left
+// unchanged so %20 is not turned into %2520.
+const SLURL_WITH_COORDS =
+  /(https?:\/\/\S*?\/secondlife\/|secondlife:\/\/(?:\/app\/teleport\/)?)([^\s/]+(?:\s+[^\s/]+)*)\s*\/\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/i;
 const SLURL_PATTERN = /(https?:\/\/\S+|secondlife:\/\/\S+)/i;
+
+function encodeSlurlRegion(region) {
+  return region.replace(/\s/g, "%20");
+}
 
 export function normalizeSlurlInput(value) {
   const trimmed = String(value || "").trim();
 
   if (!trimmed) {
     return "";
+  }
+
+  const withCoords = trimmed.match(SLURL_WITH_COORDS);
+
+  if (withCoords) {
+    const [, prefix, region, x, y, z] = withCoords;
+
+    return `${prefix}${encodeSlurlRegion(region)}/${x}/${y}/${z}`;
   }
 
   const match = trimmed.match(SLURL_PATTERN);

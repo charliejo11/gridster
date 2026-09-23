@@ -24,6 +24,7 @@ import Widget from "./Widget";
 import BoostedLabel from "./BoostedLabel";
 import { fetchActiveSpotlightBoosts, recordBoostImpression, recordBoostTeleportClick } from "../../lib/gridsterBoosts";
 import PostMedia from "./PostMedia";
+import { sidebarViewAllPage } from "./sidebarViewAll";
 
 function buildTeleportUrl(destination) {
   if (!destination) {
@@ -75,8 +76,26 @@ function RightSidebar({
   onOpenProfile,
   onOpenResidentProfile,
   onOpenMessages,
+  setActivePage,
   showToast,
 }) {
+  const openViewAll = (title) => {
+    const page = sidebarViewAllPage(title);
+
+    if (!page) {
+      return;
+    }
+
+    if (page === "Messages") {
+      onOpenMessages?.();
+    } else {
+      setActivePage?.(page);
+    }
+
+    if (typeof window !== "undefined") {
+      window.scrollTo(0, 0);
+    }
+  };
   const [currentUser, setCurrentUser] = useState(null);
   const [friends, setFriends] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -181,21 +200,21 @@ function RightSidebar({
   return (
     <aside className="right-panel">
       {spotlightBoosts.length > 0 ? (
-        <Widget title="Boosted on Gridster" onAction={() => showToast?.("Full boosted list coming soon.")}>
+        <Widget title="Boosted on Gridster">
           {spotlightBoosts.map(({ boost, post }) => (
             <SpotlightBoostCard key={boost.boost_id} boost={boost} post={post} />
           ))}
         </Widget>
       ) : null}
 
-      <Widget title="Trending Events" onAction={() => showToast?.("Full events list coming soon.")}>
+      <Widget title="Trending Events" onAction={() => openViewAll("Trending Events")}>
         {events.map(([title, time], index) => (
           <MiniEvent key={title} title={title} time={time} index={index} showToast={showToast} />
         ))}
       </Widget>
 
       {featuredLoading || featuredPlaces.length > 0 ? (
-        <Widget title="Featured Sims / Stores" onAction={() => showToast?.("Full sims and stores list coming soon.")}>
+        <Widget title="Featured Sims / Stores">
           {featuredLoading ? (
             <p className="sidebar-widget-empty">Loading featured places...</p>
           ) : (
@@ -211,7 +230,7 @@ function RightSidebar({
         </Widget>
       ) : null}
 
-      <Widget title="Popular Groups" onAction={() => showToast?.("Full groups list coming soon.")}>
+      <Widget title="Popular Groups" onAction={() => openViewAll("Popular Groups")}>
         {groups.map((group) => (
           <div className="group-row" key={group}>
             <span>✦</span>
@@ -224,7 +243,7 @@ function RightSidebar({
         ))}
       </Widget>
 
-      <Widget title="Suggested Creators" onAction={() => showToast?.("Full creator directory coming soon.")}>
+      <Widget title="Suggested Creators" onAction={() => openViewAll("Suggested Creators")}>
         {creators.map((person) => (
           <div className="creator-row" key={person}>
             <button
@@ -243,7 +262,7 @@ function RightSidebar({
         ))}
       </Widget>
 
-      <Widget title="Friends" onAction={() => showToast?.("Full friends list coming soon.")}>
+      <Widget title="Friends" onAction={() => openViewAll("Friends")}>
         {!currentUser ? (
           <p className="sidebar-widget-empty">Log in to add and see friends.</p>
         ) : friends.length === 0 ? (
@@ -272,7 +291,7 @@ function RightSidebar({
         )}
       </Widget>
 
-      <Widget title="Live Now" onAction={() => showToast?.("Full live now list coming soon.")}>
+      <Widget title="Live Now" onAction={() => openViewAll("Live Now")}>
         {liveNow.map(([name, label]) => (
           <div className="live-now-row" key={name}>
             <div className="live-indicator" />
@@ -285,7 +304,7 @@ function RightSidebar({
         ))}
       </Widget>
 
-      <Widget title="Friend Alerts" onAction={() => showToast?.("Full alerts list coming soon.")}>
+      <Widget title="Friend Alerts" onAction={() => openViewAll("Friend Alerts")}>
         {!currentUser ? (
           <p className="sidebar-widget-empty">Log in to see friend request alerts.</p>
         ) : notifications.length === 0 ? (
@@ -304,7 +323,7 @@ function RightSidebar({
         )}
       </Widget>
 
-      <Widget title="SLURL Teleport" onAction={() => showToast?.("Full teleport directory coming soon.")}>
+      <Widget title="SLURL Teleport" onAction={() => openViewAll("SLURL Teleport")}>
         {gridsterSlurlTeleports.map(([title, desc, index]) => (
           <PlaceCard key={title} title={title} desc={desc} index={index} onOpenProfile={onOpenProfile} showToast={showToast} />
         ))}

@@ -177,7 +177,16 @@ const GRIDSTER_PAGE_PATHS = {
   TonightInSL: "/tonight",
   BookingBoard: "/booking-board",
   Sponsors: "/sponsors",
+  CommunityGuidelines: "/community-guidelines",
+  PrivacyPolicy: "/privacy",
+  TermsOfService: "/terms",
 };
+
+function scrollGridsterToTop() {
+  if (typeof window !== "undefined") {
+    window.scrollTo(0, 0);
+  }
+}
 const GRIDSTER_PATH_PAGES = Object.fromEntries(
   Object.entries(GRIDSTER_PAGE_PATHS).map(([page, path]) => [path, page])
 );
@@ -449,6 +458,7 @@ function GridsterHome() {
     setShowLanding(false);
     setShowNotifications(false);
     setShowThemeMenu(false);
+    scrollGridsterToTop();
   };
 
   const handleLandingNavigate = (page, mode) => {
@@ -459,6 +469,7 @@ function GridsterHome() {
 
     setActivePage(page);
     setShowLanding(false);
+    scrollGridsterToTop();
   };
 
   const handleGridsterClick = (event) => {
@@ -541,6 +552,7 @@ function GridsterHome() {
             onOpenProfile={openProfile}
             onOpenResidentProfile={openResidentProfile}
             onOpenMessages={openMessages}
+            setActivePage={setActivePage}
             showToast={showToast}
           />
         )}
@@ -4794,6 +4806,12 @@ function JoinButton({ storageKey = "group" }) {
 }
 
 function GridsterFooter({ showToast, setActivePage }) {
+  const openFooterPage = (event, page) => {
+    event.preventDefault();
+    setActivePage?.(page);
+    scrollGridsterToTop();
+  };
+
   return (
     <footer className="gridster-footer glass-card">
       <div className="footer-brand">
@@ -4808,9 +4826,9 @@ function GridsterFooter({ showToast, setActivePage }) {
       <nav className="footer-links" aria-label="Footer navigation">
         <a onClick={() => showToast?.("About Gridster coming soon.")}>About</a>
         <a onClick={() => showToast?.("Safety Center coming soon.")}>Safety</a>
-        <a onClick={() => setActivePage?.("CommunityGuidelines")}>Community Guidelines</a>
-        <a onClick={() => setActivePage?.("PrivacyPolicy")}>Privacy Policy</a>
-        <a onClick={() => setActivePage?.("TermsOfService")}>Terms of Service</a>
+        <a href="/community-guidelines" onClick={(event) => openFooterPage(event, "CommunityGuidelines")}>Community Guidelines</a>
+        <a href="/privacy" onClick={(event) => openFooterPage(event, "PrivacyPolicy")}>Privacy Policy</a>
+        <a href="/terms" onClick={(event) => openFooterPage(event, "TermsOfService")}>Terms of Service</a>
         <a onClick={() => setActivePage?.("BlingBoost")}>Premium</a>
         <a onClick={() => setActivePage?.("Sponsors")}>Sponsors</a>
       </nav>

@@ -1,21 +1,36 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import GridsterPlusModal from "./GridsterPlusModal";
 import { resolveLandingPricingAction } from "./landingPricing";
 
 const GRIDSTER_PLUS_ARTWORK = "/gridster-logo.png";
 
-async function isLandingVisitorLoggedIn() {
-  try {
-    const { data } = await supabase.auth.getSession();
-    return Boolean(data?.session?.user);
-  } catch {
-    return false;
-  }
-}
-
 function LandingPage({ onEnter, onNavigate }) {
   const [showPlusModal, setShowPlusModal] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        if (active) {
+          setIsLoggedIn(Boolean(data?.session?.user));
+        }
+      })
+      .catch(() => {});
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (active) {
+        setIsLoggedIn(Boolean(session?.user));
+      }
+    });
+
+    return () => {
+      active = false;
+      listener?.subscription?.unsubscribe();
+    };
+  }, []);
   const features = [
     ["Social Feed", "Post moments, photos, blogs, events, outfits, and SLURLs."],
     ["Event Discovery", "Find clubs, DJs, live music, parties, and themed grid nights."],
@@ -99,8 +114,7 @@ function LandingPage({ onEnter, onNavigate }) {
     document.getElementById("landing-features")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const handlePricingClick = async (plan) => {
-    const isLoggedIn = plan?.action === "free" ? await isLandingVisitorLoggedIn() : false;
+  const handlePricingClick = (plan) => {
     const action = resolveLandingPricingAction(plan, { isLoggedIn });
 
     if (action === "plus") {

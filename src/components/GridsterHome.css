@@ -17000,3 +17000,16 @@ button.join-toggle.is-joined {
     flex-wrap: wrap;
   }
 }
+
+.games-landing-page,
+.games-section-content,
+.games-mini-games {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.games-mini-game {
+  padding: 16px;
+  border-radius: 18px;
+}

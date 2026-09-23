@@ -92,7 +92,7 @@ export default function TriviaSection({ user, onAuthOpen, showToast }) {
   };
 
   return (
-    <div className="games-trivia-section glass-card">
+    <div id="games-daily-trivia" className="games-trivia-section glass-card">
       <h3>Gridster Trivia</h3>
 
       {!activeQuestion ? (

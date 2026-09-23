@@ -5,6 +5,7 @@ import { fetchMySpinsToday } from "../../../lib/gridsterGameSpin";
 import DailySpinSection from "./DailySpinSection";
 import TriviaSection from "./TriviaSection";
 import PhotoBattlesSection from "./PhotoBattlesSection";
+import MiniGamesSection from "./MiniGamesSection";
 import { AchievementsSection, GameHistorySection, LeaderboardsSection, PrizeVaultSection } from "./GamesProgressSections";
 
 const SECTIONS = [
@@ -57,7 +58,7 @@ function GameProfileSummary({ user }) {
   );
 }
 
-function DailyGamesStatus({ user, isPremium }) {
+function DailyGamesStatus({ user, isPremium, onPlayTrivia }) {
   const [freeSpun, setFreeSpun] = useState(false);
   const [bonusSpun, setBonusSpun] = useState(false);
 
@@ -78,8 +79,10 @@ function DailyGamesStatus({ user, isPremium }) {
       <ul>
         <li>{freeSpun ? "✓" : "○"} Daily Spin</li>
         {isPremium ? <li>{bonusSpun ? "✓" : "○"} Bonus Spin (Gridster Plus)</li> : null}
-        <li>Play today's Trivia Challenge from the Play Now tab</li>
       </ul>
+      <button type="button" className="games-jump-to-trivia" onClick={onPlayTrivia}>
+        Play today's Trivia Challenge
+      </button>
     </div>
   );
 }
@@ -131,6 +134,13 @@ export default function GamesLandingPage({ onAuthOpen, showToast }) {
     };
   }, [user]);
 
+  const jumpToDailyTrivia = () => {
+    setActiveSection("play");
+    window.setTimeout(() => {
+      document.getElementById("games-daily-trivia")?.scrollIntoView({ block: "start" });
+    }, 0);
+  };
+
   return (
     <section className="games-landing-page">
       <GameProfileSummary user={user} />
@@ -153,6 +163,7 @@ export default function GamesLandingPage({ onAuthOpen, showToast }) {
           <>
             <DailySpinSection user={user} isPremium={isPremium} onAuthOpen={onAuthOpen} showToast={showToast} />
             <TriviaSection user={user} onAuthOpen={onAuthOpen} showToast={showToast} />
+            <MiniGamesSection user={user} onAuthOpen={onAuthOpen} />
             <button type="button" className="games-jump-to-battles" onClick={() => setActiveSection("battles")}>
               View Photo Challenge Battles &rarr;
             </button>
@@ -161,7 +172,7 @@ export default function GamesLandingPage({ onAuthOpen, showToast }) {
 
         {activeSection === "daily" ? (
           <>
-            <DailyGamesStatus user={user} isPremium={isPremium} />
+            <DailyGamesStatus user={user} isPremium={isPremium} onPlayTrivia={jumpToDailyTrivia} />
             <DailySpinSection user={user} isPremium={isPremium} onAuthOpen={onAuthOpen} showToast={showToast} />
           </>
         ) : null}
@@ -169,8 +180,8 @@ export default function GamesLandingPage({ onAuthOpen, showToast }) {
         {activeSection === "battles" ? <PhotoBattlesSection user={user} onAuthOpen={onAuthOpen} showToast={showToast} /> : null}
         {activeSection === "leaderboards" ? <LeaderboardsSection showToast={showToast} /> : null}
         {activeSection === "achievements" ? <AchievementsSection user={user} showToast={showToast} /> : null}
-        {activeSection === "vault" ? <PrizeVaultSection user={user} showToast={showToast} /> : null}
-        {activeSection === "history" ? <GameHistorySection user={user} showToast={showToast} /> : null}
+        {activeSection === "vault" ? <PrizeVaultSection user={user} onAuthOpen={onAuthOpen} showToast={showToast} /> : null}
+        {activeSection === "history" ? <GameHistorySection user={user} onAuthOpen={onAuthOpen} showToast={showToast} /> : null}
       </div>
     </section>
   );

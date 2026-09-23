@@ -6,6 +6,7 @@ import {
   fetchPastPhotoBattles,
   fetchPhotoBattleEntries,
   formatBattleCountdown,
+  photoBattleVoteButtonState,
   submitPhotoBattleEntry,
   updatePhotoBattleEntry,
 } from "../../../lib/gridsterGamePhotoBattles";
@@ -121,19 +122,28 @@ function BattleDetail({ battle, user, onAuthOpen, showToast, onBack }) {
       ) : null}
 
       <div className="games-battle-entries">
-        {entries.map((entry) => (
-          <div key={entry.id} className="games-battle-entry glass-card">
-            <img src={entry.photo_url} alt={entry.caption || "Battle entry"} />
-            {entry.caption ? <p>{entry.caption}</p> : null}
-            <p className="games-battle-vote-count">{entry.vote_count} votes</p>
-            {isOpen && entry.user_id !== user?.id ? (
-              <button type="button" disabled={busy} onClick={() => handleVote(entry.id)}>
-                {myVotes.includes(entry.id) ? "Voted" : "Vote"}
-              </button>
-            ) : null}
-            {entry.user_id === user?.id ? <span className="games-battle-my-entry-badge">Your entry</span> : null}
-          </div>
-        ))}
+        {entries.map((entry) => {
+          const voteButton = photoBattleVoteButtonState({
+            votedEntryIds: myVotes,
+            entryId: entry.id,
+            voteCapPerUser: battle.vote_cap_per_user,
+            busy,
+          });
+
+          return (
+            <div key={entry.id} className="games-battle-entry glass-card">
+              <img src={entry.photo_url} alt={entry.caption || "Battle entry"} />
+              {entry.caption ? <p>{entry.caption}</p> : null}
+              <p className="games-battle-vote-count">{entry.vote_count} votes</p>
+              {isOpen && entry.user_id !== user?.id ? (
+                <button type="button" disabled={voteButton.disabled} onClick={() => handleVote(entry.id)}>
+                  {voteButton.label}
+                </button>
+              ) : null}
+              {entry.user_id === user?.id ? <span className="games-battle-my-entry-badge">Your entry</span> : null}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

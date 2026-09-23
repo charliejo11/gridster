@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { difficultyLabel, formatTimeRemaining } from "./gridsterGameTrivia.js";
+import { difficultyLabel, formatTimeRemaining, leaderboardDisplayName, withLeaderboardNames } from "./gridsterGameTrivia.js";
 
 describe("formatTimeRemaining", () => {
   it("counts down in whole seconds for a future expiry", () => {
@@ -15,6 +15,42 @@ describe("formatTimeRemaining", () => {
   it("reports time's up exactly at expiry", () => {
     const expiresAt = new Date(Date.now()).toISOString();
     expect(formatTimeRemaining(expiresAt)).toBe("Time's up");
+  });
+});
+
+describe("leaderboardDisplayName", () => {
+  it("prefers a display name over the Second Life username", () => {
+    expect(leaderboardDisplayName({ display_name: "CharlieJo", sl_username: "charliejo11.resident" })).toBe("CharlieJo");
+  });
+
+  it("falls back to the Second Life username when the display name is blank", () => {
+    expect(leaderboardDisplayName({ display_name: "  ", sl_username: "charliejo11.resident" })).toBe("charliejo11.resident");
+  });
+
+  it("never shows a raw user id when the profile is missing", () => {
+    expect(leaderboardDisplayName(null)).toBe("Resident");
+    expect(leaderboardDisplayName({})).toBe("Resident");
+  });
+});
+
+describe("withLeaderboardNames", () => {
+  it("attaches avatar and display name from the profile map", () => {
+    const profiles = new Map([
+      ["user-1", { display_name: "Nova", avatar_url: "https://example.com/nova.png" }],
+    ]);
+
+    expect(withLeaderboardNames([{ user_id: "user-1", score: 40 }], profiles)).toEqual([
+      {
+        user_id: "user-1",
+        score: 40,
+        display_name: "Nova",
+        avatar_url: "https://example.com/nova.png",
+      },
+    ]);
+  });
+
+  it("labels a score with no profile as Resident", () => {
+    expect(withLeaderboardNames([{ user_id: "user-2", score: 10 }], new Map())[0].display_name).toBe("Resident");
   });
 });
 

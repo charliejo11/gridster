@@ -64,6 +64,34 @@ export async function fetchMyTriviaHistory(userId, limit = 30) {
   return data || [];
 }
 
+export function leaderboardDisplayName(profile) {
+  const displayName = String(profile?.display_name || "").trim();
+
+  if (displayName) {
+    return displayName;
+  }
+
+  const slUsername = String(profile?.sl_username || "").trim();
+
+  if (slUsername) {
+    return slUsername;
+  }
+
+  return "Resident";
+}
+
+export function withLeaderboardNames(rows, profilesByUserId) {
+  return (rows || []).map((row) => {
+    const profile = profilesByUserId?.get?.(row.user_id) ?? null;
+
+    return {
+      ...row,
+      display_name: leaderboardDisplayName(profile),
+      avatar_url: profile?.avatar_url || "",
+    };
+  });
+}
+
 export async function fetchTriviaDailyLeaderboard(challengeDate) {
   const targetDate = challengeDate || new Date().toISOString().slice(0, 10);
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatBattleCountdown, normalizePhotoBattleEntryForm } from "./gridsterGamePhotoBattles.js";
+import { formatBattleCountdown, normalizePhotoBattleEntryForm, photoBattleVoteButtonState } from "./gridsterGamePhotoBattles.js";
 
 describe("normalizePhotoBattleEntryForm", () => {
   it("trims caption whitespace", () => {
@@ -21,6 +21,41 @@ describe("normalizePhotoBattleEntryForm", () => {
 
   it("defaults missing fields to empty strings rather than throwing", () => {
     expect(normalizePhotoBattleEntryForm({})).toEqual({ photo_url: "", caption: "" });
+  });
+});
+
+describe("photoBattleVoteButtonState", () => {
+  it("lets a resident vote until they have used a vote on that entry", () => {
+    expect(photoBattleVoteButtonState({ votedEntryIds: [], entryId: "entry-a" })).toEqual({
+      disabled: false,
+      label: "Vote",
+    });
+  });
+
+  it("disables the button once this entry was already voted", () => {
+    expect(
+      photoBattleVoteButtonState({ votedEntryIds: ["entry-a"], entryId: "entry-a" })
+    ).toEqual({
+      disabled: true,
+      label: "Voted",
+    });
+  });
+
+  it("disables every remaining entry once the battle vote cap is used", () => {
+    expect(
+      photoBattleVoteButtonState({
+        votedEntryIds: ["entry-a"],
+        entryId: "entry-b",
+        voteCapPerUser: 1,
+      })
+    ).toEqual({
+      disabled: true,
+      label: "Votes used",
+    });
+  });
+
+  it("stays disabled while a vote is in flight", () => {
+    expect(photoBattleVoteButtonState({ votedEntryIds: [], entryId: "entry-a", busy: true }).disabled).toBe(true);
   });
 });
 

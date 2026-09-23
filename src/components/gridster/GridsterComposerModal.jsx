@@ -12,7 +12,22 @@ import {
   createGridsterPlace,
 } from "../../lib/gridsterPlaces";
 import { createGridsterPost } from "../../lib/gridsterPosts";
-import { uploadGridsterPostPhoto, validateGridsterPostPhoto } from "../../lib/gridsterMediaUploads";
+import {
+  GRIDSTER_ALLOWED_POST_VIDEO_TYPES,
+  GRIDSTER_POST_MEDIA_ACCEPT,
+  GRIDSTER_POST_MEDIA_HINT,
+  GRIDSTER_POST_PHOTO_ACCEPT,
+  GRIDSTER_POST_PHOTO_HINT,
+  resolveGridsterPostMediaType,
+  uploadGridsterPostMedia,
+  uploadGridsterPostPhoto,
+  validateGridsterPostMedia,
+} from "../../lib/gridsterMediaUploads";
+import PostMedia from "./PostMedia";
+
+function isPostFamilyTab(tab) {
+  return tab === "general" || tab === "photo" || tab === "blog" || tab === "store";
+}
 
 const TABS = [
   { id: "general", label: "Post" },
@@ -123,7 +138,9 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
     setError("");
 
     try {
-      const publicUrl = await uploadGridsterPostPhoto(user.id, file);
+      const publicUrl = isPostFamilyTab(activeTab)
+        ? await uploadGridsterPostMedia(user.id, file)
+        : await uploadGridsterPostPhoto(user.id, file);
 
       if (activeTab === "event") {
         updateEventField("photo_url", publicUrl);
@@ -134,7 +151,7 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
       }
     } catch (uploadError) {
       console.error("Gridster composer: photo upload failed", uploadError);
-      setError(uploadError.message || "Could not upload that image.");
+      setError(uploadError.message || "Could not upload that file.");
     } finally {
       setUploadingPhoto(false);
     }
@@ -155,9 +172,9 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
     }
 
     try {
-      validateGridsterPostPhoto(file);
+      validateGridsterPostMedia(file);
     } catch (validationError) {
-      setError(validationError.message || "Please choose a valid image.");
+      setError(validationError.message || "Please choose a valid image or video.");
       return;
     }
 
@@ -200,7 +217,7 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
     }
 
     if (activeTab === "photo" && !photoFile) {
-      setError("Please choose a photo to upload.");
+      setError("Please choose a photo or video to upload.");
       return;
     }
 
@@ -252,7 +269,7 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
 
         showToast?.("Place posted.");
       } else if (activeTab === "photo") {
-        const photoUrl = await uploadGridsterPostPhoto(user.id, photoFile);
+        const photoUrl = await uploadGridsterPostMedia(user.id, photoFile);
         await createGridsterPost(user.id, { ...postForm, photo_url: photoUrl, post_type: activeTab, author_name: displayName });
         showToast?.("Posted.");
       } else {
@@ -271,7 +288,10 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
     }
   };
 
-  const isPostFamily = activeTab === "general" || activeTab === "photo" || activeTab === "blog" || activeTab === "store";
+  const isPostFamily = isPostFamilyTab(activeTab);
+  const selectedPhotoIsVideo = Boolean(
+    photoFile && GRIDSTER_ALLOWED_POST_VIDEO_TYPES.includes(resolveGridsterPostMediaType(photoFile))
+  );
 
   return (
     <div className="gridster-composer-overlay" onClick={onClose}>
@@ -330,7 +350,7 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
                   >
                     {photoPreviewUrl ? (
                       <div className="gridster-photo-preview">
-                        <img src={photoPreviewUrl} alt="Selected preview" />
+                        <PostMedia url={photoPreviewUrl} video={selectedPhotoIsVideo} alt="Selected preview" />
                         <button type="button" className="gridster-photo-remove" onClick={clearSelectedPhoto}>
                           Remove Photo
                         </button>
@@ -339,12 +359,12 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
                       <label className="gridster-photo-dropzone-label">
                         <span className="gridster-photo-dropzone-icon" aria-hidden="true">📷</span>
                         <span className="gridster-photo-dropzone-text">
-                          Drag and drop a photo here, or click to browse
+                          Drag and drop a photo or video here, or click to browse
                         </span>
-                        <span className="gridster-photo-dropzone-hint">PNG, JPEG, WEBP, or GIF. Max 8MB.</span>
+                        <span className="gridster-photo-dropzone-hint">{GRIDSTER_POST_MEDIA_HINT}</span>
                         <input
                           type="file"
-                          accept="image/png,image/jpeg,image/webp,image/gif"
+                          accept={GRIDSTER_POST_MEDIA_ACCEPT}
                           hidden
                           onChange={handlePhotoInputChange}
                         />
@@ -355,7 +375,7 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
               ) : (
                 <div className="profile-field">
                   <label>
-                    <span>Photo URL (optional)</span>
+                    <span>Photo or video URL (optional)</span>
                     <input
                       type="text"
                       value={postForm.photo_url}
@@ -367,13 +387,13 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
                     {uploadingPhoto ? "Uploading..." : "Upload from Computer"}
                     <input
                       type="file"
-                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      accept={GRIDSTER_POST_MEDIA_ACCEPT}
                       hidden
                       disabled={uploadingPhoto}
                       onChange={handlePhotoFileChange}
                     />
                   </label>
-                  <p className="profile-upload-hint">PNG, JPEG, WEBP, or GIF. Max 8MB.</p>
+                  <p className="profile-upload-hint">{GRIDSTER_POST_MEDIA_HINT}</p>
                 </div>
               )}
 
@@ -470,13 +490,13 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
                   {uploadingPhoto ? "Uploading..." : "Upload from Computer"}
                   <input
                     type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    accept={GRIDSTER_POST_PHOTO_ACCEPT}
                     hidden
                     disabled={uploadingPhoto}
                     onChange={handlePhotoFileChange}
                   />
                 </label>
-                <p className="profile-upload-hint">PNG, JPEG, WEBP, or GIF. Max 8MB.</p>
+                <p className="profile-upload-hint">{GRIDSTER_POST_PHOTO_HINT}</p>
               </div>
 
               <label>
@@ -577,13 +597,13 @@ function GridsterComposerModal({ initialTab = "general", initialContent = "", on
                   {uploadingPhoto ? "Uploading..." : "Upload from Computer"}
                   <input
                     type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    accept={GRIDSTER_POST_PHOTO_ACCEPT}
                     hidden
                     disabled={uploadingPhoto}
                     onChange={handlePhotoFileChange}
                   />
                 </label>
-                <p className="profile-upload-hint">PNG, JPEG, WEBP, or GIF. Max 8MB.</p>
+                <p className="profile-upload-hint">{GRIDSTER_POST_PHOTO_HINT}</p>
               </div>
 
               <label>

@@ -141,6 +141,34 @@ export async function castPhotoBattleVote(entryId) {
   return data;
 }
 
+// Vote stays disabled after this resident already voted for the entry,
+// and once they have used every vote the battle allows.
+export function photoBattleVoteButtonState({
+  votedEntryIds = [],
+  entryId,
+  voteCapPerUser = 1,
+  busy = false,
+} = {}) {
+  const voted = Array.isArray(votedEntryIds) ? votedEntryIds : [];
+  const alreadyVoted = voted.includes(entryId);
+  const capValue = Number(voteCapPerUser);
+  const cap = Number.isFinite(capValue) && capValue > 0 ? capValue : 1;
+  const capReached = voted.length >= cap;
+
+  let label = "Vote";
+
+  if (alreadyVoted) {
+    label = "Voted";
+  } else if (capReached) {
+    label = "Votes used";
+  }
+
+  return {
+    disabled: Boolean(busy) || alreadyVoted || capReached,
+    label,
+  };
+}
+
 export function formatBattleCountdown(closeAtIso) {
   const remainingMs = new Date(closeAtIso).getTime() - Date.now();
 

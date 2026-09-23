@@ -168,35 +168,21 @@ import {
   readSessionShownBoostIds,
   rememberSessionShownBoostId,
 } from "../lib/gridsterTrending";
+import { pageForGridsterPath, pathForGridsterPage } from "../lib/gridsterPagePaths";
 import "./GridsterHome.css";
-
-const GRIDSTER_PAGE_PATHS = {
-  BlingBoost: "/bling-depot",
-  Messages: "/messenger",
-  TeleportDiscovery: "/places",
-  TonightInSL: "/tonight",
-  BookingBoard: "/booking-board",
-  Sponsors: "/sponsors",
-  CommunityGuidelines: "/community-guidelines",
-  PrivacyPolicy: "/privacy",
-  TermsOfService: "/terms",
-};
 
 function scrollGridsterToTop() {
   if (typeof window !== "undefined") {
     window.scrollTo(0, 0);
   }
 }
-const GRIDSTER_PATH_PAGES = Object.fromEntries(
-  Object.entries(GRIDSTER_PAGE_PATHS).map(([page, path]) => [path, page])
-);
 
 function getGridsterPageFromPath() {
   if (typeof window === "undefined") {
     return null;
   }
 
-  return GRIDSTER_PATH_PAGES[window.location.pathname] ?? null;
+  return pageForGridsterPath(window.location.pathname);
 }
 
 function getTeleportButtonProps(destinationName, slurlOverride) {
@@ -270,13 +256,23 @@ function GridsterHome() {
   }, [setActivePage, setShowLanding]);
 
   useEffect(() => {
+    if (showLanding || activePage !== "Games") {
+      return;
+    }
+
+    // Same enter behavior as the footer legal pages: Games opens at the
+    // top so a deep link or back button does not keep a scrolled feed.
+    scrollGridsterToTop();
+  }, [activePage, showLanding]);
+
+  useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
 
-    const nextPath = !showLanding && GRIDSTER_PAGE_PATHS[activePage]
-      ? GRIDSTER_PAGE_PATHS[activePage]
-      : GRIDSTER_PATH_PAGES[window.location.pathname]
+    const nextPath = !showLanding && pathForGridsterPage(activePage)
+      ? pathForGridsterPage(activePage)
+      : pageForGridsterPath(window.location.pathname)
         ? "/"
         : null;
 
@@ -821,7 +817,7 @@ function CenterContent({ activePage, galleryItems, authMode, authReturnTo, selec
 
   if (activePage === "Games") {
     return (
-      <PageShell title="Gridster Games" subtitle="Daily Spin, Trivia, and Photo Challenge Battles - play, level up, and win Bling Bits.">
+      <PageShell title="Gridster Games" subtitle="Daily Spin, Trivia, quick grid games, and Photo Challenge Battles - play, level up, and win Bling Bits.">
         <GamesLandingPage onAuthOpen={onAuthOpen} showToast={showToast} />
       </PageShell>
     );

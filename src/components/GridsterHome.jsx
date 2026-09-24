@@ -3175,6 +3175,9 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, onOpenResidentProfile, 
       setHiddenPostIds(hiddenIds);
       setMutedUserIds(creatorActions.muted);
       setBlockedUserIds(creatorActions.blocked);
+      if (creatorActions.clearedSelf) {
+        showToast?.("A mute or block on your own posts was cleared, so they can show in your feed again.");
+      }
       setFriendUserIds(new Set(friends.map((friend) => friend.user_id)));
       setPosts(rawPosts || []);
 
@@ -3614,8 +3617,8 @@ function FeedPostEntry({
             boosted={boosted}
             onProfileClick={() => onProfileClick(post, boost)}
             onHide={() => onHide(post)}
-            onMute={() => onMute(post, authorName)}
-            onBlock={() => onBlock(post, authorName)}
+            onMute={post.user_id === currentUserId ? undefined : () => onMute(post, authorName)}
+            onBlock={post.user_id === currentUserId ? undefined : () => onBlock(post, authorName)}
             onReport={(reason) => onReport(post, reason)}
           />
         )}
@@ -4481,22 +4484,26 @@ function PostHeader({ name, avatarUrl, label, timeLabel = "2h ago", showToast, b
               Hide Post
             </button>
             <button onClick={() => setReportOpen(true)}>Report Post</button>
-            <button
-              onClick={() => {
-                onMute?.();
-                closeMenu();
-              }}
-            >
-              Mute Creator
-            </button>
-            <button
-              onClick={() => {
-                onBlock?.();
-                closeMenu();
-              }}
-            >
-              Block Resident
-            </button>
+            {onMute ? (
+              <button
+                onClick={() => {
+                  onMute();
+                  closeMenu();
+                }}
+              >
+                Mute Creator
+              </button>
+            ) : null}
+            {onBlock ? (
+              <button
+                onClick={() => {
+                  onBlock();
+                  closeMenu();
+                }}
+              >
+                Block Resident
+              </button>
+            ) : null}
             <button
               onClick={() => {
                 showToast?.("SLURL copied.");

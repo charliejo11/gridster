@@ -191,8 +191,20 @@ export async function fetchCreatorActions(userId) {
 
   const muted = new Set();
   const blocked = new Set();
+  let clearedSelf = false;
 
   for (const row of data || []) {
+    if (row.target_user_id === userId) {
+      // A self mute/block hides every one of the viewer's posts while the
+      // sidebar count stays unfiltered. Drop it from the sets used by the
+      // feed, and delete the row so Feed Preferences can clear it too.
+      clearedSelf = true;
+      clearCreatorAction(userId, userId, row.action).catch((clearError) => {
+        console.error("Gridster feed: could not clear a self mute/block", clearError);
+      });
+      continue;
+    }
+
     if (row.action === "mute") {
       muted.add(row.target_user_id);
     } else if (row.action === "block") {
@@ -200,10 +212,14 @@ export async function fetchCreatorActions(userId) {
     }
   }
 
-  return { muted, blocked };
+  return { muted, blocked, clearedSelf };
 }
 
 async function setCreatorAction(userId, targetUserId, action) {
+  if (!userId || !targetUserId || userId === targetUserId) {
+    return;
+  }
+
   const { error } = await supabase
     .from(GRIDSTER_CREATOR_ACTIONS_TABLE)
     .upsert({ user_id: userId, target_user_id: targetUserId, action }, { onConflict: "user_id,target_user_id,action" });
@@ -275,11 +291,9 @@ const NEW_CREATOR_WINDOW_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 // first as the tiebreaker so an empty/default preference set behaves exactly
 // like the plain reverse-chronological feed it replaces.
 //
-// The viewer's own posts are exempt from the rating filter and are ordered
-// ahead of everyone else. Discovery focus (especially "New creators") is a
-// primary sort key, so without this a resident's brand-new post sinks below
-// older posts from newer accounts and disappears from the top of Home.
-// Explicit hides, mutes, and blocks still apply to own posts.
+// A mute or block whose target is the viewer is ignored. The More menu can
+// record one before the database rejects it, and a stored self-row would
+// otherwise remove every post the sidebar still counts.
 //
 // organic_trending_score and boost_visibility_bonus (from
 // gridsterTrending.js) are attached to each post and only ever used
@@ -322,9 +336,9 @@ export function rankAndFilterPosts(posts, options = {}) {
 
   const visible = posts.filter((post) => {
     if (hiddenPostIds.has(post.id)) return false;
-    if (mutedUserIds.has(post.user_id) || blockedUserIds.has(post.user_id)) return false;
-    const isOwnPost = viewerUserId && post.user_id === viewerUserId;
-    if (!isOwnPost && !allowedRatings.has(post.maturity_rating || "general")) return false;
+    const isOwnPost = Boolean(viewerUserId) && post.user_id === viewerUserId;
+    if (!isOwnPost && (mutedUserIds.has(post.user_id) || blockedUserIds.has(post.user_id))) return false;
+    if (!allowedRatings.has(post.maturity_rating || "general")) return false;
     return true;
   });
 
@@ -384,9 +398,6 @@ export function rankAndFilterPosts(posts, options = {}) {
   }
 
   scored.sort((a, b) => {
-    const aOwn = Boolean(viewerUserId) && a.post.user_id === viewerUserId;
-    const bOwn = Boolean(viewerUserId) && b.post.user_id === viewerUserId;
-    if (aOwn !== bOwn) return aOwn ? -1 : 1;
     if (b.score !== a.score) return b.score - a.score;
     // Tiebreaker only - never overrides the preference-based score
     // above, so a boost can influence order among otherwise-equal

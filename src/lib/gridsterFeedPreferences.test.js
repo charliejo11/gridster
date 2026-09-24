@@ -106,49 +106,33 @@ describe("rankAndFilterPosts", () => {
     expect(result.map((p) => p.id)).toEqual(["newer", "older"]);
   });
 
-  it("puts the viewer's own posts ahead of discovery-focus boosts", () => {
-    const ownNewest = makePost({
-      id: "own-newest",
-      user_id: "viewer",
-      created_at: new Date().toISOString(),
-    });
-    const ownOlder = makePost({
-      id: "own-older",
-      user_id: "viewer",
-      created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    });
-    const newCreator = makePost({
-      id: "new-creator",
-      user_id: "new-creator",
-      created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    });
-    const profilesById = new Map([
-      ["new-creator", { created_at: new Date().toISOString() }],
-      ["viewer", { created_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString() }],
-    ]);
-    const preferences = { ratings: ["general", "moderate"], discovery_focus: ["New creators"] };
+  it("ignores a mute or block aimed at the viewer", () => {
+    const own = makePost({ id: "own", user_id: "viewer", created_at: "2026-09-24T01:32:14.000Z" });
+    const other = makePost({ id: "other", user_id: "other", created_at: "2026-09-18T22:09:27.000Z" });
 
-    const withoutViewer = rankAndFilterPosts([ownNewest, newCreator], { preferences, profilesById });
-    expect(withoutViewer[0].id).toBe("new-creator");
-
-    const withViewer = rankAndFilterPosts([newCreator, ownOlder, ownNewest], {
-      preferences,
-      profilesById,
+    const muted = rankAndFilterPosts([own, other], {
+      mutedUserIds: new Set(["viewer"]),
       viewerUserId: "viewer",
     });
-    expect(withViewer.map((post) => post.id)).toEqual(["own-newest", "own-older", "new-creator"]);
+    expect(muted.map((post) => post.id)).toEqual(["own", "other"]);
+
+    const blocked = rankAndFilterPosts([own, other], {
+      blockedUserIds: new Set(["viewer"]),
+      viewerUserId: "viewer",
+    });
+    expect(blocked.map((post) => post.id)).toEqual(["own", "other"]);
   });
 
-  it("keeps the viewer's own post when their rating filter would hide it", () => {
-    const ownAdult = makePost({ id: "own-adult", user_id: "viewer", maturity_rating: "adult" });
-    const general = makePost({ id: "general", user_id: "other" });
+  it("still drops another author the viewer muted", () => {
+    const own = makePost({ id: "own", user_id: "viewer" });
+    const muted = makePost({ id: "muted", user_id: "muted-author" });
 
-    const result = rankAndFilterPosts([general, ownAdult], {
-      preferences: { ratings: ["general"] },
+    const result = rankAndFilterPosts([own, muted], {
+      mutedUserIds: new Set(["muted-author", "viewer"]),
       viewerUserId: "viewer",
     });
 
-    expect(result.map((post) => post.id)).toEqual(["own-adult", "general"]);
+    expect(result.map((post) => post.id)).toEqual(["own"]);
   });
 
   it("still drops the viewer's own post when they hid it", () => {

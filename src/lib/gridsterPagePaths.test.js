@@ -36,11 +36,13 @@ describe("gridster page paths", () => {
   });
 
   it("keeps an auth deep link while Auth is open and clears it after leaving", () => {
-    expect(nextGridsterHistoryPath({ activePage: "Auth", showLanding: false, pathname: "/login" })).toBe("/login");
-    expect(nextGridsterHistoryPath({ activePage: "Auth", showLanding: false, pathname: "/signup" })).toBe("/signup");
-    expect(nextGridsterHistoryPath({ activePage: "Auth", showLanding: false, pathname: "/" })).toBeNull();
-    expect(nextGridsterHistoryPath({ activePage: "Home", showLanding: false, pathname: "/signup" })).toBe("/");
-    expect(nextGridsterHistoryPath({ activePage: "Games", showLanding: false, pathname: "/login" })).toBe("/games");
+    expect(nextGridsterHistoryPath({ activePage: "Auth", showLanding: false, pathname: "/login", authMode: "login" })).toBe("/login");
+    expect(nextGridsterHistoryPath({ activePage: "Auth", showLanding: false, pathname: "/signup", authMode: "signup" })).toBe("/signup");
+    expect(nextGridsterHistoryPath({ activePage: "Auth", showLanding: false, pathname: "/signup", authMode: "login" })).toBe("/login");
+    expect(nextGridsterHistoryPath({ activePage: "Auth", showLanding: false, pathname: "/login", authMode: "signup" })).toBe("/signup");
+    expect(nextGridsterHistoryPath({ activePage: "Auth", showLanding: false, pathname: "/", authMode: "login" })).toBeNull();
+    expect(nextGridsterHistoryPath({ activePage: "Home", showLanding: false, pathname: "/signup", authMode: "login" })).toBe("/");
+    expect(nextGridsterHistoryPath({ activePage: "Games", showLanding: false, pathname: "/login", authMode: "login" })).toBe("/games");
   });
 
   it("keeps the existing history rules for other pages", () => {

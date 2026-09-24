@@ -287,12 +287,13 @@ function GridsterHome() {
       activePage,
       showLanding,
       pathname: window.location.pathname,
+      authMode,
     });
 
     if (nextPath && window.location.pathname !== nextPath) {
       window.history.pushState({}, "", nextPath);
     }
-  }, [activePage, showLanding]);
+  }, [activePage, showLanding, authMode]);
 
   const showToast = (message) => {
     window.clearTimeout(toastTimerRef.current);

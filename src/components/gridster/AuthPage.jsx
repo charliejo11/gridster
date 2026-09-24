@@ -30,6 +30,7 @@ function AuthPage({ initialMode = "login", onProfileOpen, onNavigate, returnTo }
 
   useEffect(() => {
     setMode(getAuthMode(initialMode));
+    setMessage("");
   }, [initialMode]);
 
   useEffect(() => {

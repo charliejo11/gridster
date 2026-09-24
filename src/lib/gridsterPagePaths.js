@@ -40,15 +40,25 @@ export function pageForGridsterPath(pathname) {
 // Keeps /login and /signup in the address bar while Auth is open so a refresh
 // restores that mode. Every other known path still falls back to / when the
 // current page has no path of its own.
-export function nextGridsterHistoryPath({ activePage, showLanding, pathname }) {
+export function nextGridsterHistoryPath({ activePage, showLanding, pathname, authMode }) {
   const mappedPagePath = !showLanding ? pathForGridsterPage(activePage) : null;
 
   if (mappedPagePath) {
     return mappedPagePath;
   }
 
-  if (!showLanding && activePage === "Auth" && authModeForGridsterPath(pathname)) {
-    return pathname;
+  if (!showLanding && activePage === "Auth") {
+    const pathMode = authModeForGridsterPath(pathname);
+
+    // Stay on /login or /signup only while that path still matches the mode.
+    // A header Log In while the URL says /signup should move to /login.
+    if (pathMode) {
+      if (pathMode === authMode) {
+        return pathname;
+      }
+
+      return authMode === "signup" ? "/signup" : "/login";
+    }
   }
 
   if (pageForGridsterPath(pathname)) {

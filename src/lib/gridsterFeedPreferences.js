@@ -275,6 +275,12 @@ const NEW_CREATOR_WINDOW_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 // first as the tiebreaker so an empty/default preference set behaves exactly
 // like the plain reverse-chronological feed it replaces.
 //
+// The viewer's own posts are exempt from the rating filter and are ordered
+// ahead of everyone else. Discovery focus (especially "New creators") is a
+// primary sort key, so without this a resident's brand-new post sinks below
+// older posts from newer accounts and disappears from the top of Home.
+// Explicit hides, mutes, and blocks still apply to own posts.
+//
 // organic_trending_score and boost_visibility_bonus (from
 // gridsterTrending.js) are attached to each post and only ever used
 // as a *tiebreaker* below the existing preference-based `score` -
@@ -293,6 +299,7 @@ export function rankAndFilterPosts(posts, options = {}) {
     trendingTags = [],
     engagementStatsByPostId = new Map(),
     activeBoostsByPostId = new Map(),
+    viewerUserId = null,
   } = options;
 
   const allowedRatings = new Set(
@@ -316,7 +323,8 @@ export function rankAndFilterPosts(posts, options = {}) {
   const visible = posts.filter((post) => {
     if (hiddenPostIds.has(post.id)) return false;
     if (mutedUserIds.has(post.user_id) || blockedUserIds.has(post.user_id)) return false;
-    if (!allowedRatings.has(post.maturity_rating || "general")) return false;
+    const isOwnPost = viewerUserId && post.user_id === viewerUserId;
+    if (!isOwnPost && !allowedRatings.has(post.maturity_rating || "general")) return false;
     return true;
   });
 
@@ -376,6 +384,9 @@ export function rankAndFilterPosts(posts, options = {}) {
   }
 
   scored.sort((a, b) => {
+    const aOwn = Boolean(viewerUserId) && a.post.user_id === viewerUserId;
+    const bOwn = Boolean(viewerUserId) && b.post.user_id === viewerUserId;
+    if (aOwn !== bOwn) return aOwn ? -1 : 1;
     if (b.score !== a.score) return b.score - a.score;
     // Tiebreaker only - never overrides the preference-based score
     // above, so a boost can influence order among otherwise-equal

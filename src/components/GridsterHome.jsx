@@ -533,6 +533,7 @@ function GridsterHome() {
             onOpenComposer={openComposer}
             onOpenMyCreatorPages={openMyCreatorPages}
             onOpenFollowList={openFollowList}
+            onOpenResidentProfile={openResidentProfile}
             showToast={showToast}
             onAuthOpen={openAuth}
           >
@@ -3248,8 +3249,9 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, onOpenResidentProfile, 
       trendingTags: computeOrganicTrendingTags(posts, engagementStatsByPostId).map(([tag]) => tag),
       engagementStatsByPostId,
       activeBoostsByPostId,
+      viewerUserId: currentUserId,
     });
-  }, [posts, feedPreferences, hiddenPostIds, mutedUserIds, blockedUserIds, friendUserIds, profilesById, engagementStatsByPostId, activeBoostsByPostId]);
+  }, [posts, feedPreferences, hiddenPostIds, mutedUserIds, blockedUserIds, friendUserIds, profilesById, engagementStatsByPostId, activeBoostsByPostId, currentUserId]);
 
   // Boosted posts are interleaved as *additional* slots after organic
   // ranking/filtering above - this never reorders the organic list,
@@ -3382,11 +3384,21 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, onOpenResidentProfile, 
       return;
     }
 
+    if (post.user_id === currentUserId) {
+      showToast?.("You can't mute your own posts.");
+      return;
+    }
+
     setMutedUserIds((current) => new Set(current).add(post.user_id));
     muteCreator(currentUserId, post.user_id)
       .then(() => showToast?.(`${authorName} muted. You'll see less from them.`))
       .catch((muteError) => {
         console.error("Gridster feed: could not mute creator", muteError);
+        setMutedUserIds((current) => {
+          const next = new Set(current);
+          next.delete(post.user_id);
+          return next;
+        });
         showToast?.(muteError.message || "Could not mute this resident.");
       });
   };
@@ -3397,11 +3409,21 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, onOpenResidentProfile, 
       return;
     }
 
+    if (post.user_id === currentUserId) {
+      showToast?.("You can't block yourself.");
+      return;
+    }
+
     setBlockedUserIds((current) => new Set(current).add(post.user_id));
     blockCreator(currentUserId, post.user_id)
       .then(() => showToast?.(`${authorName} blocked.`))
       .catch((blockError) => {
         console.error("Gridster feed: could not block resident", blockError);
+        setBlockedUserIds((current) => {
+          const next = new Set(current);
+          next.delete(post.user_id);
+          return next;
+        });
         showToast?.(blockError.message || "Could not block this resident.");
       });
   };

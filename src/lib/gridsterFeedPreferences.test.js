@@ -106,6 +106,63 @@ describe("rankAndFilterPosts", () => {
     expect(result.map((p) => p.id)).toEqual(["newer", "older"]);
   });
 
+  it("puts the viewer's own posts ahead of discovery-focus boosts", () => {
+    const ownNewest = makePost({
+      id: "own-newest",
+      user_id: "viewer",
+      created_at: new Date().toISOString(),
+    });
+    const ownOlder = makePost({
+      id: "own-older",
+      user_id: "viewer",
+      created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+    const newCreator = makePost({
+      id: "new-creator",
+      user_id: "new-creator",
+      created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+    const profilesById = new Map([
+      ["new-creator", { created_at: new Date().toISOString() }],
+      ["viewer", { created_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString() }],
+    ]);
+    const preferences = { ratings: ["general", "moderate"], discovery_focus: ["New creators"] };
+
+    const withoutViewer = rankAndFilterPosts([ownNewest, newCreator], { preferences, profilesById });
+    expect(withoutViewer[0].id).toBe("new-creator");
+
+    const withViewer = rankAndFilterPosts([newCreator, ownOlder, ownNewest], {
+      preferences,
+      profilesById,
+      viewerUserId: "viewer",
+    });
+    expect(withViewer.map((post) => post.id)).toEqual(["own-newest", "own-older", "new-creator"]);
+  });
+
+  it("keeps the viewer's own post when their rating filter would hide it", () => {
+    const ownAdult = makePost({ id: "own-adult", user_id: "viewer", maturity_rating: "adult" });
+    const general = makePost({ id: "general", user_id: "other" });
+
+    const result = rankAndFilterPosts([general, ownAdult], {
+      preferences: { ratings: ["general"] },
+      viewerUserId: "viewer",
+    });
+
+    expect(result.map((post) => post.id)).toEqual(["own-adult", "general"]);
+  });
+
+  it("still drops the viewer's own post when they hid it", () => {
+    const own = makePost({ id: "own", user_id: "viewer" });
+    const other = makePost({ id: "other", user_id: "other" });
+
+    const result = rankAndFilterPosts([own, other], {
+      hiddenPostIds: new Set(["own"]),
+      viewerUserId: "viewer",
+    });
+
+    expect(result.map((post) => post.id)).toEqual(["other"]);
+  });
+
   it("never lets a boost bonus override the preference-based score ordering", () => {
     // A strongly-preferred post with zero engagement/boost must still
     // outrank a non-preferred post even if that post has an active boost -

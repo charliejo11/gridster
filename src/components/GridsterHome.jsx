@@ -547,6 +547,7 @@ function GridsterHome() {
             onOpenComposer={openComposer}
             onOpenMyCreatorPages={openMyCreatorPages}
             onOpenFollowList={openFollowList}
+            onOpenResidentProfile={openResidentProfile}
             showToast={showToast}
             onAuthOpen={openAuth}
           >
@@ -3188,6 +3189,9 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, onOpenResidentProfile, 
       setHiddenPostIds(hiddenIds);
       setMutedUserIds(creatorActions.muted);
       setBlockedUserIds(creatorActions.blocked);
+      if (creatorActions.clearedSelf) {
+        showToast?.("A mute or block on your own posts was cleared, so they can show in your feed again.");
+      }
       setFriendUserIds(new Set(friends.map((friend) => friend.user_id)));
       setPosts(rawPosts || []);
 
@@ -3262,8 +3266,9 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, onOpenResidentProfile, 
       trendingTags: computeOrganicTrendingTags(posts, engagementStatsByPostId).map(([tag]) => tag),
       engagementStatsByPostId,
       activeBoostsByPostId,
+      viewerUserId: currentUserId,
     });
-  }, [posts, feedPreferences, hiddenPostIds, mutedUserIds, blockedUserIds, friendUserIds, profilesById, engagementStatsByPostId, activeBoostsByPostId]);
+  }, [posts, feedPreferences, hiddenPostIds, mutedUserIds, blockedUserIds, friendUserIds, profilesById, engagementStatsByPostId, activeBoostsByPostId, currentUserId]);
 
   // Boosted posts are interleaved as *additional* slots after organic
   // ranking/filtering above - this never reorders the organic list,
@@ -3396,11 +3401,21 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, onOpenResidentProfile, 
       return;
     }
 
+    if (post.user_id === currentUserId) {
+      showToast?.("You can't mute your own posts.");
+      return;
+    }
+
     setMutedUserIds((current) => new Set(current).add(post.user_id));
     muteCreator(currentUserId, post.user_id)
       .then(() => showToast?.(`${authorName} muted. You'll see less from them.`))
       .catch((muteError) => {
         console.error("Gridster feed: could not mute creator", muteError);
+        setMutedUserIds((current) => {
+          const next = new Set(current);
+          next.delete(post.user_id);
+          return next;
+        });
         showToast?.(muteError.message || "Could not mute this resident.");
       });
   };
@@ -3411,11 +3426,21 @@ function RecentPostsFeed({ refreshToken, onOpenComposer, onOpenResidentProfile, 
       return;
     }
 
+    if (post.user_id === currentUserId) {
+      showToast?.("You can't block yourself.");
+      return;
+    }
+
     setBlockedUserIds((current) => new Set(current).add(post.user_id));
     blockCreator(currentUserId, post.user_id)
       .then(() => showToast?.(`${authorName} blocked.`))
       .catch((blockError) => {
         console.error("Gridster feed: could not block resident", blockError);
+        setBlockedUserIds((current) => {
+          const next = new Set(current);
+          next.delete(post.user_id);
+          return next;
+        });
         showToast?.(blockError.message || "Could not block this resident.");
       });
   };
@@ -3606,8 +3631,8 @@ function FeedPostEntry({
             boosted={boosted}
             onProfileClick={() => onProfileClick(post, boost)}
             onHide={() => onHide(post)}
-            onMute={() => onMute(post, authorName)}
-            onBlock={() => onBlock(post, authorName)}
+            onMute={post.user_id === currentUserId ? undefined : () => onMute(post, authorName)}
+            onBlock={post.user_id === currentUserId ? undefined : () => onBlock(post, authorName)}
             onReport={(reason) => onReport(post, reason)}
           />
         )}
@@ -4473,22 +4498,26 @@ function PostHeader({ name, avatarUrl, label, timeLabel = "2h ago", showToast, b
               Hide Post
             </button>
             <button onClick={() => setReportOpen(true)}>Report Post</button>
-            <button
-              onClick={() => {
-                onMute?.();
-                closeMenu();
-              }}
-            >
-              Mute Creator
-            </button>
-            <button
-              onClick={() => {
-                onBlock?.();
-                closeMenu();
-              }}
-            >
-              Block Resident
-            </button>
+            {onMute ? (
+              <button
+                onClick={() => {
+                  onMute();
+                  closeMenu();
+                }}
+              >
+                Mute Creator
+              </button>
+            ) : null}
+            {onBlock ? (
+              <button
+                onClick={() => {
+                  onBlock();
+                  closeMenu();
+                }}
+              >
+                Block Resident
+              </button>
+            ) : null}
             <button
               onClick={() => {
                 showToast?.("SLURL copied.");

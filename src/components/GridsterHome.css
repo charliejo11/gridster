@@ -15468,9 +15468,16 @@ button.join-toggle.is-joined {
 }
 
 .resident-featured-photos h3,
-.resident-favorite-places h3 {
+.resident-favorite-places h3,
+.resident-profile-posts h3 {
   margin: 0 0 12px;
   font-size: 16px;
+}
+
+.resident-profile-posts {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 @media (max-width: 640px) {

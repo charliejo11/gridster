@@ -106,6 +106,47 @@ describe("rankAndFilterPosts", () => {
     expect(result.map((p) => p.id)).toEqual(["newer", "older"]);
   });
 
+  it("ignores a mute or block aimed at the viewer", () => {
+    const own = makePost({ id: "own", user_id: "viewer", created_at: "2026-09-24T01:32:14.000Z" });
+    const other = makePost({ id: "other", user_id: "other", created_at: "2026-09-18T22:09:27.000Z" });
+
+    const muted = rankAndFilterPosts([own, other], {
+      mutedUserIds: new Set(["viewer"]),
+      viewerUserId: "viewer",
+    });
+    expect(muted.map((post) => post.id)).toEqual(["own", "other"]);
+
+    const blocked = rankAndFilterPosts([own, other], {
+      blockedUserIds: new Set(["viewer"]),
+      viewerUserId: "viewer",
+    });
+    expect(blocked.map((post) => post.id)).toEqual(["own", "other"]);
+  });
+
+  it("still drops another author the viewer muted", () => {
+    const own = makePost({ id: "own", user_id: "viewer" });
+    const muted = makePost({ id: "muted", user_id: "muted-author" });
+
+    const result = rankAndFilterPosts([own, muted], {
+      mutedUserIds: new Set(["muted-author", "viewer"]),
+      viewerUserId: "viewer",
+    });
+
+    expect(result.map((post) => post.id)).toEqual(["own"]);
+  });
+
+  it("still drops the viewer's own post when they hid it", () => {
+    const own = makePost({ id: "own", user_id: "viewer" });
+    const other = makePost({ id: "other", user_id: "other" });
+
+    const result = rankAndFilterPosts([own, other], {
+      hiddenPostIds: new Set(["own"]),
+      viewerUserId: "viewer",
+    });
+
+    expect(result.map((post) => post.id)).toEqual(["other"]);
+  });
+
   it("never lets a boost bonus override the preference-based score ordering", () => {
     // A strongly-preferred post with zero engagement/boost must still
     // outrank a non-preferred post even if that post has an active boost -

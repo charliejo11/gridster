@@ -60,6 +60,25 @@ export async function fetchRecentPosts(limit = 20) {
   return data;
 }
 
+export async function fetchPostsForUser(userId, limit = 50) {
+  if (!userId) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from(GRIDSTER_POSTS_TABLE)
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+}
+
 export async function fetchPostCountForUser(userId) {
   if (!userId) {
     return 0;

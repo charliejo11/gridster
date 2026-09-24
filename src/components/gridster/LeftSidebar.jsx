@@ -50,6 +50,7 @@ function LeftSidebar({
   onOpenComposer,
   onOpenMyCreatorPages,
   onOpenFollowList,
+  onOpenResidentProfile,
   showToast,
   onAuthOpen,
   children,
@@ -173,14 +174,21 @@ function LeftSidebar({
           {[
             ["Followers", stats.followers, "followers"],
             ["Following", stats.following, "following"],
-            ["Posts", stats.posts, null],
+            ["Posts", stats.posts, "posts"],
           ].map(([label, value, mode]) =>
             mode && currentUser ? (
               <button
                 type="button"
                 key={label}
                 className="profile-stat-button"
-                onClick={() => onOpenFollowList?.(currentUser.id, mode)}
+                onClick={() => {
+                  if (mode === "posts") {
+                    onOpenResidentProfile?.(currentUser.id);
+                    return;
+                  }
+
+                  onOpenFollowList?.(currentUser.id, mode);
+                }}
               >
                 <strong>{value.toLocaleString()}</strong>
                 <span>{label}</span>

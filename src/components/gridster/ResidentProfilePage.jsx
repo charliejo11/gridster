@@ -16,8 +16,10 @@ import {
   sendFriendRequest,
 } from "../../lib/gridsterFriends";
 import { fetchFollowCounts, fetchIsFollowing, followUser, unfollowUser } from "../../lib/gridsterFollows";
-import { fetchPostCountForUser } from "../../lib/gridsterPosts";
+import { GRIDSTER_POST_TYPE_LABELS, fetchPostCountForUser, fetchPostsForUser } from "../../lib/gridsterPosts";
 import TeleportStatusChip from "./TeleportStatusChip";
+import FeedPost from "./FeedPost";
+import PostMedia from "./PostMedia";
 
 function getInitials(profile) {
   const source = profile?.display_name || profile?.sl_username || "Resident";
@@ -38,6 +40,8 @@ function ResidentProfilePage({ userId, onOpenFollowList, showToast }) {
   const [stats, setStats] = useState({ followers: 0, following: 0, posts: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
   const [followActionBusy, setFollowActionBusy] = useState(false);
+  const [posts, setPosts] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(true);
 
   const refreshFriendship = (nextCurrentUser) => {
     if (!nextCurrentUser || !userId) {
@@ -155,6 +159,42 @@ function ResidentProfilePage({ userId, onOpenFollowList, showToast }) {
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadPosts() {
+      if (!userId) {
+        setPosts([]);
+        setPostsLoading(false);
+        return;
+      }
+
+      setPostsLoading(true);
+
+      try {
+        const rows = await fetchPostsForUser(userId);
+
+        if (active) {
+          setPosts(rows || []);
+        }
+      } catch {
+        if (active) {
+          setPosts([]);
+        }
+      } finally {
+        if (active) {
+          setPostsLoading(false);
+        }
+      }
+    }
+
+    loadPosts();
+
+    return () => {
+      active = false;
+    };
   }, [userId]);
 
   const handleSendFriendRequest = async () => {
@@ -382,6 +422,58 @@ function ResidentProfilePage({ userId, onOpenFollowList, showToast }) {
           </div>
         ) : null}
       </article>
+
+      <section className="resident-profile-posts glass-card">
+        <h3>{currentUser?.id === userId ? "My posts" : "Posts"}</h3>
+        {postsLoading ? (
+          <p className="groups-directory-message">Loading posts...</p>
+        ) : posts.length ? (
+          posts.map((post) => (
+            <FeedPost
+              key={post.id}
+              header={(
+                <div className="post-header">
+                  <div className="post-avatar">
+                    {profile.avatar_url ? <img src={profile.avatar_url} alt="" /> : getInitials(profile)}
+                  </div>
+                  <div className="post-header-copy">
+                    <strong>{profile.display_name || post.author_name || "Resident"}</strong>
+                    <span>
+                      {GRIDSTER_POST_TYPE_LABELS[post.post_type] || "Post"}
+                      {" • "}
+                      {new Date(post.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              )}
+            >
+              <div className="recent-post-body">
+                {post.content ? <p>{post.content}</p> : null}
+                {post.photo_url ? (
+                  <div className="recent-post-photo">
+                    <PostMedia url={post.photo_url} />
+                  </div>
+                ) : null}
+                {post.link_url ? (
+                  <a className="recent-post-link" href={post.link_url} target="_blank" rel="noreferrer">
+                    {post.link_url}
+                  </a>
+                ) : null}
+                {post.slurl ? (
+                  <div className="recent-post-actions">
+                    <button type="button" data-destination={post.region_name || post.content || "Gridster"} data-slurl={post.slurl}>
+                      Teleport
+                    </button>
+                    <TeleportStatusChip slurl={post.slurl} destinationName={post.region_name || post.content || "Gridster"} showToast={showToast} />
+                  </div>
+                ) : null}
+              </div>
+            </FeedPost>
+          ))
+        ) : (
+          <p className="groups-directory-message">No posts yet.</p>
+        )}
+      </section>
 
       <BlingBuddyShowcase buddy={blingProfile?.buddy} showToast={showToast} />
 

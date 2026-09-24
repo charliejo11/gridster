@@ -494,7 +494,7 @@ function AuthPage({ initialMode = "login", onProfileOpen, onNavigate, returnTo }
       <div className="auth-card glass-card auth-login-card">
         <div className="auth-card-heading">
           <span>Gridster Account</span>
-          <h3>Create your Gridster account first.</h3>
+          <h3>{isSignupMode ? "Create your Gridster account first." : "Log in to your Gridster account."}</h3>
           <p>After you log in, you can verify your Second Life avatar and unlock your Verified Resident badge.</p>
         </div>
 
@@ -505,7 +505,10 @@ function AuthPage({ initialMode = "login", onProfileOpen, onNavigate, returnTo }
               className="auth-input"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setMessage("");
+              }}
               placeholder="you@example.com"
               required
             />
@@ -517,7 +520,10 @@ function AuthPage({ initialMode = "login", onProfileOpen, onNavigate, returnTo }
               className="auth-input"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setMessage("");
+              }}
               placeholder="Your password"
               required
             />

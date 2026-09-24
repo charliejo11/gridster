@@ -168,7 +168,7 @@ import {
   readSessionShownBoostIds,
   rememberSessionShownBoostId,
 } from "../lib/gridsterTrending";
-import { pageForGridsterPath, pathForGridsterPage } from "../lib/gridsterPagePaths";
+import { authModeForGridsterPath, nextGridsterHistoryPath, pageForGridsterPath } from "../lib/gridsterPagePaths";
 import "./GridsterHome.css";
 
 function scrollGridsterToTop() {
@@ -183,6 +183,14 @@ function getGridsterPageFromPath() {
   }
 
   return pageForGridsterPath(window.location.pathname);
+}
+
+function getAuthModeFromPath() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return authModeForGridsterPath(window.location.pathname);
 }
 
 function getTeleportButtonProps(destinationName, slurlOverride) {
@@ -206,7 +214,7 @@ function GridsterHome() {
     setShowLanding(false);
   }
 
-  const [authMode, setAuthMode] = useState("login");
+  const [authMode, setAuthMode] = useState(() => getAuthModeFromPath() ?? "login");
   const [authReturnTo, setAuthReturnTo] = useState(null);
   const [toast, setToast] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -242,6 +250,11 @@ function GridsterHome() {
     }
 
     const handlePopState = () => {
+      const nextAuthMode = getAuthModeFromPath();
+      if (nextAuthMode) {
+        setAuthMode(nextAuthMode);
+      }
+
       const nextRoutePage = getGridsterPageFromPath();
 
       if (nextRoutePage) {
@@ -253,7 +266,7 @@ function GridsterHome() {
     window.addEventListener("popstate", handlePopState);
 
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [setActivePage, setShowLanding]);
+  }, [setActivePage, setAuthMode, setShowLanding]);
 
   useEffect(() => {
     if (showLanding || activePage !== "Games") {
@@ -270,11 +283,11 @@ function GridsterHome() {
       return;
     }
 
-    const nextPath = !showLanding && pathForGridsterPage(activePage)
-      ? pathForGridsterPage(activePage)
-      : pageForGridsterPath(window.location.pathname)
-        ? "/"
-        : null;
+    const nextPath = nextGridsterHistoryPath({
+      activePage,
+      showLanding,
+      pathname: window.location.pathname,
+    });
 
     if (nextPath && window.location.pathname !== nextPath) {
       window.history.pushState({}, "", nextPath);
